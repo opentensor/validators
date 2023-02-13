@@ -42,12 +42,8 @@ from validator.neuron_utilities import PositionalEncoding, calc_loss_fct
 from validator.log_utilities import ValidatorLogger
 from bittensor.utils.tokenizer_utils import phrase_cross_entropy, topk_tokens_to_vocab_size, prune_tokens
 
-from torch.nn.functional import kl_div
-from torch.nn.utils import clip_grad_norm_
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
 from loguru import logger
-from threading import Lock
-from prometheus_client import Counter, Gauge, Histogram, Summary, Info
 
 logger = logger.opt( colors=True )
 console = Console()
