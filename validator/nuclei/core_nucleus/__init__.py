@@ -38,8 +38,8 @@ from rich.console import Console
 from rich.traceback import install
 from typing import List, Tuple, Callable, Dict, Any, Union, Set
 
-from ..neuron_utilities import ThreadQueue, PositionalEncoding, calc_loss_fct
-from ..log_utilities import ValidatorLogger
+from validator.neuron_utilities import PositionalEncoding, calc_loss_fct
+from validator.log_utilities import ValidatorLogger
 from bittensor.utils.tokenizer_utils import phrase_cross_entropy, topk_tokens_to_vocab_size, prune_tokens
 
 from torch.nn.functional import kl_div
