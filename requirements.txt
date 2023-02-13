@@ -1,0 +1,4 @@
+bittensor
+torch
+transformers
+sentence-transformers
