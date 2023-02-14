@@ -38,8 +38,8 @@ from rich.console import Console
 from rich.traceback import install
 from typing import List, Tuple, Callable, Dict, Any, Union, Set
 
-from validator.neuron_utilities import PositionalEncoding
-from validator.synapse_utilities import textcausallmnext, textcausallm
+from validators.neuron_utilities import PositionalEncoding
+from validators.synapse_utilities import textcausallmnext, textcausallm
 
 from bittensor.utils.tokenizer_utils import prune_tokens
 
