@@ -11,16 +11,7 @@ import queue
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
-
-
-def calc_loss_fct(loss_fct, logits, labels):
-    r""" Calculates self.loss_fct with logits and labels that are expected to be aligned already.
-    """
-    _logits = logits.contiguous()
-    _labels = labels.contiguous()
-    loss = loss_fct(_logits.view(-1, _logits.size(-1)), _labels.view(-1))
-    return loss
-
+from typing import List, Tuple, Callable, Dict, Any, Union, Set
 
 def update_metagraph_peerweight(metagraph, nucleus, device):
     r"""

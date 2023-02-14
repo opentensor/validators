@@ -39,6 +39,7 @@ from typing import List, Tuple, Callable, Dict, Any, Union, Set
 
 from validator.log_utilities import ValidatorLogger
 from validator.nuclei.core_nucleus import nucleus
+from validator.synapse_utilities import scaling_law_loss_to_params
 
 from torch.nn.utils import clip_grad_norm_
 from loguru import logger
