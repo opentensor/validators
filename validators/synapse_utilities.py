@@ -15,6 +15,7 @@ from bittensor.utils.tokenizer_utils import phrase_cross_entropy, topk_tokens_to
 from typing import List, Tuple, Callable, Dict, Any, Union, Set
 from loguru import logger
 from validators.log_utilities import ValidatorLogger
+logger = logger.opt( colors=True )
 
 def calc_loss_fct(loss_fct, logits, labels):
     r""" Calculates self.loss_fct with logits and labels that are expected to be aligned already.
