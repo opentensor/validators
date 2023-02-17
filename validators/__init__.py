@@ -18,14 +18,14 @@
 # Bittensor Validators
 __version__ = '0.0.0'
 version_split = __version__.split(".")
-__version_as_int__ = (100 * int(version_split[0])) + (10 * int(version_split[1])) + (1 * int(version_split[2]))
+__version_as_int__ = (10000 * int(version_split[0])) + (100 * int(version_split[1])) + (1 * int(version_split[2]))
 
-from validators import nakamoto
+from validators import finney_logit
 
 __all_validators__ =  {  
-                     'nakamoto_validator': nakamoto.neuron,
+                     'finney_logit_validator': finney_logit.neuron,
                     }
 
 __text_validators__ =  { 
-                     'nakamoto_validator': nakamoto.neuron,
+                     'finney_logit_validator': finney_logit.neuron,
                      }

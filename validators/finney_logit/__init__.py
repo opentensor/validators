@@ -38,7 +38,7 @@ from rich.traceback import install
 from typing import List, Tuple, Callable, Dict, Any, Union, Set
 
 from validators.log_utilities import ValidatorLogger
-from validators.nakamoto.nucleus import nucleus
+from validators.finney_logit.nucleus import nucleus
 from validators.synapse_utilities import scaling_law_loss_to_params
 
 from torch.nn.utils import clip_grad_norm_
