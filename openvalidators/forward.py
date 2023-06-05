@@ -384,7 +384,7 @@ async def forward(self):
     # Log to wandb.
     if not self.config.wandb.off:
         
-        if ttl_get_block( self ) % self.config.wandb.weights_block_length <= self.prev_block % self.config.wandb.weights_block_length:
+        if self.step % self.config.wandb.weights_step_length == 0:
             event["moving_averaged_scores"] = self.moving_averaged_scores.tolist()
             bt.logging.debug("logging weights")
 

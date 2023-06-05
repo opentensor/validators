@@ -28,7 +28,7 @@ def should_set_weights(self) -> bool:
     if self.config.neuron.disable_set_weights:
         return False
 
-    return ttl_get_block( self ) % self.config.neuron.epoch_length <= self.prev_block % self.config.neuron.epoch_length
+    return ttl_get_block( self ) % self.config.neuron.epoch_length < self.prev_block % self.config.neuron.epoch_length
 
 def set_weights( self ):
     # Calculate the average reward for each uid across non-zero values.
@@ -62,5 +62,3 @@ def set_weights( self ):
         wait_for_finalization=False,
         version_key = openvalidators.__spec_version__
     )
-
-    self.last_set_weights_block = self.subtensor.block
