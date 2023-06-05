@@ -218,6 +218,12 @@ def add_args(cls, parser):
         help="How many epochs before we force a new run.",
         default=100,
     )
+    parser.add_argument(
+        "--wandb.notes",
+        type=str,
+        help="Notes to add to the wandb run.",
+        default="",
+    )
 
     # Mocks
     parser.add_argument(
