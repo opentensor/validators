@@ -20,6 +20,7 @@ import torch
 import wandb
 import copy
 import bittensor as bt
+import openvalidators
 from openvalidators.misc import ttl_get_block
 
 def should_reinit_wandb( self ):
@@ -29,7 +30,17 @@ def should_reinit_wandb( self ):
 
 
 def init_wandb( self, reinit=False ):
-    """ Initializes wandb."""
+    """Starts a new wandb run."""
+    tags = [self.wallet.hotkey.ss58_address, openvalidators.__version__]
+    if self.config.mock:
+        tags.append('mock')
+    if self.config.neuron.use_custom_gating_model:
+        tags.append('custom_gating_model')
+    if self.config.neuron.nsfw_filter:
+        tags.append('nsfw_filter')
+    if self.config.neuron.disable_set_weights:
+        tags.append('disable_set_weights')
+
     bt.logging.info('starting new wandb run')
     self.wandb = wandb.init(
         anonymous='allow',
@@ -39,7 +50,7 @@ def init_wandb( self, reinit=False ):
         config=self.config,
         mode='offline' if self.config.wandb.offline else 'online',
         dir=self.config.neuron.full_path,
-        tags=self.config.wandb.tags,
+        tags=tags,
     )
     bt.logging.debug(str(self.wandb))
 
