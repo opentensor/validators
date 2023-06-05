@@ -78,7 +78,7 @@ $ python3 openvalidators/neuron.py --wallet.name <your-wallet-name> --wallet.hot
 By default, the validator sends data to wandb, allowing users to monitor running validators and access key metrics in real time, such as:
 - Gating model loss
 - Hardware usage
-- Forward pass time∆
+- Forward pass time
 - Block duration
 
 All the data sent to wandb is publicly available to the community at the following [link](https://wandb.ai/opentensor-dev/openvalidators).
