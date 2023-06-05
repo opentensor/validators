@@ -22,10 +22,7 @@ from typing import List
 
 class AsyncDendritePool:
     def __init__(self, keypair, metagraph):
-        self.dendrites = [
-            bt.text_prompting(axon=axon, keypair=keypair, uid=uid)
-            for uid, axon in enumerate(metagraph.axons)
-        ]
+        self.dendrites = [bt.text_prompting(axon=axon, keypair=keypair, uid=uid) for uid, axon in enumerate(metagraph.axons)]
 
     async def async_forward(
         self,
@@ -74,8 +71,4 @@ class AsyncDendritePool:
         # If there are any new axons, add them to the dendrites.
         if len(metagraph_uids_axons_state) > 0:
             for uid, axon in metagraph_uids_axons_state.items():
-                self.dendrites.append(
-                    bt.text_prompting(
-                        axon=axon, keypair=self.dendrites[0].keypair, uid=uid
-                    )
-                )
+                self.dendrites.append(bt.text_prompting(axon=axon, keypair=self.dendrites[0].keypair, uid=uid))

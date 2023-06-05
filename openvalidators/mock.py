@@ -69,6 +69,7 @@ class MockDataset(Iterator):
 class MockDendriteResponse:
     completion = ""
     elapsed_time = 0
+
     def __init__(self, message: str):
         if is_firewall(message):
             self.completion = firewall_mock_response()
@@ -85,9 +86,7 @@ class MockDendriteResponse:
 
 
 class MockDendritePool(torch.nn.Module):
-    def forward(
-        self, roles: List[str], messages: List[str], uids: List[int], timeout: float
-    ):
+    def forward(self, roles: List[str], messages: List[str], uids: List[int], timeout: float):
         return [MockDendriteResponse(messages[0]) for _ in uids]
 
     async def async_forward(

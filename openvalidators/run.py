@@ -33,10 +33,7 @@ def run(self):
 
             # Run multiple forwards.
             async def run_forward():
-                coroutines = [
-                    forward(self)
-                    for _ in range(self.config.neuron.num_concurrent_forwards)
-                ]
+                coroutines = [forward(self) for _ in range(self.config.neuron.num_concurrent_forwards)]
                 await asyncio.gather(*coroutines)
 
             self.loop.run_until_complete(run_forward())
@@ -50,10 +47,10 @@ def run(self):
                 set_weights(self)
 
             # Rollover wandb to a new run.
-            if should_reinit_wandb( self ):
-                reinit_wandb( self )
+            if should_reinit_wandb(self):
+                reinit_wandb(self)
 
-            self.prev_block = ttl_get_block( self )
+            self.prev_block = ttl_get_block(self)
 
     except Exception as e:
         bt.logging.error("Error in training loop", str(e))

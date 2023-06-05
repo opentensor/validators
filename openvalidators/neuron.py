@@ -78,9 +78,7 @@ class neuron:
 
         # Init metagraph.
         bt.logging.debug("loading", "metagraph")
-        self.metagraph = bt.metagraph(
-            netuid=self.config.netuid, network=self.subtensor.network
-        )
+        self.metagraph = bt.metagraph(netuid=self.config.netuid, network=self.subtensor.network)
         self.hotkeys = copy.deepcopy(self.metagraph.hotkeys)
         bt.logging.debug(str(self.metagraph))
 
@@ -94,11 +92,7 @@ class neuron:
         if self.config.neuron.mock_dataset:
             self.dataset = MockDataset()
         else:
-            self.dataset = iter(
-                load_dataset("squad_v2", split="train", streaming=True).shuffle(
-                    buffer_size=10000
-                )
-            )
+            self.dataset = iter(load_dataset("squad_v2", split="train", streaming=True).shuffle(buffer_size=10000))
         bt.logging.debug(str(self.dataset))
 
         # Init the gating model which learns which miners to select for each query.
@@ -106,13 +100,9 @@ class neuron:
         if self.config.neuron.mock_gating_model:
             self.gating_model = MockGatingModel(self.metagraph.n.item())
         elif self.config.neuron.use_custom_gating_model:
-            self.gating_model = SentenceEmbedGatingModel(
-                metagraph=self.metagraph, config=self.config
-            ).to(self.device)
+            self.gating_model = SentenceEmbedGatingModel(metagraph=self.metagraph, config=self.config).to(self.device)
         else:
-            self.gating_model = GatingModel(
-                metagraph=self.metagraph, config=self.config
-            ).to(self.device)
+            self.gating_model = GatingModel(metagraph=self.metagraph, config=self.config).to(self.device)
         bt.logging.debug(str(self.gating_model))
 
         # Dendrite pool for querying the network during training.
@@ -120,9 +110,7 @@ class neuron:
         if self.config.neuron.mock_dendrite_pool:
             self.dendrite_pool = MockDendritePool()
         else:
-            self.dendrite_pool = AsyncDendritePool(
-                keypair=self.wallet.hotkey, metagraph=self.metagraph
-            )
+            self.dendrite_pool = AsyncDendritePool(keypair=self.wallet.hotkey, metagraph=self.metagraph)
         bt.logging.debug(str(self.dendrite_pool))
 
         # Init the event loop.
@@ -131,7 +119,7 @@ class neuron:
         # Init wandb.
         if not self.config.wandb.off:
             bt.logging.debug("loading", "wandb")
-            init_wandb( self )
+            init_wandb(self)
 
         # Init Reward model
         bt.logging.debug("loading", "reward_model")
@@ -141,9 +129,7 @@ class neuron:
 
         else:
             bt.logging.info("Loading reward model")
-            self.reward_model = RewardModel(
-                model_path="EleutherAI/gpt-j-6b", device=self.config.neuron.device
-            )
+            self.reward_model = RewardModel(model_path="EleutherAI/gpt-j-6b", device=self.config.neuron.device)
             for fpath in os.listdir(self.config.neuron.reward_path):
                 if fpath.endswith(".pt") or fpath.endswith(".bin"):
                     checkpoint = os.path.join(self.config.neuron.reward_path, fpath)
@@ -159,18 +145,17 @@ class neuron:
         # Init Filter model
         if self.config.neuron.nsfw_filter:
             filter_model_path = "facebook/roberta-hate-speech-dynabench-r4-target"
-            self.filter_model = AutoModelForSequenceClassification.from_pretrained(
-                filter_model_path
-            ).to(self.device)
+            self.filter_model = AutoModelForSequenceClassification.from_pretrained(filter_model_path).to(self.device)
             self.filter_tokenizer = AutoTokenizer.from_pretrained(filter_model_path)
             self.filter_tokenizer.pad_token = self.filter_tokenizer.eos_token
 
         if self.config.neuron.epoch_length_override:
             self.config.neuron.epoch_length = self.config.neuron.epoch_length_override
         else:
-            self.config.neuron.epoch_length = self.subtensor.validator_epoch_length( self.config.netuid )
+            self.config.neuron.epoch_length = self.subtensor.validator_epoch_length(self.config.netuid)
 
-        self.prev_block = ttl_get_block( self )
+        self.prev_block = ttl_get_block(self)
+
 
 def main():
     neuron().run()

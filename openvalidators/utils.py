@@ -23,46 +23,51 @@ import bittensor as bt
 import openvalidators
 from openvalidators.misc import ttl_get_block
 
-def should_reinit_wandb( self ):
+
+def should_reinit_wandb(self):
     # Check if wandb run needs to be rolled over.
     run_block_length = self.config.neuron.epoch_length * self.config.wandb.run_epoch_length
-    return not self.config.wandb.off and ttl_get_block( self ) % run_block_length <= self.prev_block % run_block_length
+    return not self.config.wandb.off and ttl_get_block(self) % run_block_length <= self.prev_block % run_block_length
 
 
-def init_wandb( self, reinit=False ):
+def init_wandb(self, reinit=False):
     """Starts a new wandb run."""
     tags = [self.wallet.hotkey.ss58_address, openvalidators.__version__]
     if self.config.mock:
-        tags.append('mock')
+        tags.append("mock")
     if self.config.neuron.use_custom_gating_model:
-        tags.append('custom_gating_model')
+        tags.append("custom_gating_model")
     if self.config.neuron.nsfw_filter:
-        tags.append('nsfw_filter')
+        tags.append("nsfw_filter")
     if self.config.neuron.disable_set_weights:
-        tags.append('disable_set_weights')
+        tags.append("disable_set_weights")
 
-    bt.logging.info('starting new wandb run')
+    bt.logging.info("starting new wandb run")
     self.wandb = wandb.init(
-        anonymous='allow',
+        anonymous="allow",
         reinit=reinit,
         project=self.config.wandb.project_name,
         entity=self.config.wandb.entity,
         config=self.config,
-        mode='offline' if self.config.wandb.offline else 'online',
+        mode="offline" if self.config.wandb.offline else "online",
         dir=self.config.neuron.full_path,
         tags=tags,
     )
     bt.logging.debug(str(self.wandb))
 
-def reinit_wandb( self ):
-    """ Reinitializes wandb, rolling over the run."""
+
+def reinit_wandb(self):
+    """Reinitializes wandb, rolling over the run."""
     self.wandb.finish()
-    init_wandb(self, reinit=True )
+    init_wandb(self, reinit=True)
 
 
 def should_checkpoint(self):
     # Check if enough epoch blocks have elapsed since the last checkpoint.
-    return ttl_get_block( self ) % self.config.neuron.checkpoint_block_length <= self.prev_block % self.config.neuron.checkpoint_block_length
+    return (
+        ttl_get_block(self) % self.config.neuron.checkpoint_block_length
+        <= self.prev_block % self.config.neuron.checkpoint_block_length
+    )
 
 
 def checkpoint(self):
@@ -83,19 +88,13 @@ def resync_metagraph(self):
     self.metagraph.sync()
 
     # Creates a dictionary of uids and hotkeys from the previous metagraph state.
-    uids_hotkeys_state_dict = dict(
-        zip(previous_metagraph.uids.tolist(), previous_metagraph.hotkeys)
-    )
+    uids_hotkeys_state_dict = dict(zip(previous_metagraph.uids.tolist(), previous_metagraph.hotkeys))
 
     # Creates a dictionary of latest uids and hotkeys of the metagraph.
-    latest_uids_hotkeys_state_dict = dict(
-        zip(self.metagraph.uids.tolist(), self.metagraph.hotkeys)
-    )
+    latest_uids_hotkeys_state_dict = dict(zip(self.metagraph.uids.tolist(), self.metagraph.hotkeys))
 
     if uids_hotkeys_state_dict != latest_uids_hotkeys_state_dict:
-        bt.logging.info(
-            "Metagraph updated, re-syncing hotkeys, dendrite pool and moving averages"
-        )
+        bt.logging.info("Metagraph updated, re-syncing hotkeys, dendrite pool and moving averages")
         # Reconstruct the dendrite pool with the new endpoints.
         self.dendrite_pool.resync(self.metagraph)
 
@@ -133,12 +132,8 @@ def resync_linear_layer(
          metagraph (:obj: bt.metagraph.Metagraph):
              Latest state of the metagraph with updated uids and hotkeys
     """
-    uids_hotkeys_state_dict = dict(
-        zip(previous_metagraph.uids.tolist(), previous_metagraph.hotkeys)
-    )
-    latest_uids_hotkeys_state_dict = dict(
-        zip(metagraph.uids.tolist(), metagraph.hotkeys)
-    )
+    uids_hotkeys_state_dict = dict(zip(previous_metagraph.uids.tolist(), previous_metagraph.hotkeys))
+    latest_uids_hotkeys_state_dict = dict(zip(metagraph.uids.tolist(), metagraph.hotkeys))
 
     updated_uids_indices = []
     for uid, latest_hotkey in latest_uids_hotkeys_state_dict.items():
@@ -198,15 +193,11 @@ def save_state(self):
         torch.save(gating_model_linear_layer_dict, gating_model_file_path)
 
         if not self.config.wandb.off:
-            model_artifact = wandb.Artifact(
-                f"{gating_model_name}_gating_linear_layer", type="model"
-            )
+            model_artifact = wandb.Artifact(f"{gating_model_name}_gating_linear_layer", type="model")
             model_artifact.add_file(gating_model_file_path)
             self.wandb.log_artifact(model_artifact)
 
-        bt.logging.success(
-            prefix="Saved gating model", sufix=f"<blue>{gating_model_file_path}</blue>"
-        )
+        bt.logging.success(prefix="Saved gating model", sufix=f"<blue>{gating_model_file_path}</blue>")
     except Exception as e:
         bt.logging.warning(f"Failed to save model with error: {e}")
 

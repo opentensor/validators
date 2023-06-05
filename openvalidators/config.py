@@ -29,13 +29,13 @@ def check_config(cls, config: "bt.Config"):
     bt.logging.check_config(config)
     bt.wallet.check_config(config)
     bt.subtensor.check_config(config)
-    
+
     if config.mock:
         config.neuron.mock_reward_model = True
         config.neuron.mock_dendrite_pool = True
         config.neuron.mock_gating_model = True
         config.neuron.mock_dataset = True
-            
+
     full_path = os.path.expanduser(
         "{}/{}/{}/netuid{}/{}".format(
             config.logging.logging_dir,
@@ -50,9 +50,7 @@ def check_config(cls, config: "bt.Config"):
 
     if not os.path.exists(config.neuron.full_path):
         os.makedirs(config.neuron.full_path, exist_ok=True)
-    if not config.neuron.mock_reward_model and not os.path.exists(
-        config.neuron.reward_path + "/hf_ckpt.pt"
-    ):
+    if not config.neuron.mock_reward_model and not os.path.exists(config.neuron.reward_path + "/hf_ckpt.pt"):
         os.makedirs(config.neuron.reward_path, exist_ok=True)
         os.system(
             f"wget -O { config.neuron.reward_path + '/hf_ckpt.pt'} \
@@ -76,9 +74,7 @@ def check_config(cls, config: "bt.Config"):
 
 def add_args(cls, parser):
     # Netuid Arg
-    parser.add_argument(
-        "--netuid", type=int, help="Prompting network netuid", default=1
-    )
+    parser.add_argument("--netuid", type=int, help="Prompting network netuid", default=1)
     parser.add_argument(
         "--neuron.name",
         type=str,
@@ -117,9 +113,7 @@ def add_args(cls, parser):
         help="Path to reward model.",
         default="~/.bittensor/reward_models",
     )
-    parser.add_argument(
-        "--neuron.reward_shift", type=int, help="Reward model shift.", default=3
-    )
+    parser.add_argument("--neuron.reward_shift", type=int, help="Reward model shift.", default=3)
 
     parser.add_argument(
         "--neuron.followup_timeout",
@@ -134,9 +128,7 @@ def add_args(cls, parser):
         default=10,
     )
 
-    parser.add_argument(
-        "--neuron.answer_timeout", type=float, help="Answer query timeout.", default=10
-    )
+    parser.add_argument("--neuron.answer_timeout", type=float, help="Answer query timeout.", default=10)
     parser.add_argument(
         "--neuron.answer_sample_size",
         type=int,
@@ -144,9 +136,7 @@ def add_args(cls, parser):
         default=10,
     )
 
-    parser.add_argument(
-        "--neuron.scoring_timeout", type=float, help="Scoring query timeout", default=10
-    )
+    parser.add_argument("--neuron.scoring_timeout", type=float, help="Scoring query timeout", default=10)
     parser.add_argument(
         "--neuron.scoring_sample_size",
         type=int,
@@ -183,11 +173,10 @@ def add_args(cls, parser):
         "--neuron.vpermit_tao_limit",
         type=int,
         help="The maximum number of TAO allowed to query a validator with a vpermit.",
-        default=4096)
-
-    parser.add_argument(
-        "--wandb.off", action="store_true", help="Turn off wandb.", default=False
+        default=4096,
     )
+
+    parser.add_argument("--wandb.off", action="store_true", help="Turn off wandb.", default=False)
     parser.add_argument(
         "--wandb.project_name",
         type=str,
@@ -220,9 +209,7 @@ def add_args(cls, parser):
     )
 
     # Mocks
-    parser.add_argument(
-        "--mock", action="store_true", help="Mock all items.", default=False
-    )
+    parser.add_argument("--mock", action="store_true", help="Mock all items.", default=False)
     parser.add_argument(
         "--neuron.mock_reward_model",
         action="store_true",

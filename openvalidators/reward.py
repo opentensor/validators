@@ -32,11 +32,7 @@ class RewardModel(torch.nn.Module):
         if config is None:
             config = RewardModel.config()
 
-        self.config.n_embd = (
-            self.config.hidden_size
-            if hasattr(self.config, "hidden_size")
-            else self.config.n_embd
-        )
+        self.config.n_embd = self.config.hidden_size if hasattr(self.config, "hidden_size") else self.config.n_embd
         self.device = torch.device(device)
         self.transformer = self.model.transformer
         self.v_head = torch.nn.Linear(self.config.n_embd, 1, bias=False)
@@ -71,10 +67,7 @@ class RewardModel(torch.nn.Module):
             batch_size = 1
             for i in range(0, len(samples), batch_size):
                 sub_samples = samples[i : i + batch_size]
-                sub_samples = [
-                    "<|startoftext|>" + chosen + "<|endoftext|>"
-                    for chosen in sub_samples
-                ]
+                sub_samples = ["<|startoftext|>" + chosen + "<|endoftext|>" for chosen in sub_samples]
                 encodings_dict = self.tokenizer(
                     sub_samples,
                     truncation=False,
@@ -96,18 +89,12 @@ class RewardModel(torch.nn.Module):
             return scores
 
         with torch.no_grad():
-            full_rewards = [
-                reward_fn([completion]) for completion in completions_with_prompt
-            ]
+            full_rewards = [reward_fn([completion]) for completion in completions_with_prompt]
             if difference:
-                comp_rewards = [
-                    reward_fn([completion]) for completion in completions_without_prompt
-                ]
+                comp_rewards = [reward_fn([completion]) for completion in completions_without_prompt]
                 return torch.nn.functional.relu(
                     torch.tensor(full_rewards, dtype=torch.float32) + shift
-                ) - torch.nn.functional.relu(
-                    torch.tensor(comp_rewards, dtype=torch.float32) + shift
-                )
+                ) - torch.nn.functional.relu(torch.tensor(comp_rewards, dtype=torch.float32) + shift)
             else:
                 return torch.tensor(full_rewards, dtype=torch.float32)
 
@@ -176,9 +163,7 @@ class RewardModel(torch.nn.Module):
             rejected_end_scores.append(r_truncated_reward[-1])
 
             # Compute loss based on truncated rewards (ignore padding)
-            loss += -torch.log(
-                torch.sigmoid(c_truncated_reward - r_truncated_reward)
-            ).mean()
+            loss += -torch.log(torch.sigmoid(c_truncated_reward - r_truncated_reward)).mean()
         loss = loss / bs
 
         if not inference:
