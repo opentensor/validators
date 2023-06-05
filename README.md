@@ -57,7 +57,7 @@ $ pip3 install openvalidators
 
 2. From source:
 ```bash
-$ git clone https://github.com/opentensor/openvalidators.git
+$ git clone https://github.com/opentensor/validators.git
 $ pip install -e openvalidators/
 ```
 
