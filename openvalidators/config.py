@@ -21,7 +21,6 @@ import argparse
 import bittensor as bt
 from loguru import logger
 
-import openvalidators
 from openvalidators.gating import BaseGatingModel
 
 
@@ -73,20 +72,7 @@ def check_config(cls, config: "bt.Config"):
             level="EVENTS",
             format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
         )
-        
-    # raise RuntimeError()
-    if not config.wandb.off:
-        config.wandb.tags = [openvalidators.__version__]
-        if config.mock:
-            config.wandb.tags.append('mock')
-        if config.neuron.use_custom_gating_model:
-            config.wandb.tags.append('custom_gating_model')
-        if config.neuron.nsfw_filter:
-            config.wandb.tags.append('nsfw_filter')
-        if config.neuron.disable_set_weights:
-            config.wandb.tags.append('disable_set_weights')
 
-        bt.logging.info(f'Automatically set wandb tags as {config.wandb.tags}')
 
 def add_args(cls, parser):
     # Netuid Arg
@@ -231,6 +217,12 @@ def add_args(cls, parser):
         type=int,
         help="How many steps before we rollover to a new run.",
         default=1500,
+    )
+    parser.add_argument(
+        "--wandb.notes",
+        type=str,
+        help="Notes to add to the wandb run.",
+        default="",
     )
 
     # Mocks

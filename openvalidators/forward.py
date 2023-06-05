@@ -198,9 +198,6 @@ def reward_completions(
         shift=self.config.neuron.reward_shift,
     ).to(self.device)
 
-    # Softmax the rewards
-    successful_rewards = torch.nn.functional.softmax(successful_rewards, 0)
-
     # Fill scores with zeros for non successful responses.
     filled_rewards = torch.zeros(len(responses), dtype=torch.float32)
     for idx, reward in zip(successful_completions_indices, successful_rewards):
