@@ -7,6 +7,9 @@
 # Notebooks
 *.ipynb
 
+# Remove wandb files.
+wandb/
+
 # Distribution / packaging
 .Python
 build/

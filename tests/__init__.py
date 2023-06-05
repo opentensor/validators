@@ -14,18 +14,3 @@
 # THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
-from . import config
-from . import dendrite
-from . import forward
-from . import gating
-from . import misc
-from . import mock
-from . import neuron
-from . import prompts
-from . import reward
-from . import run
-from . import utils
-from . import weights
-
-__version__ = "0.1.0"
-__spec_version__ = 1000
