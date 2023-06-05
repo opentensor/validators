@@ -160,7 +160,7 @@ async def scoring_completions(
 def reward_completions(
     self, prompt: str, responses: List[bt.DendriteCall]
 ) -> torch.FloatTensor:
-    """Using the prompt and call responses return softmaxed rewards for each response.
+    """Using the prompt and call responses returns rewards for each response.
 
     Args:
         prompt (str):
@@ -170,7 +170,7 @@ def reward_completions(
 
     Returns:
         filled_rewards (torch.FloatTensor, shape = (len(responses)) ):
-            Softmaxed rewards for each response.
+            rewards for each response.
     """
     # Filters out unsuccessful responses.
     successful_completions_indices: List[int] = [
