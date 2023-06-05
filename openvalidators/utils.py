@@ -24,8 +24,7 @@ from openvalidators.misc import ttl_get_block
 
 def should_reinit_wandb( self ):
     # Check if wandb run needs to be rolled over.
-    run_block_length = self.config.neuron.epoch_length * self.config.wandb.run_epoch_length
-    return not self.config.wandb.off and ttl_get_block( self ) % run_block_length <= self.prev_block % run_block_length
+    return not self.config.wandb.off and self.step % self.config.wandb.run_step_length == 0
 
 
 def init_wandb( self, reinit=False ):

@@ -54,6 +54,7 @@ def run(self):
                 reinit_wandb( self )
 
             self.prev_block = ttl_get_block( self )
+            self.step += 1
 
     except Exception as e:
         bt.logging.error("Error in training loop", str(e))

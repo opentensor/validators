@@ -62,5 +62,3 @@ def set_weights( self ):
         wait_for_finalization=False,
         version_key = openvalidators.__spec_version__
     )
-
-    self.last_set_weights_block = self.subtensor.block
