@@ -207,16 +207,16 @@ def add_args(cls, parser):
         default=False,
     )
     parser.add_argument(
-        "--wandb.weights_block_length",
+        "--wandb.weights_step_length",
         type=int,
-        help="How many blocks before we log the weights.",
-        default=100,
+        help="How many steps before we log the weights.",
+        default=10,
     )
     parser.add_argument(
-        "--wandb.run_epoch_length",
+        "--wandb.run_step_length",
         type=int,
-        help="How many epochs before we force a new run.",
-        default=100,
+        help="How many steps before we rollover to a new run.",
+        default=1500,
     )
     parser.add_argument(
         "--wandb.notes",

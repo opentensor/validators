@@ -31,6 +31,7 @@ def run( self ):
     checkpoint( self )
     try:
         while True:
+            bt.logging.info(f"step({self.step}) block({ttl_get_block( self )})")
 
             # Run multiple forwards.
             async def run_forward():
@@ -56,6 +57,7 @@ def run( self ):
                 reinit_wandb( self )
 
             self.prev_block = ttl_get_block( self )
+            self.step += 1
 
     except Exception as e:
         bt.logging.error( "Error in training loop", str( e ) )

@@ -171,6 +171,7 @@ class neuron:
             self.config.neuron.epoch_length = self.subtensor.validator_epoch_length( self.config.netuid )
 
         self.prev_block = ttl_get_block( self )
+        self.step = 0
 
 def main():
     neuron().run()
