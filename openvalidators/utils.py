@@ -51,6 +51,7 @@ def init_wandb( self, reinit=False ):
         mode='offline' if self.config.wandb.offline else 'online',
         dir=self.config.neuron.full_path,
         tags=tags,
+        notes=self.config.wandb.notes,
     )
     bt.logging.debug(str(self.wandb))
 
