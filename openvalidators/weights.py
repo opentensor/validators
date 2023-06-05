@@ -17,6 +17,7 @@
 
 # Utils for weights setting on chain.
 
+import wandb
 import torch
 import bittensor as bt
 from openvalidators.misc import ttl_get_block
@@ -52,6 +53,7 @@ def set_weights( self ):
     bt.logging.trace("processed_weight_uids", processed_weight_uids)
 
     # Set the weights on chain via our subtensor connection.
+    wandb.log( {'set_weights': list(zip( processed_weight_uids.tolist(), processed_weights.tolist() ))} ) 
     self.subtensor.set_weights(
         wallet=self.wallet,
         netuid=self.config.netuid,
