@@ -2,14 +2,17 @@ import argparse
 import tqdm
 import json
 import pandas as pd
+import openvalidators
 from analysis.utils import get_runs, download_data
 
 
 DEFAULT_PROJECT = 'openvalidators'
+DEFAULT_FILTERS = {"tags": {"$in": [openvalidators.__version__]}}
+
 
 def collect_data(download_all: bool, export_path: str, wandb_run_id: str = None) -> pd.DataFrame:
     if download_all:
-        runs = get_runs(DEFAULT_PROJECT, return_paths=True)
+        runs = get_runs(DEFAULT_PROJECT, filters=DEFAULT_FILTERS, return_paths=True)
         df = download_data(runs)
         df.to_csv(export_path)
     else:
