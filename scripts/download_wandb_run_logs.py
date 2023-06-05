@@ -69,12 +69,3 @@ if __name__ == '__main__':
 
     if export_mining_dataset or export_mining_with_scoring_dataset:
         create_mining_dataset(df=collected_data, export_path=export_path, with_score=export_mining_with_scoring_dataset)
-
-
-
-
-
-
-
-
-
