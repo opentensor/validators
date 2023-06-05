@@ -31,6 +31,7 @@ def run( self ):
     checkpoint( self )
     try:
         while True:
+            bt.logging.info(f"step({self.step}) block({ttl_get_block( self )})")
 
             # Run multiple forwards.
             async def run_forward():
