@@ -58,12 +58,12 @@ $ pip3 install openvalidators
 2. From source:
 ```bash
 $ git clone https://github.com/opentensor/openvalidators.git
-$ pip install -e openvalidators/
+$ pip install -e validators/
 ```
 
 You can test the installation by running the following command:
 ```bash
-$ python3 openvalidators/neuron.py --help
+$ python3 validators/openvalidators/neuron.py --help
 ```
 
 # Validators
@@ -71,7 +71,7 @@ Participation in Network Validation is available to TAO holders. The validation 
 
 Once you have your wallet ready for validation, you can start the foundation validator by running the following command:
 ```bash
-$ python3 openvalidators/neuron.py --wallet.name <your-wallet-name> --wallet.hotkey <your-wallet-hot-key>
+$ python3 validators/openvalidators/neuron.py --wallet.name <your-wallet-name> --wallet.hotkey <your-wallet-hot-key>
 ```
 
 # Real-time monitoring with wandb integration
