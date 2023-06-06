@@ -45,20 +45,19 @@ def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor
     Notes:
         If `k` is larger than the number of available `uids`, set `k` to the number of available `uids`.
     """
-    candidate_uids = [uid
-                      for uid in range(self.metagraph.n.item())
-                      if check_uid_availability(self.metagraph, uid, self.config.neuron.vpermit_tao_limit)
-                      and (exclude is None or uid not in exclude)
-                      ]
+    candidate_uids = [
+        uid
+        for uid in range(self.metagraph.n.item())
+        if check_uid_availability(self.metagraph, uid, self.config.neuron.vpermit_tao_limit)
+        and (exclude is None or uid not in exclude)
+    ]
 
     available_uids = torch.tensor(candidate_uids, dtype=torch.int64).to(self.device)
     uids = torch.tensor(random.sample(available_uids.tolist(), k), dtype=torch.int64)
     return uids
 
 
-def is_successful_completion(
-    self, response: bt.DendriteCall, min_len: int = 10, nsfw_bound_score: float = 0.5
-) -> bool:
+def is_successful_completion(self, response: bt.DendriteCall, min_len: int = 10, nsfw_bound_score: float = 0.5) -> bool:
     """Filters out unsuccessful responses.
 
     Args:
@@ -122,9 +121,7 @@ async def scoring_completions(
             continue
 
         # Scoring prompt for this completion.
-        scoring_prompt = scoring_template.format(
-            question=prompt, answer=response.completion.strip()
-        )
+        scoring_prompt = scoring_template.format(question=prompt, answer=response.completion.strip())
 
         # Random uids for scoring this completion.
         scoring_uids = get_random_uids(self, k=n_score, exclude=exclude_uids).to(self.device)
@@ -155,10 +152,7 @@ async def scoring_completions(
 
         # Scoring values for wandb log.
         scoring_values = [
-            extract_score(resp.completion)
-            if is_successful_completion(self, resp)
-            else None
-            for resp in scoring_responses
+            extract_score(resp.completion) if is_successful_completion(self, resp) else None for resp in scoring_responses
         ]
 
         all_scoring_values[i] = scoring_values
@@ -166,17 +160,13 @@ async def scoring_completions(
         # Scoring average for completion.
         successful_scoring_values = [value for value in scoring_values if value]
         if len(successful_scoring_values) > 0:
-            filled_scores[i] = sum(successful_scoring_values) / len(
-                successful_scoring_values
-            )
+            filled_scores[i] = sum(successful_scoring_values) / len(successful_scoring_values)
 
     # Return all scoring details.
     return filled_scores, all_scoring_uids, all_scoring_completions, all_scoring_values
 
 
-def reward_completions(
-    self, prompt: str, responses: List[bt.DendriteCall]
-) -> torch.FloatTensor:
+def reward_completions(self, prompt: str, responses: List[bt.DendriteCall]) -> torch.FloatTensor:
     """Using the prompt and call responses returns rewards for each response.
 
     Args:
@@ -191,18 +181,12 @@ def reward_completions(
     """
     # Filters out unsuccessful responses.
     successful_completions_indices: List[int] = [
-        idx
-        for idx, resp in enumerate(responses)
-        if is_successful_completion(self, resp)
+        idx for idx, resp in enumerate(responses) if is_successful_completion(self, resp)
     ]
-    successful_completions: List[str] = [
-        responses[idx].completion.strip() for idx in successful_completions_indices
-    ]
+    successful_completions: List[str] = [responses[idx].completion.strip() for idx in successful_completions_indices]
 
     # Get completions with and without prompt.
-    completions_with_prompt: List[str] = [
-        prompt + comp for comp in successful_completions
-    ]
+    completions_with_prompt: List[str] = [prompt + comp for comp in successful_completions]
     completions_without_prompt: List[str] = [comp for comp in successful_completions]
 
     # Compute the reward for each completion by taking the difference between
@@ -222,6 +206,7 @@ def reward_completions(
 
     # Return the filled rewards.
     return filled_rewards
+
 
 def is_nsfw(self, message, bound_score=0.5, return_score=False) -> Union[bool, float]:
     """Check if the message contains hateful content.
@@ -351,26 +336,19 @@ async def forward(self):
 
     # Compute forward pass rewards.
     scattered_followup_rewards = (
-        torch.zeros((self.metagraph.n), dtype=torch.float32)
-        .to(self.device)
-        .scatter(0, followup_uids, followup_rewards)
+        torch.zeros((self.metagraph.n), dtype=torch.float32).to(self.device).scatter(0, followup_uids, followup_rewards)
     )
     scattered_answer_rewards = (
-        torch.zeros((self.metagraph.n), dtype=torch.float32)
-        .to(self.device)
-        .scatter(0, answer_uids, answer_rewards)
+        torch.zeros((self.metagraph.n), dtype=torch.float32).to(self.device).scatter(0, answer_uids, answer_rewards)
     )
     rewards = scattered_followup_rewards + scattered_answer_rewards
-    self.moving_averaged_scores = (
-        self.config.neuron.moving_average_alpha * rewards.to(self.device)
-        + (1 - self.config.neuron.moving_average_alpha) * self.moving_averaged_scores.to(self.device)
-    )
+    self.moving_averaged_scores = self.config.neuron.moving_average_alpha * rewards.to(self.device) + (
+        1 - self.config.neuron.moving_average_alpha
+    ) * self.moving_averaged_scores.to(self.device)
 
     # Train the gating layer.
     scores = self.gating_model(answer_prompt).to(self.device)
-    gating_loss = self.gating_model.backward(
-        scores=scores[answer_uids], rewards=answer_rewards
-    )
+    gating_loss = self.gating_model.backward(scores=scores[answer_uids], rewards=answer_rewards)
 
     # Create event.
     # TODO: Compress wandb data better.
@@ -404,11 +382,13 @@ async def forward(self):
     }
 
     if self.config.neuron.nsfw_filter:
-        event.update({
-            "followup_nsfw_scores": [is_nsfw(self, comp, return_score=True) for comp in followup_completions],
-            "answer_nsfw_scores": [is_nsfw(self, ans, return_score=True) for ans in answer_completions],
-        })
-        
+        event.update(
+            {
+                "followup_nsfw_scores": [is_nsfw(self, comp, return_score=True) for comp in followup_completions],
+                "answer_nsfw_scores": [is_nsfw(self, ans, return_score=True) for ans in answer_completions],
+            }
+        )
+
     bt.logging.debug("step:", str(event))
     # Log to wandb.
     if not self.config.wandb.off:

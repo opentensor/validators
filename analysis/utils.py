@@ -23,7 +23,8 @@ from pandas.api.types import is_list_like
 
 from typing import List, Dict, Any, Union
 
-def get_runs(project: str='openvalidators', filters: Dict[str, Any]=None, return_paths: bool=False) -> List:
+
+def get_runs(project: str = "openvalidators", filters: Dict[str, Any] = None, return_paths: bool = False) -> List:
     """Download runs from wandb.
 
     Args:
@@ -39,11 +40,12 @@ def get_runs(project: str='openvalidators', filters: Dict[str, Any]=None, return
 
     runs = api.runs(project, filters=filters)
     if return_paths:
-        return [os.path.join(run.entity,run.project,run.id) for run in runs]
+        return [os.path.join(run.entity, run.project, run.id) for run in runs]
     else:
         return runs
 
-def download_data(run_path: Union[str, List]=None, timeout: float=600) -> pd.DataFrame:
+
+def download_data(run_path: Union[str, List] = None, timeout: float = 600) -> pd.DataFrame:
     """Download data from wandb.
 
     Args:
@@ -61,36 +63,38 @@ def download_data(run_path: Union[str, List]=None, timeout: float=600) -> pd.Dat
 
     frames = []
     total_events = 0
-    pbar = tqdm.tqdm(sorted(run_path), desc='Loading history from wandb', total=len(run_path), unit='run')
+    pbar = tqdm.tqdm(sorted(run_path), desc="Loading history from wandb", total=len(run_path), unit="run")
     for path in pbar:
         run = api.run(path)
 
         frame = pd.DataFrame(list(run.scan_history()))
-        frames.append(frame.assign(run_id=path.split('/')[-1]))
+        frames.append(frame.assign(run_id=path.split("/")[-1]))
         total_events += len(frame)
 
-        pbar.set_postfix({'total_events': total_events})
+        pbar.set_postfix({"total_events": total_events})
 
     df = pd.concat(frames)
     # Convert timestamp to datetime.
-    df._timestamp = pd.to_datetime(df._timestamp, unit='s')
-    df.sort_values('_timestamp', inplace=True)
+    df._timestamp = pd.to_datetime(df._timestamp, unit="s")
+    df.sort_values("_timestamp", inplace=True)
 
     return df
 
-def load_data(path: str, nrows: int=None):
+
+def load_data(path: str, nrows: int = None):
     """Load data from csv."""
     df = pd.read_csv(path, nrows=nrows)
 
     # detect list columns which as stored as strings
-    list_cols = [c for c in df.columns if df[c].dtype=='object' and df[c].str.startswith('[').all()]
+    list_cols = [c for c in df.columns if df[c].dtype == "object" and df[c].str.startswith("[").all()]
 
     # convert string representation of list to list
     df[list_cols] = df[list_cols].applymap(eval)
 
     return df
 
-def explode_data(df: pd.DataFrame, list_cols: List[str]=None, list_len: int=None) -> pd.DataFrame:
+
+def explode_data(df: pd.DataFrame, list_cols: List[str] = None, list_len: int = None) -> pd.DataFrame:
     """Explode list columns in dataframe so that each element in the list is a separate row.
 
     Args:
@@ -103,24 +107,20 @@ def explode_data(df: pd.DataFrame, list_cols: List[str]=None, list_len: int=None
     """
     if list_cols is None:
         list_cols = [c for c in df.columns if df[c].apply(is_list_like).all()]
-        print(f'Exploding {len(list_cols)}) list columns with {list_len} elements: {list_cols}')
+        print(f"Exploding {len(list_cols)}) list columns with {list_len} elements: {list_cols}")
     if list_len:
-        list_cols = [c for c in list_cols if df[c].apply(len).unique()[0]==list_len]
-        print(f'Exploding {len(list_cols)}) list columns with {list_len} elements: {list_cols}')
+        list_cols = [c for c in list_cols if df[c].apply(len).unique()[0] == list_len]
+        print(f"Exploding {len(list_cols)}) list columns with {list_len} elements: {list_cols}")
 
     return df.explode(column=list_cols)
 
 
 def get_list_col_lengths(df: pd.DataFrame) -> Dict[str, int]:
     """Helper function to get the length of list columns."""
-    list_col_lengths =  {c: sorted(df[c].apply(len).unique()) for c in df.columns if df[c].apply(is_list_like).all()}
-    varying_lengths = {c: v for c,v in list_col_lengths.items() if len(v)>1}
+    list_col_lengths = {c: sorted(df[c].apply(len).unique()) for c in df.columns if df[c].apply(is_list_like).all()}
+    varying_lengths = {c: v for c, v in list_col_lengths.items() if len(v) > 1}
 
-    if len(varying_lengths)>0:
-        print(f'The following columns have varying lengths: {varying_lengths}')
+    if len(varying_lengths) > 0:
+        print(f"The following columns have varying lengths: {varying_lengths}")
 
-    return {c: v[0] for c,v in list_col_lengths.items()}
-
-
-
-
+    return {c: v[0] for c, v in list_col_lengths.items()}

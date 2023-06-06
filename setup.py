@@ -27,10 +27,8 @@ def read(fname):
 
 def read_requirements(path):
     with pathlib.Path(path).open() as requirements_txt:
-        return [
-            str(requirement)
-            for requirement in pkg_resources.parse_requirements(requirements_txt)
-        ]
+        return [str(requirement) for requirement in pkg_resources.parse_requirements(requirements_txt)]
+
 
 def get_version(rel_path):
     for line in read(rel_path).splitlines():

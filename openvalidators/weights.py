@@ -23,26 +23,25 @@ import bittensor as bt
 from openvalidators.misc import ttl_get_block
 import openvalidators
 
+
 def should_set_weights(self) -> bool:
     # Check if enough epoch blocks have elapsed since the last epoch.
     if self.config.neuron.disable_set_weights:
         return False
 
-    return ttl_get_block( self ) % self.config.neuron.epoch_length < self.prev_block % self.config.neuron.epoch_length
+    return ttl_get_block(self) % self.config.neuron.epoch_length < self.prev_block % self.config.neuron.epoch_length
 
-def set_weights( self ):
+
+def set_weights(self):
     # Calculate the average reward for each uid across non-zero values.
     # Replace any NaN values with 0.
-    raw_weights = torch.nn.functional.normalize( self.moving_averaged_scores, p = 1, dim = 0 )
-    bt.logging.trace( 'raw_weights', raw_weights )
-    bt.logging.trace( 'top10 values', raw_weights.sort()[0] )
-    bt.logging.trace( 'top10 uids', raw_weights.sort()[1] )
+    raw_weights = torch.nn.functional.normalize(self.moving_averaged_scores, p=1, dim=0)
+    bt.logging.trace("raw_weights", raw_weights)
+    bt.logging.trace("top10 values", raw_weights.sort()[0])
+    bt.logging.trace("top10 uids", raw_weights.sort()[1])
 
     # Process the raw weights to final_weights via subtensor limitations.
-    (
-        processed_weight_uids,
-        processed_weights,
-    ) = bt.utils.weight_utils.process_weights_for_netuid(
+    (processed_weight_uids, processed_weights,) = bt.utils.weight_utils.process_weights_for_netuid(
         uids=self.metagraph.uids.to("cpu"),
         weights=raw_weights.to("cpu"),
         netuid=self.config.netuid,
@@ -53,12 +52,12 @@ def set_weights( self ):
     bt.logging.trace("processed_weight_uids", processed_weight_uids)
 
     # Set the weights on chain via our subtensor connection.
-    wandb.log( {'set_weights': list(zip( processed_weight_uids.tolist(), processed_weights.tolist() ))} ) 
+    wandb.log({"set_weights": list(zip(processed_weight_uids.tolist(), processed_weights.tolist()))})
     self.subtensor.set_weights(
         wallet=self.wallet,
         netuid=self.config.netuid,
         uids=processed_weight_uids,
         weights=processed_weights,
         wait_for_finalization=False,
-        version_key = openvalidators.__spec_version__
+        version_key=openvalidators.__spec_version__,
     )
