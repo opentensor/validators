@@ -377,7 +377,6 @@ async def forward(self):
         "followup_completions": followup_completions,
         "followup_times": [comp.elapsed_time for comp in followup_responses],
         "followup_rewards": followup_rewards.tolist(),
-        "followup_nsfw_scores": [is_nsfw(self, comp.completion, return_score=True) for comp in followup_completions],
         "followup_scorings": followup_scorings,
         "followup_scoring_uids": followup_scoring_uids,
         "followup_scoring_completions": followup_scoring_completions,
@@ -390,7 +389,6 @@ async def forward(self):
         "answer_completions": answer_completions,
         "answer_times": [ans.elapsed_time for ans in answer_responses],
         "answer_rewards": answer_rewards.tolist(),
-        "answer_nsfw_scores": [is_nsfw(self, ans.completion, return_score=True) for ans in answer_completions],
         "answer_scorings": answer_scorings,
         "answer_scoring_uids": answer_scoring_uids,
         "answer_scoring_completions": answer_scoring_completions,
@@ -398,6 +396,12 @@ async def forward(self):
         "best_answer_scoring": best_answer_scoring,
     }
 
+    if self.config.neuron.nsfw_filter:
+        event.update({
+            "followup_nsfw_scores": [is_nsfw(self, comp, return_score=True) for comp in followup_completions],
+            "answer_nsfw_scores": [is_nsfw(self, ans, return_score=True) for ans in answer_completions],
+        })
+        
     bt.logging.debug("step:", str(event))
     # Log to wandb.
     if not self.config.wandb.off:
