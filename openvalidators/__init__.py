@@ -27,5 +27,5 @@ from . import run
 from . import utils
 from . import weights
 
-__version__ = "1.0.0"
-__spec_version__ = 1000
+__version__ = "0.1.0"
+__spec_version__ = 1001
