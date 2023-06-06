@@ -19,7 +19,7 @@ The [data_collector.py](data_collector.py) script is designed to extract data fr
 parameters. It supports various options to specify the type of data to collect and the configuration for exporting the
 data. 
 
-The repository's Makefile includes the following targets to facilitate data collection
+The repository's Makefile includes the following targets to facilitate data collection:
 
 
 ### `openvalidators_dataset`
@@ -35,6 +35,7 @@ It utilizes the following options under the hood of the [Makefile](Makefile):
 - `--download_all`: Downloads all the runs.
 - `--export_path`: Specifies the path and filename for the exported CSV file.
 
+---
 
 ### `run_id_dataset`
 ```bash
@@ -46,6 +47,8 @@ This command downloads a specific run from the project and exports it to a CSV f
 - `--export_path`: Specifies the path and filename for the exported CSV file.
 - `--wandb_run_id`: Specifies the ID of the run to download.
 
+---
+
 ### `mining_dataset`
 ```bash
 make mining_dataset
@@ -56,6 +59,8 @@ This command downloads all the runs from the project with a mining dataset and e
 - `--download_all`: Downloads all the runs.
 - `--export_path`: Specifies the path and filename for the exported CSV file.
 - `--export_mining_dataset`: Enables the export of mining dataset.
+
+---
 
 ### `scored_mining_dataset`
 ```bash
@@ -72,6 +77,7 @@ This command downloads all the runs from the project with a scored mining datase
 Note: Feel completely free to adjust the [data_collector.py](data_collector.py) script and [Makefile](Makefile) as necessary to 
 match your project configuration and requirements.
 
+---
 
 # Data collector parameters
 
@@ -91,9 +97,9 @@ extract data from a specific run. By default, it is set to None. Example usage: 
 It is used when you want to extract data specifically for mining purposes, in the following format:
     ```json
     {
-        { base_prompt : best_followup },
-        { answer_prompt : best_answer },    
-        ...
+        "base_prompt" : "best_followup",
+        "answer_prompt" : "best_answer",    
+        //...
     }
     ```
     By default, it is set to False.
@@ -102,9 +108,9 @@ It is used when you want to extract data specifically for mining purposes, in th
 dataset with scores, in the following format:
     ```json
     {
-        { base_prompt : { best_followup : score } },
-        { answer_prompt : { best_answer : score } },
-        ...
+        "base_prompt" : { "best_followup" : "score" },
+        "answer_prompt" : { "best_answer" : "score" },
+        //...
     }
     ```
     It is used when you want to extract data for mining with scoring. By default, it is set to False.
