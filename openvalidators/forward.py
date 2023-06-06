@@ -160,7 +160,7 @@ async def scoring_completions(
 def reward_completions(
     self, prompt: str, responses: List[bt.DendriteCall]
 ) -> torch.FloatTensor:
-    """Using the prompt and call responses return softmaxed rewards for each response.
+    """Using the prompt and call responses returns rewards for each response.
 
     Args:
         prompt (str):
@@ -170,7 +170,7 @@ def reward_completions(
 
     Returns:
         filled_rewards (torch.FloatTensor, shape = (len(responses)) ):
-            Softmaxed rewards for each response.
+            rewards for each response.
     """
     # Filters out unsuccessful responses.
     successful_completions_indices: List[int] = [
@@ -197,9 +197,6 @@ def reward_completions(
         difference=True,
         shift=self.config.neuron.reward_shift,
     ).to(self.device)
-
-    # Softmax the rewards
-    successful_rewards = torch.nn.functional.softmax(successful_rewards, 0)
 
     # Fill scores with zeros for non successful responses.
     filled_rewards = torch.zeros(len(responses), dtype=torch.float32)
@@ -387,7 +384,7 @@ async def forward(self):
     # Log to wandb.
     if not self.config.wandb.off:
         
-        if ttl_get_block( self ) % self.config.wandb.weights_block_length <= self.prev_block % self.config.wandb.weights_block_length:
+        if self.step % self.config.wandb.weights_step_length == 0:
             event["moving_averaged_scores"] = self.moving_averaged_scores.tolist()
             bt.logging.debug("logging weights")
 

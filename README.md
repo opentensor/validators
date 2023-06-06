@@ -57,8 +57,8 @@ $ pip3 install openvalidators
 
 2. From source:
 ```bash
-$ git clone https://github.com/opentensor/openvalidators.git
-$ pip install -e validators/
+$ git clone https://github.com/opentensor/validators.git
+$ pip install -e openvalidators/
 ```
 
 You can test the installation by running the following command:
@@ -78,7 +78,7 @@ $ python3 validators/openvalidators/neuron.py --wallet.name <your-wallet-name> -
 By default, the validator sends data to wandb, allowing users to monitor running validators and access key metrics in real time, such as:
 - Gating model loss
 - Hardware usage
-- Forward pass time∆
+- Forward pass time
 - Block duration
 
 All the data sent to wandb is publicly available to the community at the following [link](https://wandb.ai/opentensor-dev/openvalidators).
@@ -149,6 +149,7 @@ Consequently, validators also perform *shadow scoring*, which outsources the rew
 ## Sentence Embedding Gating Model
 Another cornerstone of the validator functionality is the use of a mixture of experts (MoE) model, which we call the gating model, to enable queries to be efficiently routed to the best-suited miners. **This incentivizes miners to become specialists, which in turn improves response quality**. It also reduces latency and addresses bandwidth issues in the network.
 We are working on a new and improved gating model, based on sentence embeddings, which is expected to be a more powerful and robust router for queries. By default it is disabled, but can be enabled with the flags
+
 ```--neuron.use_custom_gating_model --gating.model_name sentence-transformers/all-distilroberta-v1```
 
 # License
