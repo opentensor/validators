@@ -48,7 +48,7 @@ setup(
     name="openvalidators",
     version=get_version("openvalidators/__init__.py"),
     description="Openvalidators is a collection of open source validators for the Bittensor Network.",
-    url="https://github.com/opentensor/foundation_validator",  # TODO: add repo url
+    url="https://github.com/opentensor/validators",
     author="bittensor.com",
     packages=["openvalidators"],
     include_package_data=True,
