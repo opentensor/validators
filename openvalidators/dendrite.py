@@ -23,10 +23,7 @@ from typing import List
 
 class AsyncDendritePool:
     def __init__(self, keypair, metagraph):
-        self.dendrites = [
-            bt.text_prompting(axon=axon, keypair=keypair, uid=uid)
-            for uid, axon in enumerate(metagraph.axons)
-        ]
+        self.dendrites = [bt.text_prompting(axon=axon, keypair=keypair, uid=uid) for uid, axon in enumerate(metagraph.axons)]
 
     async def async_forward(
         self,
@@ -39,12 +36,7 @@ class AsyncDendritePool:
         # The following asyncio definition queries a single endpoint with the message
         # prompt and returns the response.
         def call_single_uid(uid: int):
-            return self.dendrites[uid].async_forward(
-                roles=roles,
-                messages=messages,
-                return_call=return_call,
-                timeout=timeout
-            )
+            return self.dendrites[uid].async_forward(roles=roles, messages=messages, return_call=return_call, timeout=timeout)
 
         # The following asyncio definition gathers the responses
         # from multiple coroutines for each uid.
@@ -56,29 +48,26 @@ class AsyncDendritePool:
         return await query()
 
     async def async_backward(
-            self,
-            uids: List[int],
-            roles: List[str],
-            messages: List[str],
-            completions: List[str],
-            rewards: torch.FloatTensor,
-            timeout: float = 1,  # response not required
+        self,
+        uids: List[int],
+        roles: List[str],
+        messages: List[str],
+        completions: List[str],
+        rewards: torch.FloatTensor,
+        timeout: float = 1,  # response not required
     ):
         # Async call single endpoint with reward for its completion.
         def call_single_uid(uid: int, completion: str, reward: torch.Tensor):
             return self.dendrites[uid].async_backward(
-                roles=roles,
-                messages=messages,
-                completion=completion,
-                rewards=[reward.item()],
-                timeout=timeout
+                roles=roles, messages=messages, completion=completion, rewards=[reward.item()], timeout=timeout
             )
 
         # The following asyncio definition gathers the responses
         # from multiple coroutines for each uid.
         async def query():
-            coroutines = [call_single_uid(uid, completion, reward) for uid, completion, reward in
-                          zip(uids, completions, rewards)]
+            coroutines = [
+                call_single_uid(uid, completion, reward) for uid, completion, reward in zip(uids, completions, rewards)
+            ]
             all_responses = await asyncio.gather(*coroutines)
             return all_responses
 
@@ -107,8 +96,4 @@ class AsyncDendritePool:
         # If there are any new axons, add them to the dendrites.
         if len(metagraph_uids_axons_state) > 0:
             for uid, axon in metagraph_uids_axons_state.items():
-                self.dendrites.append(
-                    bt.text_prompting(
-                        axon=axon, keypair=self.dendrites[0].keypair, uid=uid
-                    )
-                )
+                self.dendrites.append(bt.text_prompting(axon=axon, keypair=self.dendrites[0].keypair, uid=uid))

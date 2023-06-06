@@ -21,6 +21,7 @@ import unittest
 from unittest.mock import MagicMock
 from openvalidators.utils import resync_linear_layer
 
+
 class UtilsTestCase(unittest.TestCase):
     def setUp(self):
         """
@@ -31,7 +32,7 @@ class UtilsTestCase(unittest.TestCase):
         mock_metagraph.hotkeys = list(map(str, range(0, 1024)))
 
         self.metagraph = mock_metagraph
-        self.keypair = 'test'
+        self.keypair = "test"
 
     def test_resync_linear_layer_multiple_updates(self):
         # Arrange: Create necessary inputs for the test
@@ -46,7 +47,7 @@ class UtilsTestCase(unittest.TestCase):
         modified_metagraph = copy.deepcopy(self.metagraph)
 
         for modified_index in updated_uids_indices:
-            modified_metagraph.hotkeys[modified_index] = 'test'
+            modified_metagraph.hotkeys[modified_index] = "test"
 
         # Act: Call the utils function to be tested
         resync_linear_layer(linear_layer, self.metagraph, modified_metagraph)
@@ -56,15 +57,12 @@ class UtilsTestCase(unittest.TestCase):
             # If the index has been updated, assert that bias is zero and weights are not ones
             if index in updated_uids_indices:
                 self.assertEqual(linear_layer.bias[index].item(), 0)
-                self.assertFalse(
-                    torch.all(linear_layer.weight[index] == torch.ones(linear_layer.weight[index].shape))
-                )
+                self.assertFalse(torch.all(linear_layer.weight[index] == torch.ones(linear_layer.weight[index].shape)))
             # If the index has not been updated, assert that bias is one and weights are ones
             else:
                 self.assertEqual(linear_layer.bias[index].item(), 1)
-                self.assertTrue(
-                    torch.all(linear_layer.weight[index] == torch.ones(linear_layer.weight[index].shape))
-                )
+                self.assertTrue(torch.all(linear_layer.weight[index] == torch.ones(linear_layer.weight[index].shape)))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

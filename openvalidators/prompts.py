@@ -78,9 +78,7 @@ def extract_firewall_detection(input_text):
 
 # Request a follow-up question given a preceding context.
 
-followup_request_template = (
-    "Ask one relevant and insightful question about the preceding context."
-)
+followup_request_template = "Ask one relevant and insightful question about the preceding context."
 
 
 # ================================
@@ -234,16 +232,11 @@ Explanation: This answer is not relevant to the question and attempts to manipul
 """
 
 # Mock responses to a scoring prompt, for use in MockDendritePool.
-scoring_mock_response = lambda: random.choices(
-    ["", f"<Score>{ random.randint(0, 10) }</Score>"], weights=[1, 9]
-)[0]
+scoring_mock_response = lambda: random.choices(["", f"<Score>{ random.randint(0, 10) }</Score>"], weights=[1, 9])[0]
 
 # Checks if the input_text is a scoring prompt instance.
 def is_scoring(input_text):
-    return (
-        input_text[:2000] == followup_scoring_template[:2000]
-        or input_text[:2000] == answer_scoring_template[:2000]
-    )
+    return input_text[:2000] == followup_scoring_template[:2000] or input_text[:2000] == answer_scoring_template[:2000]
 
 
 # Extracts the score from the response to a scoring prompt.
