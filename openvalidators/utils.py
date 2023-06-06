@@ -74,14 +74,14 @@ def should_checkpoint(self):
 
 def checkpoint(self):
     """Checkpoints the training process."""
-    bt.logging.info("checkpoint()")
+    bt.logging.debug("checkpoint()")
     resync_metagraph(self)
     save_state(self)
 
 
 def resync_metagraph(self):
     """Resyncs the metagraph and updates the hotkeys and moving averages based on the new metagraph."""
-    bt.logging.info("resync_metagraph()")
+    bt.logging.debug("resync_metagraph()")
 
     # Copies state of metagraph before syncing.
     previous_metagraph = copy.deepcopy(self.metagraph)
@@ -96,7 +96,7 @@ def resync_metagraph(self):
     latest_uids_hotkeys_state_dict = dict(zip(self.metagraph.uids.tolist(), self.metagraph.hotkeys))
 
     if uids_hotkeys_state_dict != latest_uids_hotkeys_state_dict:
-        bt.logging.info("Metagraph updated, re-syncing hotkeys, dendrite pool and moving averages")
+        bt.logging.debug("Metagraph updated, re-syncing hotkeys, dendrite pool and moving averages")
         # Reconstruct the dendrite pool with the new endpoints.
         self.dendrite_pool.resync(self.metagraph)
 
@@ -114,7 +114,7 @@ def resync_metagraph(self):
             self.moving_averaged_scores = new_moving_average
 
         # Resize the gating model.
-        bt.logging.info("Re-syncing gating model")
+        bt.logging.debug("Re-syncing gating model")
         self.gating_model.resync(previous_metagraph, self.metagraph)
 
         # Update the hotkeys.
@@ -176,7 +176,7 @@ def check_uid_availability(metagraph: "bt.metagraph.Metagraph", uid: int, vpermi
 
 def save_state(self):
     r"""Save hotkeys, gating model, neuron model and moving average scores to filesystem."""
-    bt.logging.info("save_state()")
+    bt.logging.debug("save_state()")
     try:
         neuron_state_dict = {
             "neuron_weights": self.moving_averaged_scores,
@@ -206,7 +206,7 @@ def save_state(self):
 
 def load_state(self):
     r"""Load hotkeys and moving average scores from filesystem."""
-    bt.logging.info("load_state()")
+    bt.logging.debug("load_state()")
     try:
         state_dict = torch.load(f"{self.config.neuron.full_path}/model.torch")
         self.moving_averaged_scores = state_dict["neuron_weights"].clone().detach()

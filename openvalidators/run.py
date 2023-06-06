@@ -26,7 +26,7 @@ from openvalidators.misc import ttl_get_block
 
 # Neuron run loop.`
 def run(self):
-    bt.logging.info("run()")
+    bt.logging.debug("run()")
     load_state(self)
     checkpoint(self)
     try:

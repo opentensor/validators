@@ -264,7 +264,7 @@ async def forward(self):
     8. Trains the gating layer.
 
     """
-    bt.logging.info("forward()")
+    bt.logging.debug("forward()")
     start_time = time.time()
 
     # Load a base prompt from the dataset.

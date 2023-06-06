@@ -57,7 +57,7 @@ class neuron:
         self.check_config(self.config)
         bt.logging(config=self.config, logging_dir=self.config.neuron.full_path)
         print(self.config)
-        bt.logging.info("neuron.__init__()")
+        bt.logging.debug("neuron.__init__()")
 
         # Init device.
         bt.logging.debug("loading", "device")
@@ -128,7 +128,7 @@ class neuron:
             bt.logging.debug(str(self.reward_model))
 
         else:
-            bt.logging.info("Loading reward model")
+            bt.logging.debug("Loading reward model")
             self.reward_model = RewardModel(model_path="EleutherAI/gpt-j-6b", device=self.config.neuron.device)
             for fpath in os.listdir(self.config.neuron.reward_path):
                 if fpath.endswith(".pt") or fpath.endswith(".bin"):
