@@ -14,6 +14,12 @@ The current implementation requires you to be logged in wandb. You can do so by 
 wandb login
 ```
 
+**Note:** All the data collection scripts are designed to be run from the `scripts` directory, 
+so ensure that you are in the right place before starting:
+```bash
+ cd scripts # From root folder
+```
+
 ## Usage
 This repository provides a convenient way to collect data from the
 [WandB Openvalidators platform](https://wandb.ai/opentensor-dev/openvalidators) using the [data_collector.py](data_collector.py)
