@@ -35,18 +35,21 @@ from openvalidators.prompts import (
 from openvalidators.utils import check_uid_availability
 
 
-def get_random_uids(self, k: int) -> torch.LongTensor:
+def get_random_uids(self, k: int, exclude: List[int]) -> torch.LongTensor:
     """Returns k available random uids from the metagraph.
     Args:
         k (int): Number of uids to return.
+        exclude (List[int]): List of uids to exclude from the random sampling.
     Returns:
         uids (torch.LongTensor): Randomly sampled available uids.
     Notes:
         If `k` is larger than the number of available `uids`, set `k` to the number of available `uids`.
     """
     candidate_uids = [uid
-                      for uid, ax in enumerate(self.metagraph.axons)
-                      if check_uid_availability(self.metagraph, uid, self.config.neuron.vpermit_tao_limit)]
+                      for uid in range(self.metagraph.n.item())
+                      if check_uid_availability(self.metagraph, uid, self.config.neuron.vpermit_tao_limit)
+                      and uid not in exclude
+                      ]
 
     available_uids = torch.tensor(candidate_uids, dtype=torch.int64).to(self.device)
     uids = torch.tensor(random.sample(available_uids.tolist(), k), dtype=torch.int64)
@@ -78,7 +81,7 @@ def is_successful_completion(
 
 
 async def scoring_completions(
-    self, prompt: str, scoring_template: str, responses: List[bt.DendriteCall]
+    self, prompt: str, scoring_template: str, responses: List[bt.DendriteCall], exclude_uids: List[int] = None
 ) -> Tuple[torch.FloatTensor, List[List[int]], List[List[str]], List[List[int]]]:
     """Using the prompt and call responses, outsource prompt-based scoring to network,
        return scoring average for each response.
@@ -124,7 +127,7 @@ async def scoring_completions(
         )
 
         # Random uids for scoring this completion.
-        scoring_uids = get_random_uids(self, k=n_score).to(self.device)
+        scoring_uids = get_random_uids(self, k=n_score, exclude=exclude_uids).to(self.device)
         all_scoring_uids[i] = scoring_uids.tolist()
 
         # Query the network with the scoring prompt to score a given prompt + completion.
@@ -290,13 +293,13 @@ async def forward(self):
     followup_completions = [comp.completion for comp in followup_responses]
     best_followup = followup_completions[followup_rewards.argmax(dim=0)].strip()
 
-    # Prompt-based scoring via network.
+    # Prompt-based scoring via network. Prohibits self-scoring.
     (
         followup_scorings,
         followup_scoring_uids,
         followup_scoring_completions,
         followup_scoring_values,
-    ) = await scoring_completions(self, bootstrap_prompt, followup_scoring_template, followup_responses)
+    ) = await scoring_completions(self, bootstrap_prompt, followup_scoring_template, followup_responses, followup_uids)
     best_followup_scoring = followup_completions[followup_scorings.argmax(dim=0)].strip()
 
     # Backward call sends reward info back to followup_uids.
@@ -322,13 +325,13 @@ async def forward(self):
     answer_completions = [ans.completion for ans in answer_responses]
     best_answer = answer_completions[answer_rewards.argmax(dim=0)].strip()
 
-    # Prompt-based scoring via network.
+    # Prompt-based scoring via network. Prohibits self-scoring.
     (
         answer_scorings,
         answer_scoring_uids,
         answer_scoring_completions,
         answer_scoring_values,
-    ) = await scoring_completions(self, answer_prompt, answer_scoring_template, answer_responses)
+    ) = await scoring_completions(self, answer_prompt, answer_scoring_template, answer_responses, answer_uids)
     best_answer_scoring = answer_completions[answer_scorings.argmax(dim=0)].strip()
 
     # Backward call sends reward info back to answer_uids.
