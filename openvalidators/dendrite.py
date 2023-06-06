@@ -15,6 +15,7 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+import torch
 import asyncio
 import bittensor as bt
 from typing import List
@@ -29,23 +30,55 @@ class AsyncDendritePool:
 
     async def async_forward(
         self,
+        uids: List[int],
         roles: List[str],
         messages: List[str],
-        uids: List[int],
         timeout: float = 12,
         return_call=True,
     ):
         # The following asyncio definition queries a single endpoint with the message
         # prompt and returns the response.
-        async def call_single_uid(uid: int) -> str:
-            return await self.dendrites[uid].async_forward(
-                roles=roles, messages=messages, return_call=return_call, timeout=timeout
+        def call_single_uid(uid: int):
+            return self.dendrites[uid].async_forward(
+                roles=roles,
+                messages=messages,
+                return_call=return_call,
+                timeout=timeout
             )
 
         # The following asyncio definition gathers the responses
         # from multiple coroutines for each uid.
         async def query():
             coroutines = [call_single_uid(uid) for uid in uids]
+            all_responses = await asyncio.gather(*coroutines)
+            return all_responses
+
+        return await query()
+
+    async def async_backward(
+            self,
+            uids: List[int],
+            roles: List[str],
+            messages: List[str],
+            completions: List[str],
+            rewards: torch.FloatTensor,
+            timeout: float = 1,  # response not required
+    ):
+        # Async call single endpoint with reward for its completion.
+        def call_single_uid(uid: int, completion: str, reward: torch.Tensor):
+            return self.dendrites[uid].async_backward(
+                roles=roles,
+                messages=messages,
+                completion=completion,
+                rewards=[reward.item()],
+                timeout=timeout
+            )
+
+        # The following asyncio definition gathers the responses
+        # from multiple coroutines for each uid.
+        async def query():
+            coroutines = [call_single_uid(uid, completion, reward) for uid, completion, reward in
+                          zip(uids, completions, rewards)]
             all_responses = await asyncio.gather(*coroutines)
             return all_responses
 

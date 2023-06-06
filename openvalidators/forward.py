@@ -20,10 +20,11 @@ import time
 import wandb
 import torch
 import random
+import asyncio
 import bittensor as bt
 
 from loguru import logger
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from openvalidators.misc import ttl_get_block
 from openvalidators.prompts import (
     extract_score,
@@ -34,18 +35,21 @@ from openvalidators.prompts import (
 from openvalidators.utils import check_uid_availability
 
 
-def get_random_uids(self, k: int) -> torch.LongTensor:
+def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor:
     """Returns k available random uids from the metagraph.
     Args:
         k (int): Number of uids to return.
+        exclude (List[int]): List of uids to exclude from the random sampling.
     Returns:
         uids (torch.LongTensor): Randomly sampled available uids.
     Notes:
         If `k` is larger than the number of available `uids`, set `k` to the number of available `uids`.
     """
     candidate_uids = [uid
-                      for uid, ax in enumerate(self.metagraph.axons)
-                      if check_uid_availability(self.metagraph, uid, self.config.neuron.vpermit_tao_limit)]
+                      for uid in range(self.metagraph.n.item())
+                      if check_uid_availability(self.metagraph, uid, self.config.neuron.vpermit_tao_limit)
+                      and (exclude is None or uid not in exclude)
+                      ]
 
     available_uids = torch.tensor(candidate_uids, dtype=torch.int64).to(self.device)
     uids = torch.tensor(random.sample(available_uids.tolist(), k), dtype=torch.int64)
@@ -53,7 +57,7 @@ def get_random_uids(self, k: int) -> torch.LongTensor:
 
 
 def is_successful_completion(
-    self, response: bt.DendriteCall, min_len: int = 10
+    self, response: bt.DendriteCall, min_len: int = 10, nsfw_bound_score: float = 0.5
 ) -> bool:
     """Filters out unsuccessful responses.
 
@@ -67,17 +71,13 @@ def is_successful_completion(
         True if the response is successful, False otherwise.
     """
     len_check = len(response.completion) > min_len
-
-    if self.config.neuron.nsfw_filter:
-        filter_check = filter_message(self, response.completion)
-    else:
-        filter_check = True
+    filter_check = not (self.config.neuron.nsfw_filter and is_nsfw(self, response.completion, nsfw_bound_score))
 
     return len_check and filter_check
 
 
 async def scoring_completions(
-    self, prompt: str, scoring_template: str, responses: List[bt.DendriteCall]
+    self, prompt: str, scoring_template: str, responses: List[bt.DendriteCall], exclude_uids: List[int] = None
 ) -> Tuple[torch.FloatTensor, List[List[int]], List[List[str]], List[List[int]]]:
     """Using the prompt and call responses, outsource prompt-based scoring to network,
        return scoring average for each response.
@@ -85,8 +85,12 @@ async def scoring_completions(
     Args:
         prompt (str):
             Prompt to use for the reward model.
+        scoring_template (str):
+            Scoring template to use for the scoring prompt.
         responses (List[ bittensor.DendriteCall ]):
             List of responses from the network.
+        exclude_uids (List[int]):
+            UIDs to exclude when outsourcing scoring.
 
     Returns:
         filled_scores (torch.FloatTensor, shape = (len(responses)) ):
@@ -112,6 +116,7 @@ async def scoring_completions(
     filled_scores = torch.zeros(len(responses), dtype=torch.float32)
 
     # Each completion separately scored by the network.
+    coroutines = []
     for i, response in enumerate(responses):
         if not is_successful_completion(self, response):
             continue
@@ -122,16 +127,28 @@ async def scoring_completions(
         )
 
         # Random uids for scoring this completion.
-        scoring_uids = get_random_uids(self, k=n_score).to(self.device)
+        scoring_uids = get_random_uids(self, k=n_score, exclude=exclude_uids).to(self.device)
         all_scoring_uids[i] = scoring_uids.tolist()
 
         # Query the network with the scoring prompt to score a given prompt + completion.
-        scoring_responses = await self.dendrite_pool.async_forward(
+        scoring_responses = self.dendrite_pool.async_forward(
+            uids=scoring_uids,
             roles=["user"],
             messages=[scoring_prompt],
-            uids=scoring_uids,
             timeout=self.config.neuron.scoring_timeout,
         )
+        coroutines += [scoring_responses]
+
+    # Await all scoring responses.
+    all_scoring_responses = await asyncio.gather(*coroutines)
+
+    # Extract scores and calculate filled scores.
+    for i, response in enumerate(responses):
+        if not is_successful_completion(self, response):
+            continue
+
+        # Scoring responses for original response.
+        scoring_responses = all_scoring_responses.pop(0)
 
         # Scoring completions for wandb log.
         all_scoring_completions[i] = [resp.completion for resp in scoring_responses]
@@ -153,7 +170,7 @@ async def scoring_completions(
                 successful_scoring_values
             )
 
-    # Return the filled scores.
+    # Return all scoring details.
     return filled_scores, all_scoring_uids, all_scoring_completions, all_scoring_values
 
 
@@ -206,21 +223,25 @@ def reward_completions(
     # Return the filled rewards.
     return filled_rewards
 
-
-def filter_message(self, message, bound_score=0.5) -> bool:
-    """Check if the message is related to any sexual content.
+def is_nsfw(self, message, bound_score=0.5, return_score=False) -> Union[bool, float]:
+    """Check if the message contains hateful content.
 
     Args:
         message (str):
             The message that we check if we should filter out.
+        bound_score (float):
+            Threshold for the logit score to filter out the message.
+        return_score (bool):
+            Whether to return the logit score for the message being unsafe.
     Returns:
-        result (bool):
-            True indicates we should filter out the result, false indicates the result is safe.
+        result (bool if return_score is False, float if return_score is True):
+            bool: True indicates we should filter out the result, false indicates the result is safe.
+            float: The logit score for the message being unsafe.
+
     """
     tokenized = self.filter_tokenizer(message)
     input_ids = tokenized["input_ids"]
-    filter_out = False
-
+    score = -1000
     # The model can only support 512 tokens at a time, so we have to break up the check
     # if there are too many tokens in a single message.
     while len(input_ids) > 0:
@@ -229,18 +250,20 @@ def filter_message(self, message, bound_score=0.5) -> bool:
         with torch.no_grad():
             output = self.filter_model(torch.tensor([_input_ids]).to(self.device))
 
-        # Filter out if the logit score is out of bound.
-        filter_out = (
-            output.logits[0, 0] < bound_score or output.logits[0, 1] > bound_score
-        )
-
-        # Return if this section of the message needs to be filtered out.
-        if filter_out:
-            break
+        nothate, hate = output.logits[0].tolist()
+        if return_score:
+            # Return the max logit score across the message.
+            score = max(hate, score)
+        elif hate > bound_score or nothate < bound_score:
+            # Filter out if the logit score is out of bound.
+            return True
 
         input_ids = input_ids[512:]
 
-    return filter_out
+    if return_score:
+        return score
+    else:
+        return False
 
 
 async def forward(self):
@@ -264,78 +287,78 @@ async def forward(self):
 
     # Query the network with the base prompt and get the question extensions.
     followup_prompt = f"{bootstrap_prompt}\n\n{followup_request_template}\n\n"
-    followup_uids = get_random_uids(self, k=self.config.neuron.followup_sample_size).to(
-        self.device
-    )
-    followup_completions = await self.dendrite_pool.async_forward(
+    followup_uids = get_random_uids(self, k=self.config.neuron.followup_sample_size).to(self.device)
+    followup_responses = await self.dendrite_pool.async_forward(
+        uids=followup_uids,
         roles=["user"],
         messages=[followup_prompt],
-        uids=followup_uids,
         timeout=self.config.neuron.followup_timeout,
     )
     # Reward model evaluation.
-    followup_rewards = reward_completions(
-        self, followup_prompt, followup_completions
-    ).to(self.device)
-    best_followup = followup_completions[
-        followup_rewards.argmax(dim=0)
-    ].completion.strip()
+    followup_rewards = reward_completions(self, followup_prompt, followup_responses).to(self.device)
+    followup_completions = [comp.completion for comp in followup_responses]
+    best_followup = followup_completions[followup_rewards.argmax(dim=0)].strip()
 
-    # Prompt-based scoring via network.
-    followup_scoring_result = await scoring_completions(
-        self, bootstrap_prompt, followup_scoring_template, followup_completions
-    )
+    # Prompt-based scoring via network. Prohibits self-scoring.
     (
         followup_scorings,
         followup_scoring_uids,
         followup_scoring_completions,
         followup_scoring_values,
-    ) = followup_scoring_result
-    best_followup_scoring = followup_completions[
-        followup_scorings.argmax(dim=0)
-    ].completion.strip()
+    ) = await scoring_completions(self, bootstrap_prompt, followup_scoring_template, followup_responses, followup_uids)
+    best_followup_scoring = followup_completions[followup_scorings.argmax(dim=0)].strip()
+
+    # Backward call sends reward info back to followup_uids.
+    _followup_backward = await self.dendrite_pool.async_backward(
+        uids=followup_uids,
+        roles=["user"],
+        messages=[followup_prompt],
+        completions=followup_completions,
+        rewards=followup_rewards,
+    )
 
     # Query the network with the question and get responses.
     answer_prompt = f"{bootstrap_prompt}\n\n{best_followup}"
-    answer_uids = get_random_uids(self, k=self.config.neuron.answer_sample_size).to(
-        self.device
-    )
-    answer_completions = await self.dendrite_pool.async_forward(
+    answer_uids = get_random_uids(self, k=self.config.neuron.answer_sample_size, exclude=followup_uids).to(self.device)
+    answer_responses = await self.dendrite_pool.async_forward(
+        uids=answer_uids,
         roles=["user"],
         messages=[answer_prompt],
-        uids=answer_uids,
         timeout=self.config.neuron.answer_timeout,
     )
     # Reward model evaluation.
-    answer_rewards = reward_completions(self, answer_prompt, answer_completions).to(
-        self.device
-    )
-    best_answer = answer_completions[answer_rewards.argmax(dim=0)].completion.strip()
+    answer_rewards = reward_completions(self, answer_prompt, answer_responses).to(self.device)
+    answer_completions = [ans.completion for ans in answer_responses]
+    best_answer = answer_completions[answer_rewards.argmax(dim=0)].strip()
 
-    # Prompt-based scoring via network.
-    answer_scoring_result = await scoring_completions(
-        self, answer_prompt, answer_scoring_template, answer_completions
-    )
+    # Prompt-based scoring via network. Prohibits self-scoring.
     (
         answer_scorings,
         answer_scoring_uids,
         answer_scoring_completions,
         answer_scoring_values,
-    ) = answer_scoring_result
-    best_answer_scoring = answer_completions[
-        answer_scorings.argmax(dim=0)
-    ].completion.strip()
+    ) = await scoring_completions(self, answer_prompt, answer_scoring_template, answer_responses, answer_uids)
+    best_answer_scoring = answer_completions[answer_scorings.argmax(dim=0)].strip()
+
+    # Backward call sends reward info back to answer_uids.
+    _answer_backward = await self.dendrite_pool.async_backward(
+        uids=answer_uids,
+        roles=["user"],
+        messages=[answer_prompt],
+        completions=answer_completions,
+        rewards=answer_rewards,
+    )
 
     # Compute forward pass rewards.
     scattered_followup_rewards = (
         torch.zeros((self.metagraph.n), dtype=torch.float32)
         .to(self.device)
-        .scatter(0, answer_uids, answer_rewards)
+        .scatter(0, followup_uids, followup_rewards)
     )
     scattered_answer_rewards = (
         torch.zeros((self.metagraph.n), dtype=torch.float32)
         .to(self.device)
-        .scatter(0, followup_uids, followup_rewards)
+        .scatter(0, answer_uids, answer_rewards)
     )
     rewards = scattered_followup_rewards + scattered_answer_rewards
     self.moving_averaged_scores = (
@@ -358,8 +381,8 @@ async def forward(self):
         "gating_scorings": scores[answer_uids].tolist(),
         "base_prompt": bootstrap_prompt,
         "followup_uids": followup_uids.tolist(),
-        "followup_completions": [comp.completion for comp in followup_completions],
-        'followup_times': [ comp.elapsed_time for comp in followup_completions ],
+        "followup_completions": followup_completions,
+        "followup_times": [comp.elapsed_time for comp in followup_responses],
         "followup_rewards": followup_rewards.tolist(),
         "followup_scorings": followup_scorings,
         "followup_scoring_uids": followup_scoring_uids,
@@ -370,8 +393,8 @@ async def forward(self):
         "best_answer": best_answer,
         "answer_prompt": answer_prompt,
         "answer_uids": answer_uids.tolist(),
-        "answer_completions": [ans.completion for ans in answer_completions],
-        'answer_times': [ ans.elapsed_time for ans in answer_completions ],
+        "answer_completions": answer_completions,
+        "answer_times": [ans.elapsed_time for ans in answer_responses],
         "answer_rewards": answer_rewards.tolist(),
         "answer_scorings": answer_scorings,
         "answer_scoring_uids": answer_scoring_uids,
@@ -380,10 +403,16 @@ async def forward(self):
         "best_answer_scoring": best_answer_scoring,
     }
 
+    if self.config.neuron.nsfw_filter:
+        event.update({
+            "followup_nsfw_scores": [is_nsfw(self, comp, return_score=True) for comp in followup_completions],
+            "answer_nsfw_scores": [is_nsfw(self, ans, return_score=True) for ans in answer_completions],
+        })
+        
     bt.logging.debug("step:", str(event))
     # Log to wandb.
     if not self.config.wandb.off:
-        
+
         if self.step % self.config.wandb.weights_step_length == 0:
             event["moving_averaged_scores"] = self.moving_averaged_scores.tolist()
             bt.logging.debug("logging weights")
