@@ -23,8 +23,8 @@ import random
 import bittensor as bt
 
 from loguru import logger
-from typing import List, Tuple
-from openvalidators.misc import ttl_get_block
+from typing import List, Tuple, Union
+from openvalidators.misc import ttl_get_block, ttl_cache
 from openvalidators.prompts import (
     extract_score,
     followup_request_template,
@@ -53,7 +53,7 @@ def get_random_uids(self, k: int) -> torch.LongTensor:
 
 
 def is_successful_completion(
-    self, response: bt.DendriteCall, min_len: int = 10
+    self, response: bt.DendriteCall, min_len: int = 10, nsfw_bound_score: float = 0.5
 ) -> bool:
     """Filters out unsuccessful responses.
 
@@ -67,11 +67,7 @@ def is_successful_completion(
         True if the response is successful, False otherwise.
     """
     len_check = len(response.completion) > min_len
-
-    if self.config.neuron.nsfw_filter:
-        filter_check = filter_message(self, response.completion)
-    else:
-        filter_check = True
+    filter_check = self.config.neuron.nsfw_filter and is_nsfw(self, response.completion, nsfw_bound_score)
 
     return len_check and filter_check
 
@@ -206,21 +202,26 @@ def reward_completions(
     # Return the filled rewards.
     return filled_rewards
 
-
-def filter_message(self, message, bound_score=0.5) -> bool:
-    """Check if the message is related to any sexual content.
+@ttl_cache(maxsize=512, ttl=600)
+def is_nsfw(self, message, bound_score=0.5, return_score=False) -> Union[bool, float]:
+    """Check if the message contains hateful content.
 
     Args:
         message (str):
             The message that we check if we should filter out.
+        bound_score (float):
+            Threshold for the logit score to filter out the message.
+        return_score (bool):
+            Whether to return the logit score for the message being unsafe.
     Returns:
-        result (bool):
-            True indicates we should filter out the result, false indicates the result is safe.
+        result (bool if return_score is False, float if return_score is True):
+            bool: True indicates we should filter out the result, false indicates the result is safe.
+            float: The logit score for the message being unsafe.
+
     """
     tokenized = self.filter_tokenizer(message)
     input_ids = tokenized["input_ids"]
-    filter_out = False
-
+    score = -1000
     # The model can only support 512 tokens at a time, so we have to break up the check
     # if there are too many tokens in a single message.
     while len(input_ids) > 0:
@@ -229,18 +230,20 @@ def filter_message(self, message, bound_score=0.5) -> bool:
         with torch.no_grad():
             output = self.filter_model(torch.tensor([_input_ids]).to(self.device))
 
-        # Filter out if the logit score is out of bound.
-        filter_out = (
-            output.logits[0, 0] < bound_score or output.logits[0, 1] > bound_score
-        )
-
-        # Return if this section of the message needs to be filtered out.
-        if filter_out:
-            break
+        nothate, hate = output.logits[0].tolist()
+        if return_score:
+            # Return the max logit score across the message.
+            score = max(hate, score)
+        elif hate > bound_score or nothate < bound_score:
+            # Filter out if the logit score is out of bound.
+            return True
 
         input_ids = input_ids[512:]
 
-    return filter_out
+    if return_score:
+        return score
+    else:
+        return False
 
 
 async def forward(self):
@@ -361,6 +364,7 @@ async def forward(self):
         "followup_completions": [comp.completion for comp in followup_completions],
         'followup_times': [ comp.elapsed_time for comp in followup_completions ],
         "followup_rewards": followup_rewards.tolist(),
+        "followup_nsfw_scores": [is_nsfw(self, comp.completion, return_score=True) for comp in followup_completions],
         "followup_scorings": followup_scorings,
         "followup_scoring_uids": followup_scoring_uids,
         "followup_scoring_completions": followup_scoring_completions,
@@ -373,6 +377,7 @@ async def forward(self):
         "answer_completions": [ans.completion for ans in answer_completions],
         'answer_times': [ ans.elapsed_time for ans in answer_completions ],
         "answer_rewards": answer_rewards.tolist(),
+        "answer_nsfw_scores": [is_nsfw(self, ans.completion, return_score=True) for ans in answer_completions],
         "answer_scorings": answer_scorings,
         "answer_scoring_uids": answer_scoring_uids,
         "answer_scoring_completions": answer_scoring_completions,
@@ -383,7 +388,7 @@ async def forward(self):
     bt.logging.debug("step:", str(event))
     # Log to wandb.
     if not self.config.wandb.off:
-        
+
         if self.step % self.config.wandb.weights_step_length == 0:
             event["moving_averaged_scores"] = self.moving_averaged_scores.tolist()
             bt.logging.debug("logging weights")
