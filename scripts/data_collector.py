@@ -26,7 +26,7 @@ from analysis.utils import get_runs, download_data
 from traceback import print_exc
 
 
-DEFAULT_PROJECT = 'openvalidators'
+DEFAULT_PROJECT = 'opentensor-dev/openvalidators'
 DEFAULT_FILTERS = {"tags": {"$in": [openvalidators.__version__]}}
 
 
