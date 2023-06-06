@@ -9,6 +9,11 @@ Ensure that the [requirements](../requirements.txt) of the project are properly 
 pip install -e ../setup.py # Install openvalidators from root folder
 ```
 
+The current implementation requires you to be logged in wandb. You can do so by running the following command:
+```bash
+wandb login
+```
+
 ## Usage
 This repository provides a convenient way to collect data from the
 [WandB Openvalidators platform](https://wandb.ai/opentensor-dev/openvalidators) using the [data_collector.py](data_collector.py)
