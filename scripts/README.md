@@ -11,7 +11,7 @@ pip install -e ../setup.py # Install openvalidators from root folder
 
 ## Usage
 This repository provides a convenient way to collect data from the
-[WandB openvalidators platform](https://wandb.ai/opentensor-dev/openvalidators) using the [data_collector.py](data_collector.py)
+[WandB Openvalidators platform](https://wandb.ai/opentensor-dev/openvalidators) using the [data_collector.py](data_collector.py)
 tool. The repository includes a [Makefile](Makefile) that simplifies the execution of commands for data extraction by providing 
 predefined targets.
 

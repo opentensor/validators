@@ -89,14 +89,23 @@ def create_json_dataset(
 
         if best_answer not in blacklist:
             if include_scoring:
-                scores = max(row["answer_rewards"])
+                scores = 0
+                if isinstance(row["answer_rewards"], list):
+                    scores = max(row["answer_rewards"])
+                elif isinstance(row["answer_rewards"], float):
+                    scores = row["answer_rewards"]
+
                 dict_dataset[answer_prompt] = {best_answer: scores}
             else:
                 dict_dataset[answer_prompt] = best_answer
 
         if best_followup not in blacklist:
             if include_scoring:
-                scores = max(row['followup_rewards'])
+                scores = 0
+                if isinstance(row["answer_rewards"], list):
+                    scores = max(row["answer_rewards"])
+                elif isinstance(row["answer_rewards"], float):
+                    scores = row["answer_rewards"]
                 dict_dataset[base_prompt] = {best_followup: scores}
             else:
                 dict_dataset[base_prompt] = best_followup
@@ -178,7 +187,7 @@ if __name__ == '__main__':
         # Add the flags as parameters
         parser.add_argument("--download_all", action="store_true", help="Downloads all runs from project", default=False)
         parser.add_argument("--wandb_run_id", type=str, help="Specify the wandb run id to download", default=None)
-        parser.add_argument("--include_flags", type=str, help="Specify the flags to filter the dataset", default=None)
+        parser.add_argument("--include_tags", type=str, help="Specify the flags to filter the dataset", default=None)
         parser.add_argument("--export_mining_dataset", action="store_true", help="Exports the mining dataset", default=False)
         parser.add_argument("--export_mining_with_scoring_dataset", action="store_true", help="Exports mining dataset with scores", default=False)
         parser.add_argument("--mining_dataset_output_format", type=str, help="Specify the output format of the mining dataset", default="json")
@@ -189,7 +198,7 @@ if __name__ == '__main__':
 
         download_all = args.download_all
         wandb_run_id = args.wandb_run_id
-        include_flags = args.include_flags
+        include_tags = args.include_tags
         export_mining_dataset = args.export_mining_dataset
         export_mining_with_scoring_dataset = args.export_mining_with_scoring_dataset
         export_path = args.export_path
@@ -201,7 +210,7 @@ if __name__ == '__main__':
         blacklist_phrases = read_file_into_array(args.blacklist_path)
 
         # Collects dataframe from wandb run logs
-        collected_data = collect_data(download_all, export_path, wandb_run_id, include_flags)
+        collected_data = collect_data(download_all, export_path, wandb_run_id, include_tags)
 
         # Creates mining dataset
         if export_mining_dataset or export_mining_with_scoring_dataset:
