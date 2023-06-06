@@ -311,8 +311,10 @@ async def forward(self):
         messages=[answer_prompt],
         timeout=self.config.neuron.answer_timeout,
     )
+
+    reward_prompt = f"Question: {best_followup}\n"
     # Reward model evaluation.
-    answer_rewards = reward_completions(self, answer_prompt, answer_responses).to(self.device)
+    answer_rewards = reward_completions(self, reward_prompt, answer_responses).to(self.device)
     answer_completions = [ans.completion for ans in answer_responses]
     best_answer = answer_completions[answer_rewards.argmax(dim=0)].strip()
 
