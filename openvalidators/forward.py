@@ -35,7 +35,7 @@ from openvalidators.prompts import (
 from openvalidators.utils import check_uid_availability
 
 
-def get_random_uids(self, k: int, exclude: List[int]) -> torch.LongTensor:
+def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor:
     """Returns k available random uids from the metagraph.
     Args:
         k (int): Number of uids to return.
@@ -48,7 +48,7 @@ def get_random_uids(self, k: int, exclude: List[int]) -> torch.LongTensor:
     candidate_uids = [uid
                       for uid in range(self.metagraph.n.item())
                       if check_uid_availability(self.metagraph, uid, self.config.neuron.vpermit_tao_limit)
-                      and uid not in exclude
+                      and (exclude is None or uid not in exclude)
                       ]
 
     available_uids = torch.tensor(candidate_uids, dtype=torch.int64).to(self.device)
@@ -89,8 +89,12 @@ async def scoring_completions(
     Args:
         prompt (str):
             Prompt to use for the reward model.
+        scoring_template (str):
+            Scoring template to use for the scoring prompt.
         responses (List[ bittensor.DendriteCall ]):
             List of responses from the network.
+        exclude_uids (List[int]):
+            UIDs to exclude when outsourcing scoring.
 
     Returns:
         filled_scores (torch.FloatTensor, shape = (len(responses)) ):
@@ -313,7 +317,7 @@ async def forward(self):
 
     # Query the network with the question and get responses.
     answer_prompt = f"{bootstrap_prompt}\n\n{best_followup}"
-    answer_uids = get_random_uids(self, k=self.config.neuron.answer_sample_size).to(self.device)
+    answer_uids = get_random_uids(self, k=self.config.neuron.answer_sample_size, exclude=followup_uids).to(self.device)
     answer_responses = await self.dendrite_pool.async_forward(
         uids=answer_uids,
         roles=["user"],
