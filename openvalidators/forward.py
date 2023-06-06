@@ -344,12 +344,12 @@ async def forward(self):
     scattered_followup_rewards = (
         torch.zeros((self.metagraph.n), dtype=torch.float32)
         .to(self.device)
-        .scatter(0, answer_uids, answer_rewards)
+        .scatter(0, followup_uids, followup_rewards)
     )
     scattered_answer_rewards = (
         torch.zeros((self.metagraph.n), dtype=torch.float32)
         .to(self.device)
-        .scatter(0, followup_uids, followup_rewards)
+        .scatter(0, answer_uids, answer_rewards)
     )
     rewards = scattered_followup_rewards + scattered_answer_rewards
     self.moving_averaged_scores = (
