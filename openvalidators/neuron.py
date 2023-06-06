@@ -156,8 +156,9 @@ class neuron:
 
         self.prev_block = ttl_get_block(self)
 
-        self.prev_block = ttl_get_block( self )
+        self.prev_block = ttl_get_block(self)
         self.step = 0
+
 
 def main():
     neuron().run()

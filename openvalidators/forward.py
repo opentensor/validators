@@ -45,20 +45,19 @@ def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor
     Notes:
         If `k` is larger than the number of available `uids`, set `k` to the number of available `uids`.
     """
-    candidate_uids = [uid
-                      for uid in range(self.metagraph.n.item())
-                      if check_uid_availability(self.metagraph, uid, self.config.neuron.vpermit_tao_limit)
-                      and (exclude is None or uid not in exclude)
-                      ]
+    candidate_uids = [
+        uid
+        for uid in range(self.metagraph.n.item())
+        if check_uid_availability(self.metagraph, uid, self.config.neuron.vpermit_tao_limit)
+        and (exclude is None or uid not in exclude)
+    ]
 
     available_uids = torch.tensor(candidate_uids, dtype=torch.int64).to(self.device)
     uids = torch.tensor(random.sample(available_uids.tolist(), k), dtype=torch.int64)
     return uids
 
 
-def is_successful_completion(
-    self, response: bt.DendriteCall, min_len: int = 10, nsfw_bound_score: float = 0.5
-) -> bool:
+def is_successful_completion(self, response: bt.DendriteCall, min_len: int = 10, nsfw_bound_score: float = 0.5) -> bool:
     """Filters out unsuccessful responses.
 
     Args:
@@ -167,9 +166,7 @@ async def scoring_completions(
     return filled_scores, all_scoring_uids, all_scoring_completions, all_scoring_values
 
 
-def reward_completions(
-    self, prompt: str, responses: List[bt.DendriteCall]
-) -> torch.FloatTensor:
+def reward_completions(self, prompt: str, responses: List[bt.DendriteCall]) -> torch.FloatTensor:
     """Using the prompt and call responses returns rewards for each response.
 
     Args:
@@ -209,6 +206,7 @@ def reward_completions(
 
     # Return the filled rewards.
     return filled_rewards
+
 
 def is_nsfw(self, message, bound_score=0.5, return_score=False) -> Union[bool, float]:
     """Check if the message contains hateful content.
@@ -338,14 +336,10 @@ async def forward(self):
 
     # Compute forward pass rewards.
     scattered_followup_rewards = (
-        torch.zeros((self.metagraph.n), dtype=torch.float32)
-        .to(self.device)
-        .scatter(0, followup_uids, followup_rewards)
+        torch.zeros((self.metagraph.n), dtype=torch.float32).to(self.device).scatter(0, followup_uids, followup_rewards)
     )
     scattered_answer_rewards = (
-        torch.zeros((self.metagraph.n), dtype=torch.float32)
-        .to(self.device)
-        .scatter(0, answer_uids, answer_rewards)
+        torch.zeros((self.metagraph.n), dtype=torch.float32).to(self.device).scatter(0, answer_uids, answer_rewards)
     )
     rewards = scattered_followup_rewards + scattered_answer_rewards
     self.moving_averaged_scores = self.config.neuron.moving_average_alpha * rewards.to(self.device) + (
@@ -388,11 +382,13 @@ async def forward(self):
     }
 
     if self.config.neuron.nsfw_filter:
-        event.update({
-            "followup_nsfw_scores": [is_nsfw(self, comp, return_score=True) for comp in followup_completions],
-            "answer_nsfw_scores": [is_nsfw(self, ans, return_score=True) for ans in answer_completions],
-        })
-        
+        event.update(
+            {
+                "followup_nsfw_scores": [is_nsfw(self, comp, return_score=True) for comp in followup_completions],
+                "answer_nsfw_scores": [is_nsfw(self, ans, return_score=True) for ans in answer_completions],
+            }
+        )
+
     bt.logging.debug("step:", str(event))
     # Log to wandb.
     if not self.config.wandb.off:

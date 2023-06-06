@@ -29,7 +29,8 @@ def should_set_weights(self) -> bool:
     if self.config.neuron.disable_set_weights:
         return False
 
-    return ttl_get_block( self ) % self.config.neuron.epoch_length < self.prev_block % self.config.neuron.epoch_length
+    return ttl_get_block(self) % self.config.neuron.epoch_length < self.prev_block % self.config.neuron.epoch_length
+
 
 def set_weights(self):
     # Calculate the average reward for each uid across non-zero values.

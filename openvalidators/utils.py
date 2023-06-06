@@ -66,7 +66,10 @@ def reinit_wandb(self):
 
 def should_checkpoint(self):
     # Check if enough epoch blocks have elapsed since the last checkpoint.
-    return ttl_get_block( self ) % self.config.neuron.checkpoint_block_length < self.prev_block % self.config.neuron.checkpoint_block_length
+    return (
+        ttl_get_block(self) % self.config.neuron.checkpoint_block_length
+        < self.prev_block % self.config.neuron.checkpoint_block_length
+    )
 
 
 def checkpoint(self):
