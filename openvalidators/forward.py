@@ -34,7 +34,6 @@ from openvalidators.prompts import (
 )
 from openvalidators.utils import check_uid_availability
 
-
 def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor:
     """Returns k available random uids from the metagraph.
     Args:
@@ -200,6 +199,7 @@ def reward_completions(self, prompt: str, responses: List[bt.DendriteCall]) -> t
     ).to(self.device)
 
     # Fill scores with zeros for non successful responses.
+    successful_rewards = successful_rewards.softmax( 0 )
     filled_rewards = torch.zeros(len(responses), dtype=torch.float32)
     for idx, reward in zip(successful_completions_indices, successful_rewards):
         filled_rewards[idx] = reward
