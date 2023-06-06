@@ -24,7 +24,7 @@ import bittensor as bt
 
 from loguru import logger
 from typing import List, Tuple, Union
-from openvalidators.misc import ttl_get_block, ttl_cache
+from openvalidators.misc import ttl_get_block
 from openvalidators.prompts import (
     extract_score,
     followup_request_template,
@@ -67,7 +67,7 @@ def is_successful_completion(
         True if the response is successful, False otherwise.
     """
     len_check = len(response.completion) > min_len
-    filter_check = self.config.neuron.nsfw_filter and is_nsfw(self, response.completion, nsfw_bound_score)
+    filter_check = not (self.config.neuron.nsfw_filter and is_nsfw(self, response.completion, nsfw_bound_score))
 
     return len_check and filter_check
 
@@ -202,7 +202,6 @@ def reward_completions(
     # Return the filled rewards.
     return filled_rewards
 
-@ttl_cache(maxsize=512, ttl=600)
 def is_nsfw(self, message, bound_score=0.5, return_score=False) -> Union[bool, float]:
     """Check if the message contains hateful content.
 
