@@ -10,7 +10,8 @@ pip install -e ../setup.py # Install openvalidators from root folder
 ```
 
 ## Usage
-This repository provides a convenient way to collect data from the WandB platform using the [data_collector.py](data_collector.py)
+This repository provides a convenient way to collect data from the
+[WandB openvalidators platform](https://wandb.ai/opentensor-dev/openvalidators) using the [data_collector.py](data_collector.py)
 tool. The repository includes a [Makefile](Makefile) that simplifies the execution of commands for data extraction by providing 
 predefined targets.
 
@@ -88,7 +89,7 @@ extract data from a specific run. By default, it is set to None. Example usage: 
   >  - Run_id: **ugutvtox**.
 - **--export_mining_dataset**: This parameter is a flag that, when set, enables the export of the mining dataset. 
 It is used when you want to extract data specifically for mining purposes, in the following format:
-    ```python
+    ```json
     {
         { base_prompt : best_followup },
         { answer_prompt : best_answer },    
@@ -99,7 +100,7 @@ It is used when you want to extract data specifically for mining purposes, in th
     Example usage: `--export_mining_dataset`.
 - **--export_mining_with_scoring_dataset**: This parameter is a flag that, when set, enables the export of the mining 
 dataset with scores, in the following format:
-    ```python
+    ```json
     {
         { base_prompt : { best_followup : score } },
         { answer_prompt : { best_answer : score } },
@@ -111,6 +112,8 @@ dataset with scores, in the following format:
 
 - **--export_path**: This parameter allows you to specify the path where the exported dataset will be saved.
 By default, it is set to **"validator_dataset.csv"**. Example usage: `--export_path=your_path.csv`.
+- **--mining_dataset_output_format:** This parameter allows you to specify the output format of the mining dataset. 
+  Defaults to `json`, currently supports `json` and `csv`. Example usage: `--mining_dataset_output_format=csv`.
 - **--blacklist_path**: This parameter allows you to specify the path to a file containing blacklist phrases.
 The script will exclude any data that contains these phrases. By default, it is set to [blacklist_phrases.txt](blacklist_phrases.txt).
 Example usage: `--blacklist_path=blacklist_phrases.txt`.
