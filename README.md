@@ -58,7 +58,7 @@ $ pip3 install openvalidators
 2. From source:
 ```bash
 $ git clone https://github.com/opentensor/validators.git
-$ pip install -e openvalidators/
+$ pip3 install -e openvalidators/
 ```
 
 You can test the installation by running the following command:
@@ -101,40 +101,7 @@ A basic tutorial for downloading and analyzing wandb data can be found in [analy
 For the individuals who are eager to create datasets tailored specifically for the community's miners.
 With convenient scripts available in the [scripts](./scripts) folder, you can effortlessly download data from specific or multiple runs 
 of wandb, empowering you to curate comprehensive and valuable datasets that align with your mining objectives.
-
-First of all, ensure that you installed all the dependencies listed on `requirements.txt`.
-As of now, the script needs you to be logged in to wandb. You can do so by running the following command:
-```bash
-wandb login
-``````
-
-We currently support the following operations for dataset creation:
-
-1. Download all runs from wandb into a csv file: 
-```bash
-make project_dataset
-```
-
-This command will download all the runs from the project `openvalidators` into a csv file named `project_dataset.csv`.
-
-2. Download the data of a specific run_id from wandb:
-```bash
-make run_id_dataset RUN_ID=<run-id>
-```
-
-This command will download the specific run with the id `<run-id>` into a csv file named `openvalidators_dataset.csv`.
-
-
-
-3. Download the data of all runs into a format of `{ prompt: best_response }`
-```bash
-make mining_dataset
-```
-
-This command will download all the runs, similar to the first command, 
-but it will also create a json file named `mining_dataset.json` that contains the data in the format
-`{ prompt: best_response }` that can later be used for training miners. 
-
+Check the [README of the data collector](./scripts/README.md) for more information.
 
 ----
 ## Experimental Features
