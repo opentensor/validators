@@ -55,22 +55,59 @@ def plot_weights(scores: pd.DataFrame, ntop: int = 20, uids: List[Union[str, int
     # Select subset of columns for plotting
     if uids is None:
         uids = scores.columns[:ntop]
-        print(f"Using first {ntop} uids for plotting: {uids}")
+        print(f'Using first {ntop} uids for plotting: {uids}')
 
-    return px.line(
-        scores, y=uids, title="Moving Averaged Scores", labels={"_timestamp": "", "value": "Score"}, **plotly_config
-    ).update_traces(opacity=0.7)
+    return px.line(scores, y = uids,
+            title = 'Moving Averaged Scores',
+            labels={'_timestamp':'', 'value':'Score'},
+            **plotly_config).update_traces(opacity=0.7)
 
+def plot_uid_diversty(df: pd.DataFrame, remove_unsuccessful: bool = False) -> go.Figure:
+    """Plot uid diversity as measured by ratio of unique to total completions.
 
-def plot_completion_rates(
-    df: pd.DataFrame,
-    msg_col: str = "all_completions",
-    time_interval: str = "H",
-    time_col: str = "_timestamp",
-    ntop: int = 20,
-    completions: List[str] = None,
-    completion_regex: str = None,
-) -> go.Figure:
+    Args:
+        df (pd.DataFrame): Dataframe of event log.
+    """
+    uid_cols = ['followup_uids', 'answer_uids']
+    completion_cols = ['followup_completions', 'answer_completions']
+    reward_cols = ['followup_rewards', 'answer_rewards']
+    list_cols = uid_cols+completion_cols+reward_cols
+    
+    df = df[list_cols].explode(column=list_cols)
+    if remove_unsuccessful:
+        # remove unsuccessful completions, as indicated by empty completions
+        for col in completion_cols:
+            df = df[df[col].str.len()>0]
+    
+    frames = []
+    for uid_col, completion_col, reward_col in zip(uid_cols, completion_cols, reward_cols):
+        frame = df.groupby(uid_col).agg({completion_col:['nunique','size'], reward_col:'mean'})
+        # flatten multiindex columns
+        frame.columns = ['_'.join(col) for col in frame.columns]
+        frame['diversity'] = frame[f'{completion_col}_nunique']/frame[f'{completion_col}_size']
+        frames.append(frame)
+
+    merged = pd.merge(*frames, left_index=True, right_index=True, suffixes=('_followup', '_answer'))
+    merged['reward_mean'] = merged.filter(regex='rewards_mean').mean(axis=1)
+
+    merged.index.name = 'UID'
+    merged.reset_index(inplace=True)
+
+    return px.scatter(merged,x='diversity_followup', y='diversity_answer',
+           opacity=0.3, size='followup_completions_size', color='reward_mean',
+           hover_data=['UID'] + merged.columns.tolist(),
+           marginal_x='histogram', marginal_y='histogram',
+           labels={'x':'Followup diversity', 'y':'Answer diversity'},
+            title='Diversity of completions by UID',
+            **plotly_config)
+
+def plot_completion_rates(df: pd.DataFrame,
+                          msg_col: str = 'all_completions',
+                          time_interval: str = 'H',
+                          time_col: str = '_timestamp',
+                          ntop: int = 20,
+                          completions: List[str] = None,
+                          completion_regex: str = None) -> go.Figure:
     """Plot completion rates. Useful for identifying common completions and attacks.
 
     Args:

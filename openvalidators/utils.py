@@ -26,8 +26,7 @@ from openvalidators.misc import ttl_get_block
 
 def should_reinit_wandb(self):
     # Check if wandb run needs to be rolled over.
-    run_block_length = self.config.neuron.epoch_length * self.config.wandb.run_epoch_length
-    return not self.config.wandb.off and ttl_get_block(self) % run_block_length <= self.prev_block % run_block_length
+    return not self.config.wandb.off and self.step and self.step % self.config.wandb.run_step_length == 0
 
 
 def init_wandb(self, reinit=False):
@@ -42,7 +41,6 @@ def init_wandb(self, reinit=False):
     if self.config.neuron.disable_set_weights:
         tags.append("disable_set_weights")
 
-    bt.logging.info("starting new wandb run")
     self.wandb = wandb.init(
         anonymous="allow",
         reinit=reinit,
@@ -52,8 +50,12 @@ def init_wandb(self, reinit=False):
         mode="offline" if self.config.wandb.offline else "online",
         dir=self.config.neuron.full_path,
         tags=tags,
+        notes=self.config.wandb.notes,
     )
-    bt.logging.debug(str(self.wandb))
+    bt.logging.success(
+        prefix="Started a new wandb run",
+        sufix=f"<blue> {self.wandb.name} </blue>",
+    )
 
 
 def reinit_wandb(self):
@@ -64,10 +66,7 @@ def reinit_wandb(self):
 
 def should_checkpoint(self):
     # Check if enough epoch blocks have elapsed since the last checkpoint.
-    return (
-        ttl_get_block(self) % self.config.neuron.checkpoint_block_length
-        <= self.prev_block % self.config.neuron.checkpoint_block_length
-    )
+    return ttl_get_block( self ) % self.config.neuron.checkpoint_block_length < self.prev_block % self.config.neuron.checkpoint_block_length
 
 
 def checkpoint(self):
