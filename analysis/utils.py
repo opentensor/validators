@@ -18,11 +18,22 @@
 import os
 import tqdm
 import wandb
-
 import pandas as pd
 from pandas.api.types import is_list_like
 
-def get_runs(project, filters=None, return_paths=False):
+from typing import List, Dict, Any, Union
+
+def get_runs(project: str='openvalidators', filters: Dict[str, Any]=None, return_paths: bool=False) -> List:
+    """Download runs from wandb.
+
+    Args:
+        project (str): Name of the project. Defaults to 'openvalidators' (community project)
+        filters (Dict[str, Any], optional): Optional run filters for wandb api. Defaults to None.
+        return_paths (bool, optional): Return only run paths. Defaults to False.
+
+    Returns:
+        List[wandb.apis.public.Run]: List of runs or run paths (List[str]).
+    """
     api = wandb.Api()
     wandb.login()
 
@@ -32,7 +43,16 @@ def get_runs(project, filters=None, return_paths=False):
     else:
         return runs
 
-def download_data(run_path=None, timeout=600):
+def download_data(run_path: Union[str, List]=None, timeout: float=600) -> pd.DataFrame:
+    """Download data from wandb.
+
+    Args:
+        run_path (Union[str, List], optional): Path to run or list of paths. Defaults to None.
+        timeout (float, optional): Timeout for wandb api. Defaults to 600.
+
+    Returns:
+        pd.DataFrame: Dataframe of event log.
+    """
     api = wandb.Api(timeout=timeout)
     wandb.login()
 
@@ -46,7 +66,7 @@ def download_data(run_path=None, timeout=600):
         run = api.run(path)
 
         frame = pd.DataFrame(list(run.scan_history()))
-        frames.append(frame)
+        frames.append(frame.assign(run_id=path.split('/')[-1]))
         total_events += len(frame)
 
         pbar.set_postfix({'total_events': total_events})
@@ -58,8 +78,8 @@ def download_data(run_path=None, timeout=600):
 
     return df
 
-def load_data(path, nrows):
-
+def load_data(path: str, nrows: int=None):
+    """Load data from csv."""
     df = pd.read_csv(path, nrows=nrows)
 
     # detect list columns which as stored as strings
@@ -70,8 +90,17 @@ def load_data(path, nrows):
 
     return df
 
-def explode_data(df, list_cols=None, list_len=None):
+def explode_data(df: pd.DataFrame, list_cols: List[str]=None, list_len: int=None) -> pd.DataFrame:
+    """Explode list columns in dataframe so that each element in the list is a separate row.
 
+    Args:
+        df (pd.DataFrame): Dataframe of event log.
+        list_cols (List[str], optional): List of columns to explode. Defaults to None.
+        list_len (int, optional): Length of list. Defaults to None.
+
+    Returns:
+        pd.DataFrame: Dataframe with exploded list columns.
+    """
     if list_cols is None:
         list_cols = [c for c in df.columns if df[c].apply(is_list_like).all()]
         print(f'Exploding {len(list_cols)}) list columns with {list_len} elements: {list_cols}')
@@ -82,7 +111,8 @@ def explode_data(df, list_cols=None, list_len=None):
     return df.explode(column=list_cols)
 
 
-def get_list_col_lengths(df):
+def get_list_col_lengths(df: pd.DataFrame) -> Dict[str, int]:
+    """Helper function to get the length of list columns."""
     list_col_lengths =  {c: sorted(df[c].apply(len).unique()) for c in df.columns if df[c].apply(is_list_like).all()}
     varying_lengths = {c: v for c,v in list_col_lengths.items() if len(v)>1}
 
@@ -91,25 +121,6 @@ def get_list_col_lengths(df):
 
     return {c: v[0] for c,v in list_col_lengths.items()}
 
-
-def get_completions(series, ntop=10, completions=None, completion_regex=None, return_counts=False):
-
-    if completions is None:
-        completion_counts = series.value_counts()
-        if completion_regex is not None:
-            completions = completion_counts[completion_counts.index.str.contains(completion_regex)].index[:ntop]
-            print(f'Using {len(completions)} completions which match {completion_regex!r}: \n{completions}')
-        else:
-            completions = completion_counts.index[:ntop]
-            print(f'Using top {len(completions)} completions: \n{completions}')
-    else:
-        print(f'Using {len(completions)} completions: \n{completions}')
-        completion_counts = series.loc[series.isin(completions)].value_counts()
-
-    if return_counts:
-        return completion_counts
-    else:
-        return completions
 
 
 
