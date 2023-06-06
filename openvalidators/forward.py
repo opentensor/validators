@@ -20,6 +20,7 @@ import time
 import wandb
 import torch
 import random
+import asyncio
 import bittensor as bt
 
 from loguru import logger
@@ -108,6 +109,7 @@ async def scoring_completions(
     filled_scores = torch.zeros(len(responses), dtype=torch.float32)
 
     # Each completion separately scored by the network.
+    coroutines = []
     for i, response in enumerate(responses):
         if not is_successful_completion(self, response):
             continue
@@ -122,12 +124,24 @@ async def scoring_completions(
         all_scoring_uids[i] = scoring_uids.tolist()
 
         # Query the network with the scoring prompt to score a given prompt + completion.
-        scoring_responses = await self.dendrite_pool.async_forward(
+        scoring_responses = self.dendrite_pool.async_forward(
+            uids=scoring_uids,
             roles=["user"],
             messages=[scoring_prompt],
-            uids=scoring_uids,
             timeout=self.config.neuron.scoring_timeout,
         )
+        coroutines += [scoring_responses]
+
+    # Await all scoring responses.
+    all_scoring_responses = await asyncio.gather(*coroutines)
+
+    # Extract scores and calculate filled scores.
+    for i, response in enumerate(responses):
+        if not is_successful_completion(self, response):
+            continue
+
+        # Scoring responses for original response.
+        scoring_responses = all_scoring_responses.pop(0)
 
         # Scoring completions for wandb log.
         all_scoring_completions[i] = [resp.completion for resp in scoring_responses]
@@ -149,14 +163,14 @@ async def scoring_completions(
                 successful_scoring_values
             )
 
-    # Return the filled scores.
+    # Return all scoring details.
     return filled_scores, all_scoring_uids, all_scoring_completions, all_scoring_values
 
 
 def reward_completions(
     self, prompt: str, responses: List[bt.DendriteCall]
 ) -> torch.FloatTensor:
-    """Using the prompt and call responses return softmaxed rewards for each response.
+    """Using the prompt and call responses returns rewards for each response.
 
     Args:
         prompt (str):
@@ -166,7 +180,7 @@ def reward_completions(
 
     Returns:
         filled_rewards (torch.FloatTensor, shape = (len(responses)) ):
-            Softmaxed rewards for each response.
+            rewards for each response.
     """
     # Filters out unsuccessful responses.
     successful_completions_indices: List[int] = [
@@ -266,67 +280,67 @@ async def forward(self):
 
     # Query the network with the base prompt and get the question extensions.
     followup_prompt = f"{bootstrap_prompt}\n\n{followup_request_template}\n\n"
-    followup_uids = get_random_uids(self, k=self.config.neuron.followup_sample_size).to(
-        self.device
-    )
-    followup_completions = await self.dendrite_pool.async_forward(
+    followup_uids = get_random_uids(self, k=self.config.neuron.followup_sample_size).to(self.device)
+    followup_responses = await self.dendrite_pool.async_forward(
+        uids=followup_uids,
         roles=["user"],
         messages=[followup_prompt],
-        uids=followup_uids,
         timeout=self.config.neuron.followup_timeout,
     )
     # Reward model evaluation.
-    followup_rewards = reward_completions(
-        self, followup_prompt, followup_completions
-    ).to(self.device)
-    best_followup = followup_completions[
-        followup_rewards.argmax(dim=0)
-    ].completion.strip()
+    followup_rewards = reward_completions(self, followup_prompt, followup_responses).to(self.device)
+    followup_completions = [comp.completion for comp in followup_responses]
+    best_followup = followup_completions[followup_rewards.argmax(dim=0)].strip()
 
     # Prompt-based scoring via network.
-    followup_scoring_result = await scoring_completions(
-        self, bootstrap_prompt, followup_scoring_template, followup_completions
-    )
     (
         followup_scorings,
         followup_scoring_uids,
         followup_scoring_completions,
         followup_scoring_values,
-    ) = followup_scoring_result
-    best_followup_scoring = followup_completions[
-        followup_scorings.argmax(dim=0)
-    ].completion.strip()
+    ) = await scoring_completions(self, bootstrap_prompt, followup_scoring_template, followup_responses)
+    best_followup_scoring = followup_completions[followup_scorings.argmax(dim=0)].strip()
+
+    # Backward call sends reward info back to followup_uids.
+    _followup_backward = await self.dendrite_pool.async_backward(
+        uids=followup_uids,
+        roles=["user"],
+        messages=[followup_prompt],
+        completions=followup_completions,
+        rewards=followup_rewards,
+    )
 
     # Query the network with the question and get responses.
     answer_prompt = f"{bootstrap_prompt}\n\n{best_followup}"
-    answer_uids = get_random_uids(self, k=self.config.neuron.answer_sample_size).to(
-        self.device
-    )
-    answer_completions = await self.dendrite_pool.async_forward(
+    answer_uids = get_random_uids(self, k=self.config.neuron.answer_sample_size).to(self.device)
+    answer_responses = await self.dendrite_pool.async_forward(
+        uids=answer_uids,
         roles=["user"],
         messages=[answer_prompt],
-        uids=answer_uids,
         timeout=self.config.neuron.answer_timeout,
     )
     # Reward model evaluation.
-    answer_rewards = reward_completions(self, answer_prompt, answer_completions).to(
-        self.device
-    )
-    best_answer = answer_completions[answer_rewards.argmax(dim=0)].completion.strip()
+    answer_rewards = reward_completions(self, answer_prompt, answer_responses).to(self.device)
+    answer_completions = [ans.completion for ans in answer_responses]
+    best_answer = answer_completions[answer_rewards.argmax(dim=0)].strip()
 
     # Prompt-based scoring via network.
-    answer_scoring_result = await scoring_completions(
-        self, answer_prompt, answer_scoring_template, answer_completions
-    )
     (
         answer_scorings,
         answer_scoring_uids,
         answer_scoring_completions,
         answer_scoring_values,
-    ) = answer_scoring_result
-    best_answer_scoring = answer_completions[
-        answer_scorings.argmax(dim=0)
-    ].completion.strip()
+    ) = await scoring_completions(self, answer_prompt, answer_scoring_template, answer_responses)
+    best_answer_scoring = answer_completions[answer_scorings.argmax(dim=0)].strip()
+
+    # Backward call sends reward info back to answer_uids.
+    _answer_backward = await self.dendrite_pool.async_backward(
+        uids=answer_uids,
+        roles=["user"],
+        messages=[answer_prompt],
+        completions=answer_completions,
+        rewards=answer_rewards,
+    )
 
     # Compute forward pass rewards.
     scattered_followup_rewards = (
@@ -360,8 +374,8 @@ async def forward(self):
         "gating_scorings": scores[answer_uids].tolist(),
         "base_prompt": bootstrap_prompt,
         "followup_uids": followup_uids.tolist(),
-        "followup_completions": [comp.completion for comp in followup_completions],
-        'followup_times': [ comp.elapsed_time for comp in followup_completions ],
+        "followup_completions": followup_completions,
+        "followup_times": [comp.elapsed_time for comp in followup_responses],
         "followup_rewards": followup_rewards.tolist(),
         "followup_nsfw_scores": [is_nsfw(self, comp.completion, return_score=True) for comp in followup_completions],
         "followup_scorings": followup_scorings,
@@ -373,8 +387,8 @@ async def forward(self):
         "best_answer": best_answer,
         "answer_prompt": answer_prompt,
         "answer_uids": answer_uids.tolist(),
-        "answer_completions": [ans.completion for ans in answer_completions],
-        'answer_times': [ ans.elapsed_time for ans in answer_completions ],
+        "answer_completions": answer_completions,
+        "answer_times": [ans.elapsed_time for ans in answer_responses],
         "answer_rewards": answer_rewards.tolist(),
         "answer_nsfw_scores": [is_nsfw(self, ans.completion, return_score=True) for ans in answer_completions],
         "answer_scorings": answer_scorings,

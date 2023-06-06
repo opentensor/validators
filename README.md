@@ -63,7 +63,7 @@ $ pip install -e openvalidators/
 
 You can test the installation by running the following command:
 ```bash
-$ python3 openvalidators/neuron.py --help
+$ python3 validators/openvalidators/neuron.py --help
 ```
 
 # Validators
@@ -71,7 +71,7 @@ Participation in Network Validation is available to TAO holders. The validation 
 
 Once you have your wallet ready for validation, you can start the foundation validator by running the following command:
 ```bash
-$ python3 openvalidators/neuron.py --wallet.name <your-wallet-name> --wallet.hotkey <your-wallet-hot-key>
+$ python3 validators/openvalidators/neuron.py --wallet.name <your-wallet-name> --wallet.hotkey <your-wallet-hot-key>
 ```
 
 # Real-time monitoring with wandb integration
@@ -101,6 +101,40 @@ The scripts and notebooks are located in the [analysis](./analysis) folder.
 For the individuals who are eager to create datasets tailored specifically for the community's miners.
 With convenient scripts available in the [scripts](./scripts) folder, you can effortlessly download data from specific or multiple runs 
 of wandb, empowering you to curate comprehensive and valuable datasets that align with your mining objectives.
+
+First of all, ensure that you installed all the dependencies listed on `requirements.txt`.
+As of now, the script needs you to be logged in to wandb. You can do so by running the following command:
+```bash
+wandb login
+``````
+
+We currently support the following operations for dataset creation:
+
+1. Download all runs from wandb into a csv file: 
+```bash
+make project_dataset
+```
+
+This command will download all the runs from the project `openvalidators` into a csv file named `project_dataset.csv`.
+
+2. Download the data of a specific run_id from wandb:
+```bash
+make run_id_dataset RUN_ID=<run-id>
+```
+
+This command will download the specific run with the id `<run-id>` into a csv file named `openvalidators_dataset.csv`.
+
+
+
+3. Download the data of all runs into a format of `{ prompt: best_response }`
+```bash
+make mining_dataset
+```
+
+This command will download all the runs, similar to the first command, 
+but it will also create a json file named `mining_dataset.json` that contains the data in the format
+`{ prompt: best_response }` that can later be used for training miners. 
+
 
 ----
 ## Experimental Features
