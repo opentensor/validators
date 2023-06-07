@@ -33,6 +33,7 @@ def should_set_weights(self) -> bool:
 
 
 def set_weights(self):
+    subtensor = bt.subtensor( netuid=1 ) #TODO: fix hard coded netuid
     # Calculate the average reward for each uid across non-zero values.
     # Replace any NaN values with 0.
     raw_weights = torch.nn.functional.normalize(self.moving_averaged_scores, p=1, dim=0)
@@ -55,7 +56,7 @@ def set_weights(self):
         wandb.log({"set_weights": list(zip(processed_weight_uids.tolist(), processed_weights.tolist()))})
 
     # Set the weights on chain via our subtensor connection.
-    self.subtensor.set_weights(
+    subtensor.set_weights(
         wallet=self.wallet,
         netuid=self.config.netuid,
         uids=processed_weight_uids,
