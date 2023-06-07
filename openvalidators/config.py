@@ -92,7 +92,7 @@ def add_args(cls, parser):
         "--neuron.num_concurrent_forwards",
         type=int,
         help="The number of concurrent forwards running at any time.",
-        default=5,
+        default=1,
     )
     parser.add_argument(
         "--neuron.disable_set_weights",
@@ -125,7 +125,7 @@ def add_args(cls, parser):
         "--neuron.followup_sample_size",
         type=int,
         help="How many miners to query for the follow up prompt.",
-        default=10,
+        default=50,
     )
 
     parser.add_argument("--neuron.answer_timeout", type=float, help="Answer query timeout.", default=10)
@@ -133,7 +133,7 @@ def add_args(cls, parser):
         "--neuron.answer_sample_size",
         type=int,
         help="How many miners to query for the answer.",
-        default=10,
+        default=50,
     )
 
     parser.add_argument("--neuron.scoring_timeout", type=float, help="Scoring query timeout", default=10)
