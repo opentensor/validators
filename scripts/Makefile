@@ -24,3 +24,8 @@ scored_mining_dataset:
 			--export_path='openvalidators_dataset.csv' \
 			--export_mining_with_scoring_dataset \
 
+openai_mining_dataset:
+	python3 data_collector.py  \
+		--download_all \
+		--export_path='openvalidators_dataset.csv' \
+		--export_openai_dataset \
