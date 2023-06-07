@@ -74,9 +74,8 @@ def is_successful_completion(self, response: bt.DendriteCall, min_len: int = 10,
     return len_check and filter_check
 
 
-async def scoring_completions(
-    self, prompt: str, scoring_template: str, prefix: str, responses: List[bt.DendriteCall], exclude_uids: List[int] = None
-) -> Dict:
+async def scoring_completions(self, prompt: str, scoring_template: str, responses: List[bt.DendriteCall],
+                              exclude_uids: List[int] = None, prefix: str = '') -> Dict:
     """Using the prompt and call responses, outsource prompt-based scoring to network,
        return scoring average for each response.
 
@@ -85,12 +84,12 @@ async def scoring_completions(
             Prompt to use for the reward model.
         scoring_template (str):
             Scoring template to use for the scoring prompt.
-        prefix (str):
-            Prefix to use for scoring dict keys.
         responses (List[ bittensor.DendriteCall ]):
             List of responses from the network.
         exclude_uids (List[int]):
             UIDs to exclude when outsourcing scoring.
+        prefix (str):
+            Prefix to use for scoring dict keys.
 
     Returns:
         filled_scores (torch.FloatTensor, shape = (len(responses)) ):
@@ -299,8 +298,10 @@ async def forward(self):
 
     # Prompt-based scoring via network. Prohibits self-scoring.
     if self.config.neuron.outsource_scoring:
-        followup_scoring = await scoring_completions(self, bootstrap_prompt, followup_scoring_template,
-                                                     followup_responses, followup_uids)
+        followup_scoring = await scoring_completions(self, prompt=bootstrap_prompt,
+                                                     scoring_template=followup_scoring_template,
+                                                     responses=followup_responses, exclude_uids=followup_uids,
+                                                     prefix='followup')
 
     # Backward call sends reward info back to followup_uids.
     _followup_backward = await self.dendrite_pool.async_backward(
@@ -329,8 +330,9 @@ async def forward(self):
 
     # Prompt-based scoring via network. Prohibits self-scoring.
     if self.config.neuron.outsource_scoring:
-        answer_scoring = await scoring_completions(self, answer_prompt, answer_scoring_template, answer_responses,
-                                                   answer_uids)
+        answer_scoring = await scoring_completions(self, prompt=answer_prompt, scoring_template=answer_scoring_template,
+                                                   responses=answer_responses, exclude_uids=answer_uids,
+                                                   prefix='answer')
 
     # Backward call sends reward info back to answer_uids.
     _answer_backward = await self.dendrite_pool.async_backward(
