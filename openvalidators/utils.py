@@ -31,13 +31,15 @@ def should_reinit_wandb(self):
 
 def init_wandb(self, reinit=False):
     """Starts a new wandb run."""
-    tags = [self.wallet.hotkey.ss58_address, openvalidators.__version__]
+    tags = [self.wallet.hotkey.ss58_address, openvalidators.__version__, openvalidators.__spec_version__]
     if self.config.mock:
         tags.append("mock")
     if self.config.neuron.use_custom_gating_model:
         tags.append("custom_gating_model")
     if self.config.neuron.nsfw_filter:
         tags.append("nsfw_filter")
+    if self.config.neuron.outsource_scoring:
+        tags.append("outsource_scoring")
     if self.config.neuron.disable_set_weights:
         tags.append("disable_set_weights")
 
