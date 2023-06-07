@@ -33,7 +33,7 @@ def should_set_weights(self) -> bool:
 
 
 def set_weights(self):
-    subtensor = bt.subtensor( network='finney' ) #TODO: fix hard coded netuid
+    subtensor = bt.subtensor( self.config ) #TODO: fix hard coded netuid
     # Calculate the average reward for each uid across non-zero values.
     # Replace any NaN values with 0.
     raw_weights = torch.nn.functional.normalize(self.moving_averaged_scores, p=1, dim=0)
