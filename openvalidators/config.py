@@ -141,7 +141,7 @@ def add_args(cls, parser):
         "--neuron.scoring_sample_size",
         type=int,
         help="How many miners to query for the scoring prompt.",
-        default=10,
+        default=2,
     )
 
     parser.add_argument(
@@ -250,6 +250,12 @@ def add_args(cls, parser):
         "--neuron.nsfw_filter",
         action="store_true",
         help="If set, filter out not-safe-for-work messages.",
+        default=False,
+    )
+    parser.add_argument(
+        "--neuron.outsource_scoring",
+        action="store_true",
+        help="If set, enable outsourced scoring.",
         default=False,
     )
 
