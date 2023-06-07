@@ -24,7 +24,7 @@ import asyncio
 import bittensor as bt
 
 from loguru import logger
-from typing import List, Tuple, Union
+from typing import List, Union, Dict
 from openvalidators.misc import ttl_get_block
 from openvalidators.prompts import (
     extract_score,
@@ -75,8 +75,8 @@ def is_successful_completion(self, response: bt.DendriteCall, min_len: int = 10,
 
 
 async def scoring_completions(
-    self, prompt: str, scoring_template: str, responses: List[bt.DendriteCall], exclude_uids: List[int] = None
-) -> Tuple[torch.FloatTensor, List[List[int]], List[List[str]], List[List[int]]]:
+    self, prompt: str, scoring_template: str, prefix: str, responses: List[bt.DendriteCall], exclude_uids: List[int] = None
+) -> Dict:
     """Using the prompt and call responses, outsource prompt-based scoring to network,
        return scoring average for each response.
 
@@ -85,6 +85,8 @@ async def scoring_completions(
             Prompt to use for the reward model.
         scoring_template (str):
             Scoring template to use for the scoring prompt.
+        prefix (str):
+            Prefix to use for scoring dict keys.
         responses (List[ bittensor.DendriteCall ]):
             List of responses from the network.
         exclude_uids (List[int]):
@@ -161,8 +163,19 @@ async def scoring_completions(
         if len(successful_scoring_values) > 0:
             filled_scores[i] = sum(successful_scoring_values) / len(successful_scoring_values)
 
-    # Return all scoring details.
-    return filled_scores, all_scoring_uids, all_scoring_completions, all_scoring_values
+    # Determine best completion.
+    completions = [resp.completion for resp in responses]
+    best_completion = completions[filled_scores.argmax(dim=0)].strip()
+
+    # Scoring dictionary for wandb.
+    scoring_dict = {
+        f"{prefix}_scorings": filled_scores,
+        f"{prefix}_scoring_uids": all_scoring_uids,
+        f"{prefix}_scoring_completions": all_scoring_completions,
+        f"{prefix}_scoring_values": all_scoring_values,
+        f"best_{prefix}_completion": best_completion,
+    }
+    return scoring_dict
 
 
 def reward_completions(self, prompt: str, responses: List[bt.DendriteCall]) -> torch.FloatTensor:
@@ -286,13 +299,8 @@ async def forward(self):
 
     # Prompt-based scoring via network. Prohibits self-scoring.
     if self.config.neuron.outsource_scoring:
-        (
-            followup_scorings,
-            followup_scoring_uids,
-            followup_scoring_completions,
-            followup_scoring_values,
-        ) = await scoring_completions(self, bootstrap_prompt, followup_scoring_template, followup_responses, followup_uids)
-        best_followup_scoring = followup_completions[followup_scorings.argmax(dim=0)].strip()
+        followup_scoring = await scoring_completions(self, bootstrap_prompt, followup_scoring_template,
+                                                     followup_responses, followup_uids)
 
     # Backward call sends reward info back to followup_uids.
     _followup_backward = await self.dendrite_pool.async_backward(
@@ -321,13 +329,8 @@ async def forward(self):
 
     # Prompt-based scoring via network. Prohibits self-scoring.
     if self.config.neuron.outsource_scoring:
-        (
-            answer_scorings,
-            answer_scoring_uids,
-            answer_scoring_completions,
-            answer_scoring_values,
-        ) = await scoring_completions(self, answer_prompt, answer_scoring_template, answer_responses, answer_uids)
-        best_answer_scoring = answer_completions[answer_scorings.argmax(dim=0)].strip()
+        answer_scoring = await scoring_completions(self, answer_prompt, answer_scoring_template, answer_responses,
+                                                   answer_uids)
 
     # Backward call sends reward info back to answer_uids.
     _answer_backward = await self.dendrite_pool.async_backward(
@@ -384,20 +387,7 @@ async def forward(self):
         )
 
     if self.config.neuron.outsource_scoring:
-        event.update(
-            {
-                "followup_scorings": followup_scorings,
-                "followup_scoring_uids": followup_scoring_uids,
-                "followup_scoring_completions": followup_scoring_completions,
-                "followup_scoring_values": followup_scoring_values,
-                "best_followup_scoring": best_followup_scoring,
-                "answer_scorings": answer_scorings,
-                "answer_scoring_uids": answer_scoring_uids,
-                "answer_scoring_completions": answer_scoring_completions,
-                "answer_scoring_values": answer_scoring_values,
-                "best_answer_scoring": best_answer_scoring,
-            }
-        )
+        event.update({**followup_scoring, **answer_scoring})
 
     bt.logging.debug("step:", str(event))
     # Log to wandb.
