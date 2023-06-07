@@ -38,6 +38,8 @@ def init_wandb(self, reinit=False):
         tags.append("custom_gating_model")
     if self.config.neuron.nsfw_filter:
         tags.append("nsfw_filter")
+    if self.config.neuron.outsource_scoring:
+        tags.append("outsource_scoring")
     if self.config.neuron.disable_set_weights:
         tags.append("disable_set_weights")
 
