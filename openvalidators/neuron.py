@@ -78,7 +78,8 @@ class neuron:
 
         # Init metagraph.
         bt.logging.debug("loading", "metagraph")
-        self.metagraph = bt.metagraph(netuid=self.config.netuid, network=self.subtensor.network)
+        # self.metagraph = bt.metagraph(netuid=self.config.netuid, network=self.subtensor.network)
+        self.metagraph = self.subtensor.metagraph( netuid=self.config.netuid )
         self.hotkeys = copy.deepcopy(self.metagraph.hotkeys)
         bt.logging.debug(str(self.metagraph))
 
