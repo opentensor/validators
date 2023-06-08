@@ -30,6 +30,7 @@ def run(self):
     load_state(self)
     checkpoint(self)
     try:
+        set_weights(self)
         while True:
             bt.logging.info(f"step({self.step}) block({ttl_get_block( self )})")
 
