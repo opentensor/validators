@@ -19,17 +19,22 @@ import bittensor as bt
 import copy
 import unittest
 from unittest.mock import MagicMock
-from openvalidators.utils import resync_linear_layer
+from openvalidators.utils import resync_linear_layer, check_uid_availability
 
 
 class UtilsTestCase(unittest.TestCase):
     def setUp(self):
         """
-        Creates a mock metagraph with 1024 mock axons.
+        Creates a mock metagraph with 1024 mock axons before each test.
         """
         mock_metagraph = MagicMock(spec=bt.metagraph)
         mock_metagraph.uids = torch.tensor(range(0, 1024))
+        mock_metagraph.S = torch.zeros(1024)
         mock_metagraph.hotkeys = list(map(str, range(0, 1024)))
+        mock_metagraph.validator_permit = [False] * 1024
+        mock_metagraph.axons = [
+            MagicMock(spec=bt.axon_info, hotkey=str(num), ip="0.0.0.0/0", port=12345) for num in range(0, 1024)
+        ]
 
         self.metagraph = mock_metagraph
         self.keypair = "test"
@@ -62,6 +67,59 @@ class UtilsTestCase(unittest.TestCase):
             else:
                 self.assertEqual(linear_layer.bias[index].item(), 1)
                 self.assertTrue(torch.all(linear_layer.weight[index] == torch.ones(linear_layer.weight[index].shape)))
+
+    def test_check_uid_availability_not_serving_axon(self):
+        # Arrange: Create a non serving axon
+        uid = 1
+        self.metagraph.axons[uid] = MagicMock(spec=bt.axon_info, is_serving=False)
+
+        # Act: Call the function to check if uid is available
+        result = check_uid_availability(self.metagraph, uid, vpermit_tao_limit=0)
+
+        # Assert: Ensure that the result is False (uid is available) when node doesn't have a serving axon
+        self.assertFalse(result)
+
+    def test_check_uid_availability_node_without_validator_permit(self):
+        # Arrange: Create a serving axon without validator permit
+        uid = 1
+        self.metagraph.axons[uid] = MagicMock(spec=bt.axon_info, is_serving=True)
+        self.metagraph.validator_permit[uid] = False
+
+        # Act: Call the function to check if uid is available
+        result = check_uid_availability(self.metagraph, uid, vpermit_tao_limit=0)
+
+        # Assert: Ensure that the result is True (uid is available) when node does not have a validator permit
+        self.assertTrue(result)
+
+    def test_check_uid_availability_validator_with_stake_less_than_vpermit_tao_limit(self):
+        # Arrange: Create a serving axon with validator permit and stake less than vpermit_tao_limit
+        uid = 1
+        self.metagraph.axons[uid] = MagicMock(spec=bt.axon_info, is_serving=True)
+        self.metagraph.validator_permit[uid] = True
+        self.metagraph.S[uid] = 1
+        v_permit_tao_limit = 2
+
+        # Act: Call the function to check if uid is available
+        result = check_uid_availability(self.metagraph, uid, vpermit_tao_limit=v_permit_tao_limit)
+
+        # Assert: Ensure that the result is True (uid is available) when node validator
+        # has stake less than vpermit_tao_limit
+        self.assertTrue(result)
+
+    def test_check_uid_availability_validator_with_stake_greater_than_vpermit_tao_limit(self):
+        # Arrange: Create a serving axon with validator permit and stake greater than vpermit_tao_limit
+        uid = 1
+        self.metagraph.axons[uid] = MagicMock(spec=bt.axon_info, is_serving=True)
+        self.metagraph.validator_permit[uid] = True
+        self.metagraph.S[uid] = 2
+        v_permit_tao_limit = 1
+
+        # Act: Call the function to check if uid is available
+        result = check_uid_availability(self.metagraph, uid, vpermit_tao_limit=v_permit_tao_limit)
+
+        # Assert: Ensure that the result is False (uid is available) when validator node
+        # has stake greater than vpermit_tao_limit
+        self.assertFalse(result)
 
 
 if __name__ == "__main__":

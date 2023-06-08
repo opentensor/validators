@@ -14,6 +14,24 @@ The current implementation requires you to be logged in wandb. You can do so by 
 wandb login
 ```
 
+You will also need to install `make` to profit from the predefined targets in the [Makefile](Makefile). 
+To install `make` on Ubuntu, run the following command:
+```bash
+sudo apt install make
+```
+
+If you are on Mac, you can install it by running:
+```bash
+brew install make
+```
+
+
+**Note:** All the data collection scripts are designed to be run from the `scripts` directory, 
+so ensure that you are in the right place before starting:
+```bash
+ cd scripts # From root folder
+```
+
 ## Usage
 This repository provides a convenient way to collect data from the
 [WandB Openvalidators platform](https://wandb.ai/opentensor-dev/openvalidators) using the [data_collector.py](data_collector.py)
