@@ -341,12 +341,12 @@ async def forward(self):
 
     # Compute forward pass rewards.
     scattered_followup_rewards = (
-        torch.zeros((self.metagraph.n), dtype=torch.float32).to(self.device).scatter(0, followup_uids, followup_rewards)
+        self.moving_averaged_scores.scatter(0, followup_uids, followup_rewards)
     )
     scattered_answer_rewards = (
-        torch.zeros((self.metagraph.n), dtype=torch.float32).to(self.device).scatter(0, answer_uids, answer_rewards)
+        self.moving_averaged_scores.scatter(0, answer_uids, answer_rewards)
     )
-    rewards = scattered_followup_rewards + scattered_answer_rewards
+    rewards = (scattered_followup_rewards + scattered_answer_rewards)/2
     self.moving_averaged_scores = self.config.neuron.moving_average_alpha * rewards.to(self.device) + (
         1 - self.config.neuron.moving_average_alpha
     ) * self.moving_averaged_scores.to(self.device)
