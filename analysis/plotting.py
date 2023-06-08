@@ -103,6 +103,7 @@ def plot_uid_diversty(df: pd.DataFrame, remove_unsuccessful: bool = False) -> go
         hover_data=["UID"] + merged.columns.tolist(),
         marginal_x="histogram",
         marginal_y="histogram",
+        color_continuous_scale=px.colors.sequential.Bluered,
         labels={"x": "Followup diversity", "y": "Answer diversity"},
         title="Diversity of completions by UID",
         **plotly_config,

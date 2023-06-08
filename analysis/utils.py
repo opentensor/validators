@@ -68,7 +68,7 @@ def download_data(run_path: Union[str, List] = None, timeout: float = 600) -> pd
         run = api.run(path)
 
         frame = pd.DataFrame(list(run.scan_history()))
-        frames.append(frame.assign(run_id=path.split("/")[-1]))
+        frames.append(frame)
         total_events += len(frame)
 
         pbar.set_postfix({"total_events": total_events})
@@ -84,12 +84,13 @@ def download_data(run_path: Union[str, List] = None, timeout: float = 600) -> pd
 def load_data(path: str, nrows: int = None):
     """Load data from csv."""
     df = pd.read_csv(path, nrows=nrows)
+    # filter out events with missing step length
+    df = df.loc[df.step_length.notna()]
 
     # detect list columns which as stored as strings
     list_cols = [c for c in df.columns if df[c].dtype == "object" and df[c].str.startswith("[").all()]
-
     # convert string representation of list to list
-    df[list_cols] = df[list_cols].applymap(eval)
+    df[list_cols] = df[list_cols].applymap(eval, na_action='ignore')
 
     return df
 
