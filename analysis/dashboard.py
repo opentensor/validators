@@ -6,6 +6,7 @@ import time
 from analysis.utils import get_runs, download_data, get_list_col_lengths, explode_data
 import analysis.plotting as plotting
 
+
 # dendrite time versus completion length
 # prompt-based completion score stats
 
@@ -160,10 +161,9 @@ df_runs_old = df_runs.loc[df_runs.start_time < pd.to_datetime(time.time()-24*60*
 
 col1, col2, col3 = st.columns(3)
 
-col1.metric('Runs', df_runs.shape[0], delta=df_runs.shape[0]-df_runs_old.shape[0])
-col2.metric('Hotkeys', df_runs.hotkey.nunique(), delta=int(df_runs.hotkey.nunique()-df_runs_old.hotkey.nunique()))
-col3.metric('Events', df_runs.num_steps.sum(), delta=int(df_runs.num_steps.sum()-df_runs_old.num_steps.sum()))
-
+col1.metric('Runs', df_runs.shape[0], delta=f'{df_runs.shape[0]-df_runs_old.shape[0]} (24h)')
+col2.metric('Hotkeys', df_runs.hotkey.nunique(), delta=f'{df_runs.hotkey.nunique()-df_runs_old.hotkey.nunique()} (24h)')
+col3.metric('Events', df_runs.num_steps.sum(), delta=f'{df_runs.num_steps.sum()-df_runs_old.num_steps.sum()} (24h)')
 
 # https://wandb.ai/opentensor-dev/openvalidators/runs/kt9bzxii/overview?workspace=
 # all_run_paths = ['opentensor-dev/openvalidators/kt9bzxii'] # pedro long run
@@ -186,7 +186,7 @@ tab1, tab2, tab3, tab4 = st.tabs(["Wandb Runs", "UID Health", "Completions", "Pr
 with tab1:
 
     st.markdown('#')
-    st.subheader(":red[Wandb] Runs")
+    st.subheader(":violet[Wandb] Runs")
 
     # Load data
     df = load_data(df_runs.loc[run_ids.isin(selected_runs)], load=True, save=True)
@@ -201,7 +201,7 @@ with tab1:
     selected_runs = st.multiselect(f'Runs ({len(df_runs)})', run_ids, default=selected_runs)
 
     st.markdown('#')
-    st.subheader("View :red[Data]")
+    st.subheader("View :violet[Data]")
 
     show_col1, show_col2 = st.columns(2)
     show_runs = show_col1.checkbox('Show runs', value=True)
@@ -225,7 +225,8 @@ with tab1:
 default_src = 'followup'
 with tab2:
 
-    st.subheader("UID :red[Health]")
+    st.markdown('#')
+    st.subheader("UID :violet[Health]")
     uid_src = default_src
 
     # uid = st.selectbox('UID:', sorted(df_long[uid_col].unique()), key='uid')
@@ -236,7 +237,7 @@ with tab2:
     reward_col = f'{uid_src}_rewards'
 
     st.markdown('#')
-    st.subheader("UID :red[Leaderboard]")
+    st.subheader("UID :violet[Leaderboard]")
     uid_ntop_default = 10
 
     uid_col1, uid_col2 = st.columns(2)
@@ -263,7 +264,9 @@ with tab2:
 
 completion_ntop_default = 10
 with tab3:
-    st.subheader('Completion :red[Leaderboard]')
+
+    st.markdown('#')
+    st.subheader('Completion :violet[Leaderboard]')
     completion_src = default_src
 
     msg_col1, msg_col2 = st.columns(2)
@@ -289,7 +292,7 @@ with tab3:
         )
     )
     st.markdown('#')
-    st.subheader('Completion :red[Rewards]')
+    st.subheader('Completion :violet[Rewards]')
 
     completion_select = st.multiselect('Completions:', completions.index, default=completions.index[:3].tolist())
     # completion_regex = st.text_input('Completion regex:', value='', key='completion_regex')
