@@ -401,3 +401,5 @@ async def forward(self):
     # Log locally
     if not self.config.neuron.dont_save_events:
         logger.log("EVENTS", "events", **event)
+
+    return event
