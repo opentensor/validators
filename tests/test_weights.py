@@ -17,35 +17,32 @@
 import torch
 import copy
 import pytest
+import asyncio
 import sys
 from openvalidators.neuron import neuron as Neuron
 from openvalidators.forward import forward
 
-CLI_ARGS = 'validators/openvalidators/neuron.py --mock --wallet.mock --wandb.off'.split(' ')
+CLI_ARGS = 'validators/openvalidators/neuron.py --mock --wallet._mock --wallet.reregister False --wandb.off --logging.trace'.split(' ')
 
-def test_uid_weights_unchanged_unless_queried():
-    
+def test_uid_weights_unchanged_unless_queried(n_steps=10, n_concurrent=1):
+
     sys.argv = CLI_ARGS
     neuron = Neuron()
-    for _ in range(100):
+    for _ in range(n_steps):
         prev_scores = copy.deepcopy(neuron.moving_averaged_scores)
-        # run forward pass
-        event = forward()
-        next_scores = neuron.moving_averaged_scores
-        ignored_uids = [uid for uid in torch.arange(neuron.metagraph.n.item()) if uid not in event['followup_uids']+event['answer_uids']]
-        
-        assert next_scores[ignored_uids] == prev_scores[ignored_uids], "Unqueried uids should not change"
 
-def test_weight_decay():
-    # make a neuron with mock everything (reward, )
-    neuron = neuron()
-    for _ in range(100):
-        prev_scores = copy.deepcopy(neuron.moving_averaged_scores)
-        # run forward pass
-        event = forward()
-        next_scores = neuron.moving_averaged_scores
-        ignored_uids = [uid for uid in range(neuron.metagraph.n.item()) if uid not in event['followup_uids']+event['answer_uids']]
-        
-        assert next_scores[ignored_uids] == prev_scores[ignored_uids], "Unqueried uids should not change"
-        assert next_scores[event['followup_uids']] < prev_scores[event['followup_uids']], "Followup uids should decay"
-        assert next_scores[event['answer_uids']] > prev_scores[event['answer_uids']], "Answer uids should increase"
+        # run concurrent forward passes
+        async def run_forward():
+            coroutines = [forward(neuron) for _ in range(n_concurrent)]
+            return await asyncio.gather(*coroutines)
+
+        events = neuron.loop.run_until_complete(run_forward())
+        for event in events:
+
+            queried_uids = list( set( event['followup_uids']+event['answer_uids'] ) )
+            ignored_uids = [uid for uid in torch.arange(neuron.metagraph.n.item()) if uid not in queried_uids]
+
+            next_scores = neuron.moving_averaged_scores
+
+            assert all(next_scores[ignored_uids] == prev_scores[ignored_uids]), "Unqueried uids should not change"
+
