@@ -34,6 +34,7 @@ from openvalidators.prompts import (
 )
 from openvalidators.utils import check_uid_availability
 
+
 def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor:
     """Returns k available random uids from the metagraph.
     Args:
@@ -48,7 +49,7 @@ def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor
 
     for uid in range(self.metagraph.n.item()):
         uid_is_available = check_uid_availability(self.metagraph, uid, self.config.neuron.vpermit_tao_limit)
-        uid_is_not_excluded = (exclude is None or uid not in exclude)
+        uid_is_not_excluded = exclude is None or uid not in exclude
 
         if uid_is_available and uid_is_not_excluded:
             candidate_uids.append(uid)
@@ -76,8 +77,9 @@ def is_successful_completion(self, response: bt.DendriteCall, min_len: int = 10,
     return len_check and filter_check
 
 
-async def scoring_completions(self, prompt: str, scoring_template: str, responses: List[bt.DendriteCall],
-                              exclude_uids: List[int] = None) -> Dict:
+async def scoring_completions(
+    self, prompt: str, scoring_template: str, responses: List[bt.DendriteCall], exclude_uids: List[int] = None
+) -> Dict:
     """Using the prompt and call responses, outsource prompt-based scoring to network,
        return scoring average for each response.
 
@@ -211,7 +213,7 @@ def reward_completions(self, prompt: str, responses: List[bt.DendriteCall]) -> t
     ).to(self.device)
 
     # Fill scores with zeros for non successful responses.
-    successful_rewards = successful_rewards.softmax( 0 )
+    successful_rewards = successful_rewards.softmax(0)
     filled_rewards = torch.zeros(len(responses), dtype=torch.float32)
     for idx, reward in zip(successful_completions_indices, successful_rewards):
         filled_rewards[idx] = reward
@@ -298,9 +300,13 @@ async def forward(self):
 
     # Prompt-based scoring via network. Prohibits self-scoring.
     if self.config.neuron.outsource_scoring:
-        followup_scoring = await scoring_completions(self, prompt=bootstrap_prompt,
-                                                     scoring_template=followup_scoring_template,
-                                                     responses=followup_responses, exclude_uids=followup_uids)
+        followup_scoring = await scoring_completions(
+            self,
+            prompt=bootstrap_prompt,
+            scoring_template=followup_scoring_template,
+            responses=followup_responses,
+            exclude_uids=followup_uids,
+        )
 
     # Backward call sends reward info back to followup_uids.
     _followup_backward = await self.dendrite_pool.async_backward(
@@ -329,8 +335,13 @@ async def forward(self):
 
     # Prompt-based scoring via network. Prohibits self-scoring.
     if self.config.neuron.outsource_scoring:
-        answer_scoring = await scoring_completions(self, prompt=answer_prompt, scoring_template=answer_scoring_template,
-                                                   responses=answer_responses, exclude_uids=answer_uids)
+        answer_scoring = await scoring_completions(
+            self,
+            prompt=answer_prompt,
+            scoring_template=answer_scoring_template,
+            responses=answer_responses,
+            exclude_uids=answer_uids,
+        )
 
     # Backward call sends reward info back to answer_uids.
     _answer_backward = await self.dendrite_pool.async_backward(
@@ -384,8 +395,8 @@ async def forward(self):
         )
 
     if self.config.neuron.outsource_scoring:
-        event.update({f'followup_{k}': v for k, v in followup_scoring.items()})
-        event.update({f'answer_{k}': v for k, v in answer_scoring.items()})
+        event.update({f"followup_{k}": v for k, v in followup_scoring.items()})
+        event.update({f"answer_{k}": v for k, v in answer_scoring.items()})
 
     bt.logging.debug("step:", str(event))
     # Log to wandb.
@@ -400,3 +411,5 @@ async def forward(self):
     # Log locally
     if not self.config.neuron.dont_save_events:
         logger.log("EVENTS", "events", **event)
+
+    return event
