@@ -7,6 +7,7 @@ import tqdm
 import pandas as pd
 import openvalidators
 import bittensor as bt
+import pyarrow as pa
 from loguru import logger
 from datetime import datetime
 from huggingface_hub import HfFileSystem, login
@@ -23,14 +24,37 @@ WANDB_DF_SCHEMA =['answer_rewards', 'moving_averaged_scores', '_step',
 'base_prompt', 'best_answer', 'answer_prompt', 'gating_loss',
 'best_followup', '_timestamp', 'block', 'set_weights']
 
+
+DATASET_SCHEMA = pa.schema([
+    ('_runtime', pa.float64()),
+    ('_step', pa.int64()),
+    ('_timestamp', pa.float64()),
+    ('answer_completions', pa.list_(pa.string())),
+    ('answer_prompt', pa.string()),
+    ('answer_rewards', pa.list_(pa.float64())),
+    ('answer_times', pa.list_(pa.float64())),
+    ('answer_uids', pa.list_(pa.int32())),
+    ('base_prompt', pa.string()),
+    ('best_answer', pa.string()),
+    ('best_followup', pa.string()),
+    ('block', pa.float64()),
+    ('followup_completions', pa.list_(pa.string())),
+    ('followup_rewards', pa.list_(pa.float64())),
+    ('followup_times', pa.list_(pa.float64())),
+    ('followup_uids', pa.list_(pa.int64())),
+    ('gating_loss', pa.float64()),
+    ('gating_scorings', pa.list_(pa.float64())),
+    ('moving_averaged_scores', pa.list_(pa.float64())),
+    ('set_weights', pa.list_(pa.list_(pa.float64()))),
+    ('step_length', pa.float64())
+])
+
+
 @dataclass
 class CollectionOutputResult:
     problematic_run_ids: List[str]
     new_downloaded_run_ids: int
     skipped_run_ids: int
-
-
-
 
 
 def load_metadata_info(hf_datasets_path: str, version: str) -> pd.DataFrame:
@@ -70,7 +94,12 @@ def export_df_to_hf(
     run_id_file_output_path = f"hf://datasets/{hf_datasets_path}/{version}/raw_data/{run.id}.parquet"
     bt.logging.info(f'Exporting run data to {run_id_file_output_path}...')
     # TODO: add complementary metadata to the run_df
-    run_df.to_parquet(run_id_file_output_path)
+
+    # Needs to convert to pyarrow table with schema and reconvert to pandas dataframe to export to Hugging Face Hub
+    pa.Table.from_pandas(run_df, schema=DATASET_SCHEMA)\
+        .to_pandas()\
+        .to_parquet(run_id_file_output_path)
+
     bt.logging.info(f'Run data exported successfully!')
 
 
