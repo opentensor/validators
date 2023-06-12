@@ -30,13 +30,21 @@ class DendriteTestCase(unittest.TestCase):
         mock_metagraph = MagicMock(spec=bt.metagraph)
         mock_metagraph.uids = torch.tensor(range(0, 1024))
         mock_metagraph.axons = [
-            MagicMock(spec=bt.axon_info, hotkey=str(num), ip="0.0.0.0/0", port=12345) for num in range(0, 1024)
+            bt.axon_info(
+                version=0,
+                ip="0.0.0.0/0",
+                port=12345,
+                ip_type=0,
+                hotkey=str(num),
+                coldkey=str(num)
+            ) for num in range(0, 1024)
         ]
 
         self.metagraph = mock_metagraph
         self.keypair = "test"
 
-    def test_resync_uid_change(self):
+    def test_resync_uid_modified_metagraph(self):
+        # Arrange: Creates Async dendrite pool and modifies the metagraph by changing the axon_info at defined index
         dendrite_pool = AsyncDendritePool(keypair=self.keypair, metagraph=self.metagraph)
 
         # Modify the hotkey of the first axon of the metagraph
@@ -44,8 +52,10 @@ class DendriteTestCase(unittest.TestCase):
         modified_metagraph = copy.deepcopy(self.metagraph)
         modified_metagraph.axons[index].hotkey = "hotkey-test"
 
+        # Act: Resync the dendrite pool with the modified metagraph
         dendrite_pool.resync(modified_metagraph)
 
+        # Assert: The dendrite pool hotkeys should be the same as the modified metagraph hotkeys after resync
         dendrite_hot_keys = list(map(lambda dendrite: dendrite.axon_info.hotkey, dendrite_pool.dendrites))
         new_metagraph_hot_keys = list(map(lambda axon: axon.hotkey, modified_metagraph.axons))
 
