@@ -105,3 +105,12 @@ class MockDendritePool(torch.nn.Module):
 
     def resync(self, metagraph):
         pass
+
+    async def async_backward(
+        self, uids: List[int], roles: List[str], messages: List[str], completions: List[str], rewards: List[float]
+    ):
+        async def query():
+            await asyncio.sleep(0.01)
+            return [MockDendriteResponse(messages[0]) for _ in uids]
+
+        return await query()

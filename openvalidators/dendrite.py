@@ -86,7 +86,7 @@ class AsyncDendritePool:
         for index, dendrite in enumerate(self.dendrites):
             current_uid_axon_info = metagraph_uids_axons_state.pop(dendrite.uid)
 
-            if dendrite.axon_info.hotkey != current_uid_axon_info.hotkey:
+            if dendrite.axon_info != current_uid_axon_info:
                 self.dendrites[index] = bt.text_prompting(
                     axon=current_uid_axon_info,
                     keypair=dendrite.keypair,
