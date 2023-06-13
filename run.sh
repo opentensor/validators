@@ -224,7 +224,7 @@ if [ "$?" -eq 1 ]; then
                         echo "New version published. Updating the local copy."
 
                         # Install latest changes just in case.
-                        pip install -e ../
+                        pip install -e .
 
                         # # Run the Python script with the arguments using pm2
                         echo "Restarting PM2 process"
