@@ -210,12 +210,6 @@ if [ "$?" -eq 1 ]; then
                         # Install latest changes just in case.
                         pip install -e ../
 
-                        # Check if script is already running with pm2
-                        # if pm2 status | grep -q $proc_name; then
-                        #     echo "The script is already running with pm2. Stopping and restarting..."
-                        #     pm2 delete $proc_name
-                        # fi
-
                         # # Run the Python script with the arguments using pm2
                         echo "Restarting PM2 process"
                         pm2 restart $proc_name
