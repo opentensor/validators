@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
 from schemas import DATASET_SCHEMA
-from metadata import  get_wandb_metadata_info
+from metadata import get_wandb_metadata_info, MetadataInfo, append_metadata_info
 from substrateinterface.base import is_valid_ss58_address
 
 import bittensor as bt
@@ -19,21 +19,29 @@ class ProblematicRun:
     error: str
     run: "wandb_sdk.wandb_run.Run"
 
+
 @dataclass
 class CollectionOutputResult:
     problematic_runs: List[ProblematicRun]
     new_downloaded_run_ids: int
     skipped_run_ids: int
 
-WANDB_DF_SCHEMA =['answer_rewards', 'moving_averaged_scores', '_step',
-'gating_scorings', 'answer_times', 'followup_uids',
-'answer_completions', 'followup_completions', 'followup_rewards',
-'answer_uids', 'followup_times', 'step_length', '_runtime',
-'base_prompt', 'best_answer', 'answer_prompt', 'gating_loss',
-'best_followup', '_timestamp', 'block', 'set_weights']
+
+WANDB_DF_SCHEMA = ['answer_rewards', 'moving_averaged_scores', '_step',
+                   'gating_scorings', 'answer_times', 'followup_uids',
+                   'answer_completions', 'followup_completions', 'followup_rewards',
+                   'answer_uids', 'followup_times', 'step_length', '_runtime',
+                   'base_prompt', 'best_answer', 'answer_prompt', 'gating_loss',
+                   'best_followup', '_timestamp', 'block', 'set_weights']
 
 
 def get_hotkey_from_tags(tags: List[str]) -> Optional[str]:
+    """Returns the hotkey from a list of tags if it is a valid ss58 address
+    Args:
+        tags (List[str]): List of wandb tags
+    Returns:
+        Optional[str]: The hotkey if it is a valid ss58 address, None otherwise
+    """
     for tag in tags:
         if is_valid_ss58_address(tag):
             return tag
@@ -42,11 +50,20 @@ def get_hotkey_from_tags(tags: List[str]) -> Optional[str]:
 
 
 def get_non_processed_runs(
-    wandb_api: wandb.Api,
-    wandb_project: str,
-    version: str,
-    metadata_info_df: pd.DataFrame
+        wandb_api: wandb.Api,
+        wandb_project: str,
+        version: str,
+        metadata_info_df: pd.DataFrame
 ):
+    """Returns a list of wandb runs that have not been processed yet
+    Args:
+        wandb_api (wandb.Api): Wandb api object
+        wandb_project (str): Wandb project name
+        version (str): Dataset version
+        metadata_info_df (pd.DataFrame): Metadata info dataframe
+    Returns:
+        List["wandb_sdk.wandb_run.Run"]: List of wandb runs that have not been processed yet
+    """
     wandb_runs = wandb_api.runs(wandb_project, filters={"tags": {"$in": [version]}})
     wandb_run_ids = [run.id for run in wandb_runs]
 
@@ -63,15 +80,15 @@ def get_non_processed_runs(
 
 
 def export_df_to_hf(
-    run_df: pd.DataFrame,
-    hf_datasets_path: str,
-    version: str,
-    run: "wandb_sdk.wandb_run.Run"
+        run_df: pd.DataFrame,
+        hf_datasets_path: str,
+        version: str,
+        run: "wandb_sdk.wandb_run.Run"
 ):
     expected_columns = set(WANDB_DF_SCHEMA)
     df_columns = set(run_df.columns.tolist())
 
-    columns_mismatch = not set(expected_columns).issubset(df_columns)
+    columns_mismatch = not set(expected_columns).issubset(df_columns) or not set(df_columns).issubset(expected_columns)
 
     if columns_mismatch:
         bt.logging.error(f'Wandb Run dataset columns do not match the expected schema')
@@ -84,18 +101,18 @@ def export_df_to_hf(
     # TODO: add complementary metadata to the run_df
 
     # Needs to convert to pyarrow table with schema and reconvert to pandas dataframe to export to Hugging Face Hub
-    pa.Table.from_pandas(run_df, schema=DATASET_SCHEMA)\
-        .to_pandas()\
+    pa.Table.from_pandas(run_df, schema=DATASET_SCHEMA) \
+        .to_pandas() \
         .to_parquet(run_id_file_output_path)
 
     bt.logging.info(f'Run data exported successfully!')
 
 
 def handle_problematic_run_ids(
-    problematic_runs: List[ProblematicRun],
-    metadata_info_df: pd.DataFrame,
-    hf_datasets_path: str,
-    version: str
+        problematic_runs: List[ProblematicRun],
+        metadata_info_df: pd.DataFrame,
+        hf_datasets_path: str,
+        version: str
 ):
     for problematic_run in problematic_runs:
         try:
@@ -106,27 +123,33 @@ def handle_problematic_run_ids(
                 metadata_info_df.loc[run_id_metadata_row.index, 'problematic'] = True
                 metadata_info_df.loc[run_id_metadata_row.index, 'problematic_reason'] = problematic_run.error
 
-                metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True, index_label="index")
+                metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True,
+                                        index_label="index")
             else:
-                run_id_metadata_row = pd.DataFrame(
-                    {
-                        "run_id": problematic_run.run_id,
-                        "completed": False,
-                        "downloaded": False,
-                        "last_checkpoint": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        "hotkey": get_hotkey_from_tags(problematic_run.run.tags),
-                        "openvalidators_version": version,
-                        'problematic': True,
-                        'problematic_reason': problematic_run.error
-                    },
-                    index=[len(metadata_info_df)]
+                wandb_metadata = get_wandb_metadata_info(problematic_run)
+                run_id_metadata = MetadataInfo(
+                    run_id=problematic_run.run_id,
+                    completed=False,
+                    downloaded=False,
+                    last_checkpoint=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    hotkey=get_hotkey_from_tags(problematic_run.run.tags),
+                    openvalidators_version=version,
+                    problematic=True,
+                    problematic_reason=problematic_run.error,
+                    wandb_json_config=wandb_metadata.wandb_json_config,
+                    wandb_run_name=wandb_metadata.wandb_run_name,
+                    wandb_user_info=wandb_metadata.wandb_user_info,
+                    wandb_tags=wandb_metadata.wandb_tags,
+                    wandb_createdAt=wandb_metadata.wandb_createdAt,
                 )
 
-                run_id_metadata_row = pd.merge(run_id_metadata_row, get_wandb_metadata_info(problematic_run.run), left_index=True, right_index=True)
+                metadata_info_df = append_metadata_info(
+                    metadata_info_df=metadata_info_df,
+                    new_metadata_info=run_id_metadata
+                )
 
-                # Concats new metadata row to metadata dataframe
-                metadata_info_df = pd.concat([metadata_info_df, run_id_metadata_row])
-                metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True, index_label="index")
+                metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True,
+                                        index_label="index")
                 bt.logging.error('Problematic run_id updated successfully')
         except Exception as e:
             bt.logging.error(f'Error while handling problematic run {problematic_run.run_id}: {e}')
@@ -135,13 +158,13 @@ def handle_problematic_run_ids(
 
 
 def consume_wandb_run(
-    run: "wandb_sdk.wandb_run.Run",
-    wandb_project: str,
-    wandb_api: wandb.Api,
-    hf_datasets_path: str,
-    version: str,
-    metadata_info_df: pd.DataFrame,
-    collection_output_result: CollectionOutputResult
+        run: "wandb_sdk.wandb_run.Run",
+        wandb_project: str,
+        wandb_api: wandb.Api,
+        hf_datasets_path: str,
+        version: str,
+        metadata_info_df: pd.DataFrame,
+        collection_output_result: CollectionOutputResult
 ):
     run_id_metadata_row = metadata_info_df.loc[metadata_info_df['run_id'] == run.id]
 
@@ -157,7 +180,8 @@ def consume_wandb_run(
         metadata_info_df.loc[run_id_metadata_row.index, 'last_checkpoint'] = datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S")
 
-        metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True, index_label="index")
+        metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True,
+                                index_label="index")
         collection_output_result.skipped_run_ids += 1
         return
     elif run.state in completed_states and not run_id_metadata["downloaded"]:
@@ -174,8 +198,10 @@ def consume_wandb_run(
         # Updates metadata info
         metadata_info_df.loc[run_id_metadata_row.index, 'completed'] = True
         metadata_info_df.loc[run_id_metadata_row.index, 'downloaded'] = True
-        metadata_info_df.loc[run_id_metadata_row.index, 'last_checkpoint'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True, index_label="index")
+        metadata_info_df.loc[run_id_metadata_row.index, 'last_checkpoint'] = datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S")
+        metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True,
+                                index_label="index")
         bt.logging.info(f'Metadata info updated successfully!')
         collection_output_result.new_downloaded_run_ids += 1
         return
@@ -184,16 +210,17 @@ def consume_wandb_run(
 
 
 def collect_wandb_data(
-    metadata_info_df: pd.DataFrame,
-    wandb_project: str,
-    version: str,
-    hf_datasets_path: str
+        metadata_info_df: pd.DataFrame,
+        wandb_project: str,
+        version: str,
+        hf_datasets_path: str
 ) -> CollectionOutputResult:
     api = wandb.Api()
     wandb.login(anonymous="allow")
 
     non_processed_runs = get_non_processed_runs(api, wandb_project, version, metadata_info_df)
-    runs_pbar = tqdm.tqdm(non_processed_runs, desc="Loading unprocessed run_ids from wandb", total=len(non_processed_runs), unit="run")
+    runs_pbar = tqdm.tqdm(non_processed_runs, desc="Loading unprocessed run_ids from wandb",
+                          total=len(non_processed_runs), unit="run")
 
     output_result = CollectionOutputResult(problematic_runs=[], skipped_run_ids=0, new_downloaded_run_ids=0)
 
@@ -215,29 +242,31 @@ def collect_wandb_data(
             else:
                 bt.logging.info(f'New run with id {run.id} identified, capturing it...')
 
-                # Creates new metadata row
-                run_id_metadata = {
-                    "run_id": run.id,
-                    "completed": False,
-                    "downloaded": False,
-                    "last_checkpoint": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "hotkey": get_hotkey_from_tags(run.tags),
-                    "openvalidators_version": version,
-                    'problematic': False,
-                    'problematic_reason': None
-                }
-
                 wandb_metadata = get_wandb_metadata_info(run)
-                row_metadata = {**run_id_metadata, **wandb_metadata}
+                run_id_metadata = MetadataInfo(
+                    run_id=run.id,
+                    completed=False,
+                    downloaded=False,
+                    last_checkpoint=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    hotkey=get_hotkey_from_tags(run.tags),
+                    openvalidators_version=version,
+                    problematic=False,
+                    problematic_reason=None,
+                    wandb_json_config=wandb_metadata.wandb_json_config,
+                    wandb_run_name=wandb_metadata.wandb_run_name,
+                    wandb_user_info=wandb_metadata.wandb_user_info,
+                    wandb_tags=wandb_metadata.wandb_tags,
+                    wandb_createdAt=wandb_metadata.wandb_createdAt,
+                )
 
-                run_id_metadata_row = pd.DataFrame.from_dict(row_metadata, orient='index').T
-
-                # Concats new metadata row to metadata dataframe
-                metadata_info_df = pd.concat([metadata_info_df, run_id_metadata_row])
-                metadata_info_df.reset_index(inplace=True, drop=True)
+                metadata_info_df = append_metadata_info(
+                    metadata_info_df=metadata_info_df,
+                    new_metadata_info=run_id_metadata
+                )
 
                 # Sends metadata info to Hugging Face Hub
-                metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True, index_label="index")
+                metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True,
+                                        index_label="index")
 
                 bt.logging.info(f'Run {run.id} captured successfully! Consuming run...')
 

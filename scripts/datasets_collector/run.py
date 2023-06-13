@@ -11,34 +11,53 @@ DEFAULT_WANDB_PROJECT = 'opentensor-dev/openvalidators'
 HF_TOKEN = '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'
 
 
-if __name__ == "__main__":
-    # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="Collect data from wandb and save to huggingface datasets")
-    parser.add_argument("--wandb_project", type=str, help="Wandb project to crawl", default=DEFAULT_WANDB_PROJECT)
-    parser.add_argument("--version", type=str, help="Tag version of openvalidators to be crawled", default=DEFAULT_VERSION)
-    parser.add_argument("--hf_dataset_output_dir", type=str, help="Hugging Face dataset output directory", default=DEFAULT_HF_DATASET_OUTPUT_DIR)
-    parser.add_argument("--hf_token", type=str, help="Hugging Face token", default=HF_TOKEN)
-    args = parser.parse_args()
+def start_collector(version: str, hf_dataset_output_dir: str, wandb_project: str):
+    """Starts the data collector script
+    Args:
+        version (str): Version of the dataset to collect
+        hf_dataset_output_dir (str): Hugging Face dataset output directory
+        wandb_project (str): Wandb project to crawl
+    """
 
-    # Login to hugging face
-    login(args.hf_token)
 
     # Load metadata info
-    metadata_info = load_metadata_info(hf_datasets_path=args.hf_dataset_output_dir, version=args.version)
+    metadata_info = load_metadata_info(hf_datasets_path=hf_dataset_output_dir, version=version)
 
     # Collecting wandb data
     output_result = collect_wandb_data(
         metadata_info_df=metadata_info,
-        wandb_project=args.wandb_project,
-        version=args.version,
-        hf_datasets_path=args.hf_dataset_output_dir
+        wandb_project=wandb_project,
+        version=version,
+        hf_datasets_path=hf_dataset_output_dir
     )
 
-    bt.logging.info(f"Runs from version {args.version} collected successfully!")
+    bt.logging.info(f"Runs from version {version} collected successfully!")
     bt.logging.info(f"New downloaded runs: {output_result.new_downloaded_run_ids}")
     bt.logging.info(f"Skipped runs: {output_result.skipped_run_ids}")
 
     problematic_run_ids = [run.run_id for run in output_result.problematic_runs]
     bt.logging.info(f"Problematic runs({len(output_result.problematic_runs)}): {problematic_run_ids}")
+    bt.logging.info('*' * 100)
+
+
+if __name__ == "__main__":
+    """Executes the data collector script"""
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Collect data from wandb and save to huggingface datasets")
+    parser.add_argument("--wandb_project", type=str, help="Wandb project to crawl", default=DEFAULT_WANDB_PROJECT)
+    parser.add_argument("--hf_dataset_output_dir", type=str, help="Hugging Face dataset output directory", default=DEFAULT_HF_DATASET_OUTPUT_DIR)
+    parser.add_argument("--hf_token", type=str, help="Hugging Face token", default=HF_TOKEN)
+    args = parser.parse_args()
+
+    hf_token = args.hf_token
+    hf_dataset_output_dir = args.hf_dataset_output_dir
+    wandb_project = args.wandb_project
+
+    # Login to hugging face
+    login(hf_token)
+
+    for version in SUPPORTED_VERSIONS:
+        start_collector(version=version, hf_dataset_output_dir=hf_dataset_output_dir, wandb_project=wandb_project)
+
 
 

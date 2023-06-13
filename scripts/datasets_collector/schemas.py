@@ -1,5 +1,6 @@
 import pyarrow as pa
 
+# Schema for the dataset logged in wandb by openvalidators:
 DATASET_SCHEMA = pa.schema([
     ('_runtime', pa.float64()), # Runtime of the event
     ('_step', pa.int64()), # Step of the event
