@@ -148,7 +148,6 @@ strip_quotes() {
 
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
-    echo $1
     case $1 in
         --script) script="$2"; shift ;;
         --name) name="$2"; shift ;;
