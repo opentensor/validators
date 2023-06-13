@@ -85,10 +85,23 @@ def export_df_to_hf(
         version: str,
         run: "wandb_sdk.wandb_run.Run"
 ):
+    """Exports a run dataframe to Hugging Face Hub
+    Args:
+        run_df (pd.DataFrame): Run dataframe
+        hf_datasets_path (str): Hugging Face datasets path
+        version (str): Dataset version
+        run ("wandb_sdk.wandb_run.Run"): Wandb run object
+    """
+
+    # Patch set_weights column if it does not exist (for short runs that don't log set_weights)
+    not_empty_run = len(run_df.columns) > 1
+    if not_empty_run and 'set_weights' not in run_df.columns:
+        run_df['set_weights'] = None
+
     expected_columns = set(WANDB_DF_SCHEMA)
     df_columns = set(run_df.columns.tolist())
 
-    columns_mismatch = not set(expected_columns).issubset(df_columns) or not set(df_columns).issubset(expected_columns)
+    columns_mismatch = not set(expected_columns).issubset(df_columns)
 
     if columns_mismatch:
         bt.logging.error(f'Wandb Run dataset columns do not match the expected schema')
@@ -98,7 +111,6 @@ def export_df_to_hf(
 
     run_id_file_output_path = f"hf://datasets/{hf_datasets_path}/{version}/raw_data/{run.id}.parquet"
     bt.logging.info(f'Exporting run data to {run_id_file_output_path}...')
-    # TODO: add complementary metadata to the run_df
 
     # Needs to convert to pyarrow table with schema and reconvert to pandas dataframe to export to Hugging Face Hub
     pa.Table.from_pandas(run_df, schema=DATASET_SCHEMA) \
@@ -108,53 +120,51 @@ def export_df_to_hf(
     bt.logging.info(f'Run data exported successfully!')
 
 
-def handle_problematic_run_ids(
-        problematic_runs: List[ProblematicRun],
+def handle_problematic_run_id(
+        problematic_run: ProblematicRun,
         metadata_info_df: pd.DataFrame,
         hf_datasets_path: str,
         version: str
 ):
-    for problematic_run in problematic_runs:
-        try:
-            run_id_metadata_row = metadata_info_df.loc[metadata_info_df['run_id'] == problematic_run.run_id]
-            run_id_already_captured = len(run_id_metadata_row) != 0
+    try:
+        run_id_metadata_row = metadata_info_df.loc[metadata_info_df['run_id'] == problematic_run.run_id]
+        run_id_already_captured = len(run_id_metadata_row) != 0
 
-            if run_id_already_captured:
-                metadata_info_df.loc[run_id_metadata_row.index, 'problematic'] = True
-                metadata_info_df.loc[run_id_metadata_row.index, 'problematic_reason'] = problematic_run.error
+        if run_id_already_captured:
+            metadata_info_df.loc[run_id_metadata_row.index, 'problematic'] = True
+            metadata_info_df.loc[run_id_metadata_row.index, 'problematic_reason'] = problematic_run.error
 
-                metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True,
-                                        index_label="index")
-            else:
-                wandb_metadata = get_wandb_metadata_info(problematic_run)
-                run_id_metadata = MetadataInfo(
-                    run_id=problematic_run.run_id,
-                    completed=False,
-                    downloaded=False,
-                    last_checkpoint=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    hotkey=get_hotkey_from_tags(problematic_run.run.tags),
-                    openvalidators_version=version,
-                    problematic=True,
-                    problematic_reason=problematic_run.error,
-                    wandb_json_config=wandb_metadata.wandb_json_config,
-                    wandb_run_name=wandb_metadata.wandb_run_name,
-                    wandb_user_info=wandb_metadata.wandb_user_info,
-                    wandb_tags=wandb_metadata.wandb_tags,
-                    wandb_createdAt=wandb_metadata.wandb_createdAt,
-                )
+            metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True,
+                                    index_label="index")
+        else:
+            wandb_metadata = get_wandb_metadata_info(problematic_run)
+            run_id_metadata = MetadataInfo(
+                run_id=problematic_run.run_id,
+                completed=False,
+                downloaded=False,
+                last_checkpoint=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                hotkey=get_hotkey_from_tags(problematic_run.run.tags),
+                openvalidators_version=version,
+                problematic=True,
+                problematic_reason=problematic_run.error,
+                wandb_json_config=wandb_metadata.wandb_json_config,
+                wandb_run_name=wandb_metadata.wandb_run_name,
+                wandb_user_info=wandb_metadata.wandb_user_info,
+                wandb_tags=wandb_metadata.wandb_tags,
+                wandb_createdAt=wandb_metadata.wandb_createdAt,
+            )
 
-                metadata_info_df = append_metadata_info(
-                    metadata_info_df=metadata_info_df,
-                    new_metadata_info=run_id_metadata
-                )
+            metadata_info_df = append_metadata_info(
+                metadata_info_df=metadata_info_df,
+                new_metadata_info=run_id_metadata
+            )
 
-                metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True,
-                                        index_label="index")
-                bt.logging.error('Problematic run_id updated successfully')
-        except Exception as e:
-            bt.logging.error(f'Error while handling problematic run {problematic_run.run_id}: {e}')
-            logger.add("error.log", format="{time} {level} {message}", level="ERROR")
-            continue
+            metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True,
+                                    index_label="index")
+            bt.logging.error('Problematic run_id updated successfully')
+    except Exception as e:
+        bt.logging.error(f'Error while handling problematic run {problematic_run.run_id}: {e}')
+        logger.add("error.log", format="{time} {level} {message}", level="ERROR")
 
 
 def consume_wandb_run(
@@ -282,13 +292,14 @@ def collect_wandb_data(
         except Exception as e:
             bt.logging.error(f'Error while consuming run {run.id}: {e}')
             problematic_run = ProblematicRun(run_id=run.id, run=run, error=str(e))
+
+            handle_problematic_run_id(
+                problematic_run,
+                metadata_info_df,
+                hf_datasets_path,
+                version)
+
             output_result.problematic_runs.append(problematic_run)
             continue
-
-    handle_problematic_run_ids(
-        output_result.problematic_runs,
-        metadata_info_df,
-        hf_datasets_path,
-        version)
 
     return output_result
