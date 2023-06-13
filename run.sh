@@ -211,15 +211,14 @@ if [ "$?" -eq 1 ]; then
                         pip install -e ../
 
                         # Check if script is already running with pm2
-                        if pm2 status | grep -q $proc_name; then
-                            echo "The script is already running with pm2. Stopping and restarting..."
-                            pm2 delete $proc_name
-                        fi
+                        # if pm2 status | grep -q $proc_name; then
+                        #     echo "The script is already running with pm2. Stopping and restarting..."
+                        #     pm2 delete $proc_name
+                        # fi
 
                         # # Run the Python script with the arguments using pm2
-                        echo "Running $script with the following arguments with pm2:"
-                        echo "${args[@]}"
-                        pm2 start "$script" --name $proc_name --interpreter python3 -- "${args[@]}"
+                        echo "Restarting PM2 process"
+                        pm2 restart $proc_name
 
                         # Update current version:
                         current_version=$(read_version_value)
