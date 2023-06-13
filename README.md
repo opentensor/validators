@@ -49,7 +49,7 @@ These validators are designed to run and update themselves automatically. To run
    ```
 4. Run the `run.sh` script which will handle running your validator and pulling the latest updates as they are issued. 
    ```bash
-   $ pm2 start autorun.sh -- script validators/openvalidators/neuron.py --wallet.name <your-wallet-name> --wallet.hotkey <your-wallet-hot-key>
+   $ pm2 start run.sh -- script validators/openvalidators/neuron.py --wallet.name <your-wallet-name> --wallet.hotkey <your-wallet-hot-key>
    ```
 
 # Usage
