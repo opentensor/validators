@@ -91,13 +91,10 @@ def resync_metagraph(self):
     # Sync the metagraph.
     self.metagraph.sync()
 
-    # Creates a dictionary of uids and hotkeys from the previous metagraph state.
-    uids_hotkeys_state_dict = dict(zip(previous_metagraph.uids.tolist(), previous_metagraph.hotkeys))
+    # Check if the metagraph axon info has changed.
+    metagraph_axon_info_updated = previous_metagraph.axons != self.metagraph.axons
 
-    # Creates a dictionary of latest uids and hotkeys of the metagraph.
-    latest_uids_hotkeys_state_dict = dict(zip(self.metagraph.uids.tolist(), self.metagraph.hotkeys))
-
-    if uids_hotkeys_state_dict != latest_uids_hotkeys_state_dict:
+    if metagraph_axon_info_updated:
         bt.logging.info("Metagraph updated, re-syncing hotkeys, dendrite pool and moving averages")
         # Reconstruct the dendrite pool with the new endpoints.
         self.dendrite_pool.resync(self.metagraph)
