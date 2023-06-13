@@ -94,6 +94,22 @@ Once you have your wallet ready for validation, you can start the foundation val
 $ python3 validators/openvalidators/neuron.py --wallet.name <your-wallet-name> --wallet.hotkey <your-wallet-hot-key>
 ```
 
+# Automatic Mode
+You can run the validator with automatic execution and updates so that it will remain up to date with the latest changes without you needing to continuously update it manually.
+
+The script `run.sh` in the root of this repository accomplishes this in conjuction with PM2. 
+
+To do this, first ensure you have installed the [`jq` package](https://jqlang.github.io/jq/) on your system.
+
+   On Ubuntu: `sudo apt update && sudo apt install jq` 
+   On OS X: `brew update && brew install jq`
+
+Once you have installed `jq`, you can start the validator in automatic mode by running the following command:
+
+```bash
+$ pm2 start autorun.sh -- script validators/openvalidators/neuron.py --wallet.name <your-wallet-name> --wallet.hotkey <your-wallet-hot-key>
+```
+
 # Real-time monitoring with wandb integration
 By default, the validator sends data to wandb, allowing users to monitor running validators and access key metrics in real time, such as:
 - Gating model loss

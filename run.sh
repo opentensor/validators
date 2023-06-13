@@ -8,6 +8,11 @@ args=()
 version_location="./openvalidators/__init__.py"
 version="__version__"
 
+<<<<<<< HEAD
+=======
+args=$@
+
+>>>>>>> d3962f425eea50cd648a963febe981a6fc5a4e7a
 # Check if pm2 is installed
 if ! command -v pm2 &> /dev/null
 then
@@ -193,7 +198,10 @@ fi
 
 # Run the Python script with the arguments using pm2
 echo "Running $script with the following arguments with pm2:"
+<<<<<<< HEAD
 echo "pm2 start $script --name $proc_name --interpreter python3 -- ${args[@]}"
+=======
+>>>>>>> d3962f425eea50cd648a963febe981a6fc5a4e7a
 pm2 start "$script" --name $proc_name --interpreter python3 -- "${args[@]}"
 
 # Check if packages are installed.
