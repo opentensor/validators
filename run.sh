@@ -8,8 +8,6 @@ args=()
 version_location="./openvalidators/__init__.py"
 version="__version__"
 
-args=$@
-
 # Check if pm2 is installed
 if ! command -v pm2 &> /dev/null
 then
@@ -149,10 +147,27 @@ strip_quotes() {
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --script) script="$2"; shift ;;
-        --name) name="$2"; shift ;;
-        --*) shift ;;
-        *) shift ;;
+        --script) 
+            script="$2";
+            shift ;;
+        --name) 
+            name="$2"
+            shift ;;
+        --*) 
+            flag="$1";
+            echo "flag is: $flag"
+            value="$2";
+            if [[ $value == *"--"*  ]]; then
+                value="True";
+                args+=("$flag=$value");
+            else
+                args+=("$flag=$value");
+                shift;
+            fi
+            ;;
+        *) 
+            echo "Unknown parameter passed"
+            shift ;;
     esac
     shift
 done
@@ -178,6 +193,7 @@ fi
 
 # Run the Python script with the arguments using pm2
 echo "Running $script with the following arguments with pm2:"
+echo "pm2 start $script --name $proc_name --interpreter python3 -- ${args[@]}"
 pm2 start "$script" --name $proc_name --interpreter python3 -- "${args[@]}"
 
 # Check if packages are installed.

@@ -32,6 +32,26 @@ the creation of valuable datasets for the community's miners.
 
 To learn more about the Bittensor validation process, check out this [documentation](https://tensor-wiki.vercel.app/validating/validating).
 
+# Running
+
+These validators are designed to run and update themselves automatically. To run a validator, follow these steps:
+
+1. Install this repository, you can do so by following the steps outlined in [the installation section](#install).
+2. Install [Weights and Biases](https://docs.wandb.ai/quickstart) and run `wandb.init()` within this repository. This will initialize Weights and Biases, enabling you to view KPIs and Metrics on your validator.
+3. Install [PM2](https://pm2.io/docs/runtime/guide/installation/) and the [`jq` package](https://jqlang.github.io/jq/) on your system.
+      **On Linux**:
+   ```bash
+   sudo apt update && sudo apt install jq
+   ``` 
+   **On Mac OS**
+   ```bash
+   brew update && brew install jq
+   ```
+4. Run the `run.sh` script which will handle running your validator and pulling the latest updates as they are issued. 
+   ```bash
+   $ pm2 start autorun.sh -- script validators/openvalidators/neuron.py --wallet.name <your-wallet-name> --wallet.hotkey <your-wallet-hot-key>
+   ```
+
 # Usage
 There are currently four main avenues for engaging with this repository:
 
