@@ -155,7 +155,6 @@ while [[ "$#" -gt 0 ]]; do
             shift ;;
         --*) 
             flag="$1";
-            echo "flag is: $flag"
             value="$2";
             if [[ $value == *"--"*  ]]; then
                 value="True";
