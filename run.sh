@@ -148,11 +148,12 @@ strip_quotes() {
 
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
+    echo $1
     case $1 in
         --script) script="$2"; shift ;;
         --name) name="$2"; shift ;;
-        --*) args+=("$1=$2"); shift ;;
-        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+        --*) shift ;;
+        *) shift ;;
     esac
     shift
 done
@@ -178,7 +179,6 @@ fi
 
 # Run the Python script with the arguments using pm2
 echo "Running $script with the following arguments with pm2:"
-echo "${args[@]}"
 pm2 start "$script" --name $proc_name --interpreter python3 -- "${args[@]}"
 
 # Check if packages are installed.
