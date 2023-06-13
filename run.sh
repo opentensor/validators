@@ -8,6 +8,8 @@ args=()
 version_location="./openvalidators/__init__.py"
 version="__version__"
 
+old_args=$@
+
 # Check if pm2 is installed
 if ! command -v pm2 &> /dev/null
 then
@@ -234,7 +236,7 @@ if [ "$?" -eq 1 ]; then
 
                         # Restart autorun script
                         echo "Restarting script..."
-                        ./$(basename $0) $args && exit
+                        ./$(basename $0) $old_args && exit
                     else
                         echo "**Will not update**"
                         echo "It appears you have made changes on your local copy. Please stash your changes using git stash."
