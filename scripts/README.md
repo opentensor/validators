@@ -51,7 +51,7 @@ The repository's Makefile includes the following targets to facilitate data coll
 make openvalidators_dataset
 ```
 
-This command downloads all the runs from the project and exports them to a CSV file named 
+This command downloads all the runs from the latest version of the project and exports them to a CSV file named 
 **openvalidators_dataset.csv**.
 It utilizes the following options under the hood of the [Makefile](Makefile):
 
@@ -76,8 +76,8 @@ This command downloads a specific run from the project and exports it to a CSV f
 ```bash
 make mining_dataset
 ```
-This command downloads all the runs from the project with a mining dataset and exports them to a CSV file named 
-**openvalidators_dataset.csv**. It utilizes the following options:
+This command downloads all the runs from the latest version of the project with a mining dataset and exports them to a 
+CSV file named **openvalidators_dataset.csv**. It utilizes the following options:
 
 - `--download_all`: Downloads all the runs.
 - `--export_path`: Specifies the path and filename for the exported CSV file.
@@ -90,12 +90,22 @@ This command downloads all the runs from the project with a mining dataset and e
 make scored_mining_dataset
 ```
 
-This command downloads all the runs from the project with a scored mining dataset and exports them to a CSV file named 
-**openvalidators_dataset.csv**. It utilizes the following options:
+This command downloads all the runs from the latest version of the project with a scored mining dataset and exports them
+to a CSV file named **openvalidators_dataset.csv**. It utilizes the following options:
 
 - `--download_all`: Downloads all the runs.
 - `--export_path`: Specifies the path and filename for the exported CSV file.
 - `--export_mining_with_scoring_dataset`: Enables the export of mining dataset with scoring.
+
+---
+
+### `openai_mining_dataset`
+```bash
+make openai_mining_dataset
+```
+
+This command downloads all the runs from the latest version of the project and exports them to jsonl file named
+**openai_mining_dataset_openvalidators.jsonl** in the [openai fine-tuning format](https://platform.openai.com/docs/guides/fine-tuning/prepare-training-data).
 
 Note: Feel completely free to adjust the [data_collector.py](data_collector.py) script and [Makefile](Makefile) as necessary to 
 match your project configuration and requirements.
@@ -146,7 +156,13 @@ By default, it is set to **"validator_dataset.csv"**. Example usage: `--export_p
 - **--blacklist_path**: This parameter allows you to specify the path to a file containing blacklist phrases.
 The script will exclude any data that contains these phrases. By default, it is set to [blacklist_phrases.txt](blacklist_phrases.txt).
 Example usage: `--blacklist_path=blacklist_phrases.txt`.
-
+- **--export_openai_dataset**: This parameter is a flag that, when set, enables the export of the mining dataset
+in the [jsonl openai format for fine-tuning](https://platform.openai.com/docs/guides/fine-tuning):
+  ```json lines
+  {"prompt": "base_prompt", "completion": "best_followup"},
+  {"prompt": "answer_prompt", "completion": "best_answer" }
+  ...
+  ```
 
 Make sure to adjust the parameters accordingly when executing the [data_collector.py](data_collector.py) script for your
 specific data collection needs.

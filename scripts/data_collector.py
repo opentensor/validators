@@ -17,20 +17,21 @@
 
 import bittensor as bt
 import argparse
-import tqdm
 import json
 import pandas as pd
 import openvalidators
 import os
 from analysis.utils import get_runs, download_data
 from traceback import print_exc
+from typing import List
+from data_formatter import create_json_dataset, create_csv_dataset, create_openai_dataset
 
 
 DEFAULT_PROJECT = 'opentensor-dev/openvalidators'
 DEFAULT_FILTERS = {"tags": {"$in": [openvalidators.__version__]}}
 
 
-def read_file_into_array(file_path: str) -> list[str]:
+def read_file_into_array(file_path: str) -> List[str]:
     """Reads a file into an array of strings"""
     bt.logging.info(f"Loading blacklists phrases from {file_path}")
     with open(file_path, 'r') as file:
@@ -73,76 +74,13 @@ def collect_data(
     return df
 
 
-def create_json_dataset(
-    df: pd.DataFrame,
-    include_scoring: bool,
-    blacklist: list[str]
-) -> dict:
-    dict_dataset = {}
-
-    for _, row in tqdm.tqdm(df.iterrows(), desc='Creating mining dataset', total=len(df), unit='run'):
-        base_prompt = row['base_prompt']
-        best_followup = row['best_followup']
-
-        answer_prompt = row['answer_prompt']
-        best_answer = row['best_answer']
-
-        if best_answer not in blacklist:
-            if include_scoring:
-                scores = 0
-                if isinstance(row["answer_rewards"], list):
-                    scores = max(row["answer_rewards"])
-                elif isinstance(row["answer_rewards"], float):
-                    scores = row["answer_rewards"]
-
-                dict_dataset[answer_prompt] = {best_answer: scores}
-            else:
-                dict_dataset[answer_prompt] = best_answer
-
-        if best_followup not in blacklist:
-            if include_scoring:
-                scores = 0
-                if isinstance(row["answer_rewards"], list):
-                    scores = max(row["answer_rewards"])
-                elif isinstance(row["answer_rewards"], float):
-                    scores = row["answer_rewards"]
-                dict_dataset[base_prompt] = {best_followup: scores}
-            else:
-                dict_dataset[base_prompt] = best_followup
-
-    return dict_dataset
-
-def create_csv_dataset(
-    df: pd.DataFrame,
-    include_scoring: bool,
-    blacklist: list[str]
-) -> pd.DataFrame:
-    if include_scoring:
-        mining_df = df[['base_prompt', 'best_followup', 'followup_rewards', 'answer_prompt', 'best_answer', 'answer_rewards']]
-        # Excludes blacklisted phrases from the dataset
-        filtered_df = mining_df[~df['best_followup'].isin(blacklist)]
-        filtered_df = filtered_df[~df['best_answer'].isin(blacklist)]
-
-        # Gets the max score for each answer and followup
-        filtered_df['followup_rewards'] = filtered_df['followup_rewards'].apply(lambda rewards: max(rewards))
-        filtered_df['answer_rewards'] = filtered_df['answer_rewards'].apply(lambda rewards: max(rewards))
-
-        return filtered_df
-    else:
-        mining_df = df[['base_prompt', 'best_followup', 'answer_prompt', 'best_answer']]
-        # Excludes blacklisted phrases from the dataset
-        filtered_df = mining_df[~df['best_followup'].isin(blacklist)]
-        filtered_df = filtered_df[~df['best_answer'].isin(blacklist)]
-
-        return filtered_df
-
-
 def create_mining_dataset(
     df: pd.DataFrame,
     export_path: str,
     mining_dataset_output_format: str,
-    blacklist_phrases: list[str],
-    with_score: bool =False):
+    blacklist_phrases: List[str],
+    with_score: bool =False,
+    export_openai_dataset: bool = False):
     """Creates a dataset for mining from the dataframe of wandb run logs.
     Args:
         df (pd.DataFrame): Dataframe of wandb run logs.
@@ -157,7 +95,13 @@ def create_mining_dataset(
 
     bt.logging.info(f"Creating mining dataset: {mining_dataset_path}")
 
-    if mining_dataset_output_format == 'json':
+    if export_openai_dataset:
+        jsonl_dataset = create_openai_dataset(df=df, blacklist=blacklist_phrases)
+
+        with open("openai_mining_dataset_openvalidators.jsonl", "w") as file:
+            file.write(jsonl_dataset)
+
+    elif mining_dataset_output_format == 'json':
         dict_dataset = create_json_dataset(
             df=df,
             include_scoring=with_score,
@@ -193,6 +137,7 @@ if __name__ == '__main__':
         parser.add_argument("--mining_dataset_output_format", type=str, help="Specify the output format of the mining dataset", default="json")
         parser.add_argument("--export_path", type=str, help="Specify the path to export the dataset", default="validator_dataset.csv")
         parser.add_argument("--blacklist_path", type=str, help="Specify the path to the blacklist phrases", default="blacklist_phrases.txt")
+        parser.add_argument("--export_openai_dataset", action="store_true", help="Exports the openai dataset", default=False)
 
         args = parser.parse_args()
 
@@ -203,6 +148,7 @@ if __name__ == '__main__':
         export_mining_with_scoring_dataset = args.export_mining_with_scoring_dataset
         export_path = args.export_path
         mining_dataset_output_format = args.mining_dataset_output_format
+        export_openai_dataset = args.export_openai_dataset
 
         bt.logging.info("Current version of openvalidators: " + openvalidators.__version__)
 
@@ -213,13 +159,14 @@ if __name__ == '__main__':
         collected_data = collect_data(download_all, export_path, wandb_run_id, include_tags)
 
         # Creates mining dataset
-        if export_mining_dataset or export_mining_with_scoring_dataset:
+        if export_mining_dataset or export_mining_with_scoring_dataset or export_openai_dataset:
             create_mining_dataset(
                 df=collected_data,
                 export_path=export_path,
                 mining_dataset_output_format=mining_dataset_output_format,
                 blacklist_phrases=blacklist_phrases,
-                with_score=export_mining_with_scoring_dataset
+                with_score=export_mining_with_scoring_dataset,
+                export_openai_dataset=export_openai_dataset
             )
     except Exception as e:
         bt.logging.error("Error in training loop", str(e))
