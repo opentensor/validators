@@ -8,11 +8,6 @@ args=()
 version_location="./openvalidators/__init__.py"
 version="__version__"
 
-<<<<<<< HEAD
-=======
-args=$@
-
->>>>>>> d3962f425eea50cd648a963febe981a6fc5a4e7a
 # Check if pm2 is installed
 if ! command -v pm2 &> /dev/null
 then
