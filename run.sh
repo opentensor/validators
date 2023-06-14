@@ -195,8 +195,14 @@ fi
 
 # Run the Python script with the arguments using pm2
 echo "Running $script with the following arguments with pm2:"
-echo "pm2 start $script --name $proc_name --interpreter python3 -- ${args[@]}"
-pm2 start "$script" --name $proc_name --interpreter python3 -- "${args[@]}"
+if [ ${#args[@]} -eq 0 ]; then
+    echo "pm2 start $script --name $proc_name --interpreter python3"
+    pm2 start "$script" --name $proc_name --interpreter python3
+else
+    echo "pm2 start $script --name $proc_name --interpreter python3 -- ${args[@]}"
+    pm2 start "$script" --name $proc_name --interpreter python3 -- "${args[@]}"
+fi
+
 
 # Check if packages are installed.
 check_package_installed "jq"
