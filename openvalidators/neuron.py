@@ -34,7 +34,7 @@ from openvalidators.config import add_args, check_config, config
 from openvalidators.run import run
 from openvalidators.misc import ttl_get_block
 from openvalidators.utils import init_wandb
-
+import random
 
 class neuron:
     @classmethod
@@ -93,7 +93,8 @@ class neuron:
         if self.config.neuron.mock_dataset:
             self.dataset = MockDataset()
         else:
-            self.dataset = iter(load_dataset("openwebtext", split="train", streaming=True).shuffle(buffer_size=10000))
+            seed = random.randint(0,1000)
+            self.dataset = iter(load_dataset("openwebtext", split="train", streaming=True).shuffle(seed=seed, buffer_size=100000))
         bt.logging.debug(str(self.dataset))
 
         # Init the gating model which learns which miners to select for each query.

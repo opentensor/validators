@@ -22,13 +22,15 @@ import torch
 import random
 import asyncio
 import bittensor as bt
-
+import random
 from loguru import logger
 from typing import List, Union, Dict
 from openvalidators.misc import ttl_get_block
 from openvalidators.prompts import (
     extract_score,
     followup_request_template,
+    augment_request_template,
+    school_levels,
     answer_scoring_template,
     followup_scoring_template,
 )
@@ -286,14 +288,35 @@ async def forward(self):
     bootstrap_prompt = ''
     for i in data.split('.')[:20]:
         bootstrap_prompt += i +'.'
-        
+
+    # Query the network with the base prompt and get an augmented base prompt.
+    random_level = random.randint(0,4)
+    augment_prompt = f"{bootstrap_prompt}\n\n{augment_request_template} {school_levels[random_level]} level\n\n"
+
     print("#########")
-    print("bootstrap_prompt")
-    print(bootstrap_prompt)
+    print("augment_prompt")
+    print(augment_prompt)
+    print("#########")
+
+    augment_uids = get_random_uids(self, k=self.config.neuron.followup_sample_size).to(self.device)
+    augment_responses = await self.dendrite_pool.async_forward(
+        uids=augment_uids,
+        roles=["user"],
+        messages=[augment_prompt],
+        timeout=self.config.neuron.followup_timeout,
+    )
+    # Reward model evaluation.
+    augment_rewards = reward_completions(self, augment_prompt, augment_responses).to(self.device)
+    augment_completions = [comp.completion for comp in followup_responses]
+    best_augment = augment_completions[augment_rewards.argmax(dim=0)].strip()
+
+    print("#########")
+    print("best_augment")
+    print(best_augment)
     print("#########")
 
     # Query the network with the base prompt and get the question extensions.
-    followup_prompt = f"{bootstrap_prompt}\n\n{followup_request_template}\n\n"
+    followup_prompt = f"{best_augment}\n\n{followup_request_template}\n\n"
     followup_uids = get_random_uids(self, k=self.config.neuron.followup_sample_size).to(self.device)
     followup_responses = await self.dendrite_pool.async_forward(
         uids=followup_uids,
@@ -372,6 +395,7 @@ async def forward(self):
 
     # Compute forward pass rewards, assumes followup_uids and answer_uids are mutually exclusive.
     rewards = self.moving_averaged_scores.scatter(0, followup_uids, followup_rewards)
+    rewards = rewards.scatter(0, augment_uids, augment_rewards)
     rewards = rewards.scatter(0, answer_uids, answer_rewards)
 
     # Update moving_averaged_scores with rewards.

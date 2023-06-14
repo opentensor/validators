@@ -80,6 +80,14 @@ def extract_firewall_detection(input_text):
 
 followup_request_template = "Ask one relevant and insightful question about the preceding context."
 
+# ==============================
+# === Augmentation request prompt ===
+# ==============================
+
+# Request an augmentation given a preceding context.
+
+augment_request_template = "Summarize the preceding context at"
+school_levels = ['elementary school','middle school', 'highschool', 'university', 'graduate school']
 
 # ================================
 # === Follow-up scoring prompt ===
