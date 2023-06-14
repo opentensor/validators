@@ -18,8 +18,7 @@ def start_collector(version: str, hf_dataset_output_dir: str, wandb_project: str
         hf_dataset_output_dir (str): Hugging Face dataset output directory
         wandb_project (str): Wandb project to crawl
     """
-
-
+    bt.logging.info(f"Starting data collector of version: {version}")
     # Load metadata info
     metadata_info = load_metadata_info(hf_datasets_path=hf_dataset_output_dir, version=version)
 

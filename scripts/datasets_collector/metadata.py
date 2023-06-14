@@ -1,8 +1,8 @@
 import bittensor as bt
 import pandas as pd
 from typing import Optional
-from huggingface_hub import HfFileSystem
 from dataclasses import dataclass, asdict
+from hf_utils import check_file_exists
 
 METADATA_COLUMNS = ["run_id", "completed", "downloaded", "last_checkpoint", "hotkey", "openvalidators_version",
                     "problematic", "problematic_reason", "wandb_json_config", "wandb_run_name", "wandb_user_info",
@@ -41,11 +41,7 @@ def load_metadata_info(hf_datasets_path: str, version: str) -> pd.DataFrame:
         pd.DataFrame: Metadata info
     """
     metadata_path = f"datasets/{hf_datasets_path}/{version}/metadata.csv"
-
-    hf_file_system = HfFileSystem()
-    repo_metadata = hf_file_system.glob(metadata_path)
-
-    repo_metadata_exists = len(repo_metadata) != 0
+    repo_metadata_exists = check_file_exists(metadata_path)
 
     if repo_metadata_exists:
         bt.logging.info(f'Metadata file located at {metadata_path}, loading metadata file...')
