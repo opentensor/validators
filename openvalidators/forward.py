@@ -212,7 +212,7 @@ def reward_completions(self, prompt: str, responses: List[bt.DendriteCall]) -> t
         difference=True,
         shift=self.config.neuron.reward_shift,
     ).to(self.device)
-    # successful_rewards = [ check_rpc_health(c, r) for c,r in list(zip(completions_without_prompt, successful_rewards)) ]
+    successful_rewards = [ check_rpc_health(c, r) for c,r in list(zip(completions_without_prompt, successful_rewards)) ]
 
     # Fill scores with zeros for non successful responses.
     successful_rewards = successful_rewards.softmax(0)
