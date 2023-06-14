@@ -282,7 +282,15 @@ async def forward(self):
     start_time = time.time()
 
     # Load a base prompt from the dataset.
-    bootstrap_prompt = next(self.dataset)["context"]
+    data = next(self.dataset)["text"]
+    bootstrap_prompt = ''
+    for i in data.split('.')[:20]:
+        bootstrap_prompt += i +'.'
+        
+    print("#########")
+    print("bootstrap_prompt")
+    print(bootstrap_prompt)
+    print("#########")
 
     # Query the network with the base prompt and get the question extensions.
     followup_prompt = f"{bootstrap_prompt}\n\n{followup_request_template}\n\n"
@@ -297,6 +305,11 @@ async def forward(self):
     followup_rewards = reward_completions(self, followup_prompt, followup_responses).to(self.device)
     followup_completions = [comp.completion for comp in followup_responses]
     best_followup = followup_completions[followup_rewards.argmax(dim=0)].strip()
+
+    print("#########")
+    print("best_followup")
+    print(best_followup)
+    print("#########")
 
     # Prompt-based scoring via network. Prohibits self-scoring.
     if self.config.neuron.outsource_scoring:
@@ -332,6 +345,11 @@ async def forward(self):
     answer_rewards = reward_completions(self, reward_prompt, answer_responses).to(self.device)
     answer_completions = [ans.completion for ans in answer_responses]
     best_answer = answer_completions[answer_rewards.argmax(dim=0)].strip()
+
+    print("#########")
+    print("best_answer")
+    print(best_answer)
+    print("#########")
 
     # Prompt-based scoring via network. Prohibits self-scoring.
     if self.config.neuron.outsource_scoring:

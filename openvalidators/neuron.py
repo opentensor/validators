@@ -93,7 +93,7 @@ class neuron:
         if self.config.neuron.mock_dataset:
             self.dataset = MockDataset()
         else:
-            self.dataset = iter(load_dataset("squad_v2", split="train", streaming=True).shuffle(buffer_size=10000))
+            self.dataset = iter(load_dataset("openwebtext", split="train", streaming=True).shuffle(buffer_size=10000))
         bt.logging.debug(str(self.dataset))
 
         # Init the gating model which learns which miners to select for each query.
