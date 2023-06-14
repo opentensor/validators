@@ -26,7 +26,6 @@ import bittensor as bt
 from loguru import logger
 from typing import List, Union, Dict
 from openvalidators.misc import ttl_get_block
-from openvalidators.misc import check_rpc_health
 from openvalidators.prompts import (
     extract_score,
     followup_request_template,
