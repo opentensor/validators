@@ -150,7 +150,7 @@ def append_scanned_runs_batch(scanned_runs_df: pd.DataFrame, run_id: str, sample
 def main(version):
 
     scanned_runs_df = get_scanned_runs_df(hf_datasets_path=DEFAULT_HF_DATASET_OUTPUT_DIR)
-    scanned_ids = []# scanned_runs_df['run_id'].tolist()
+    scanned_ids = scanned_runs_df['run_id'].tolist()
 
     downloaded_runs_ids = get_downloaded_runs(hf_data_source_path=DEFAULT_HF_SOURCE_DATASET, version=version)
 
@@ -160,8 +160,10 @@ def main(version):
 
     openai_dataset_df = load_openai_dataset(hf_datasets_path=DEFAULT_HF_DATASET_OUTPUT_DIR, dataset_path=OPENAI_DATASET_PATH)
 
-    try:
-        for run_id in tqdm.tqdm(new_runs_ids, desc='Ingesting runs', total=len(new_runs_ids),unit='run'):
+    problematic_run_ids = []
+
+    for run_id in tqdm.tqdm(new_runs_ids, desc='Ingesting runs', total=len(new_runs_ids),unit='run'):
+        try:
             bt.logging.info(f'Ingesting run {run_id}...')
             new_samples_df = get_new_samples(
                 openai_dataset_df=openai_dataset_df,
@@ -172,6 +174,7 @@ def main(version):
 
             # Append new samples to the openai dataset
             openai_dataset_df = pd.concat([openai_dataset_df, new_samples_df])
+            openai_dataset_df = openai_dataset_df.sort_values(by=['prompt']).drop_duplicates()
 
             bt.logging.info(f'Run {run_id} collected with {len(new_samples_df)} new samples...')
             bt.logging.info(f'OpenAI dataset size: {len(openai_dataset_df)}')
@@ -181,15 +184,14 @@ def main(version):
                 scanned_runs_df=scanned_runs_df,
                 run_id=run_id,
                 sample_size=len(new_samples_df))
+        except Exception as e:
+            bt.logging.error(f'Error while ingesting new runs: {e}')
+            problematic_run_ids.append(run_id)
 
-        openai_dataset_df = openai_dataset_df.sort_values(by=['prompt']).drop_duplicates()
-        openai_dataset_df.to_json(f'hf://datasets/{DEFAULT_HF_DATASET_OUTPUT_DIR}/{OPENAI_DATASET_PATH}', orient='records', lines=True)
-        scanned_runs_df.to_csv(f"hf://datasets/{DEFAULT_HF_DATASET_OUTPUT_DIR}/openai/scanned_runs.csv", index=False)
-    except Exception as e:
-        bt.logging.error(f'Error while ingesting new runs: {e}')
-        raise e
+    openai_dataset_df.to_json(f'hf://datasets/{DEFAULT_HF_DATASET_OUTPUT_DIR}/{OPENAI_DATASET_PATH}', orient='records', lines=True)
+    scanned_runs_df.to_csv(f"hf://datasets/{DEFAULT_HF_DATASET_OUTPUT_DIR}/openai/scanned_runs.csv", index=False)
 
-
+    bt.logging.warning(f'Problematic runs: {problematic_run_ids}')
 
 
 if __name__ == "__main__":
