@@ -36,7 +36,7 @@ To learn more about the Bittensor validation process, check out this [documentat
 These validators are designed to run and update themselves automatically. To run a validator, follow these steps:
 
 1. Install this repository, you can do so by following the steps outlined in [the installation section](#install).
-2. Install [Weights and Biases](https://docs.wandb.ai/quickstart) and run `wandb.login()` within this repository. This will initialize Weights and Biases, enabling you to view KPIs and Metrics on your validator. (Strongly recommended to help the network improve from data sharing)
+2. Install [Weights and Biases](https://docs.wandb.ai/quickstart) and run `wandb login` within this repository. This will initialize Weights and Biases, enabling you to view KPIs and Metrics on your validator. (Strongly recommended to help the network improve from data sharing)
 3. Install [PM2](https://pm2.io/docs/runtime/guide/installation/) and the [`jq` package](https://jqlang.github.io/jq/) on your system.
       **On Linux**:
    ```bash
