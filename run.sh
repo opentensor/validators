@@ -155,21 +155,21 @@ while [[ $# -gt 0 ]]; do
     # Check if the argument has a value
     if [[ $# -gt 1 && "$2" != -* ]]; then
           if [[ "$arg" == "--script" ]]; then
-            script="$2"
+            script="$2";
             shift 2
         else
             # Add '=' sign between flag and value
-            args+="$arg=$2 "
+            args+=("$arg=$2");
             shift 2
         fi
     else
       # Add '=True' for flags with no value
-      args+="$arg=True "
+      args+=("$arg");
       shift
     fi
   else
     # Argument is not a flag, add it as it is
-    args+="$arg "
+    args+=("$arg ");
     shift
   fi
 done
