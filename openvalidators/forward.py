@@ -307,7 +307,7 @@ async def forward(self):
     )
     # Reward model evaluation.
     augment_rewards = reward_completions(self, augment_prompt, augment_responses).to(self.device)
-    augment_completions = [comp.completion for comp in followup_responses]
+    augment_completions = [comp.completion for comp in augment_responses]
     best_augment = augment_completions[augment_rewards.argmax(dim=0)].strip()
 
     print("#########")
