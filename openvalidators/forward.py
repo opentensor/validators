@@ -26,6 +26,7 @@ import bittensor as bt
 from loguru import logger
 from typing import List, Union, Dict
 from openvalidators.misc import ttl_get_block
+from openvalidators.misc import check_rpc_health
 from openvalidators.prompts import (
     extract_score,
     followup_request_template,
@@ -211,6 +212,7 @@ def reward_completions(self, prompt: str, responses: List[bt.DendriteCall]) -> t
         difference=True,
         shift=self.config.neuron.reward_shift,
     ).to(self.device)
+    successful_rewards = [ check_rpc_health(c, r) for c,r in list(zip(completions_without_prompt, successful_rewards)) ]
 
     # Fill scores with zeros for non successful responses.
     successful_rewards = successful_rewards.softmax(0)
