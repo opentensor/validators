@@ -33,6 +33,7 @@ from openvalidators.prompts import (
     followup_scoring_template,
 )
 from openvalidators.utils import check_uid_availability
+from openvalidators.filtering import is_nsfw, is_relevant
 
 
 def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor:
@@ -59,7 +60,7 @@ def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor
     return uids
 
 
-def is_successful_completion(self, response: bt.DendriteCall, min_len: int = 10, nsfw_bound_score: float = 0.5) -> bool:
+def is_successful_completion(self, prompt: str, response: bt.DendriteCall, is_answer: bool = False, min_len: int = 10, nsfw_bound_score: float = 0.5) -> bool:
     """Filters out unsuccessful responses.
 
     Args:
@@ -72,13 +73,12 @@ def is_successful_completion(self, response: bt.DendriteCall, min_len: int = 10,
         True if the response is successful, False otherwise.
     """
     len_check = len(response.completion) > min_len
-    filter_check = not (self.config.neuron.nsfw_filter and is_nsfw(self, response.completion, nsfw_bound_score))
-
-    return len_check and filter_check
-
+    nsfw_filter_check = not (self.config.neuron.nsfw_filter and is_nsfw(self, response.completion, nsfw_bound_score))
+    relevance_check = is_relevant(self, prompt, response.completion, is_answer = is_answer )
+    return len_check and nsfw_filter_check and relevance_check
 
 async def scoring_completions(
-    self, prompt: str, scoring_template: str, responses: List[bt.DendriteCall], exclude_uids: List[int] = None
+    self, prompt: str, scoring_template: str, responses: List[bt.DendriteCall], is_answer: bool = False, exclude_uids: List[int] = None
 ) -> Dict:
     """Using the prompt and call responses, outsource prompt-based scoring to network,
        return scoring average for each response.
@@ -119,7 +119,7 @@ async def scoring_completions(
     # Each completion separately scored by the network.
     coroutines = []
     for i, response in enumerate(responses):
-        if not is_successful_completion(self, response):
+        if not is_successful_completion(self, prompt, response, is_answer = is_answer):
             continue
 
         # Scoring prompt for this completion.
@@ -143,7 +143,7 @@ async def scoring_completions(
 
     # Extract scores and calculate filled scores.
     for i, response in enumerate(responses):
-        if not is_successful_completion(self, response):
+        if not is_successful_completion(self, prompt, response, is_answer = is_answer):
             continue
 
         # Scoring responses for original response.
@@ -179,7 +179,7 @@ async def scoring_completions(
     return scoring_dict
 
 
-def reward_completions(self, prompt: str, responses: List[bt.DendriteCall]) -> torch.FloatTensor:
+def reward_completions(self, prompt: str, responses: List[bt.DendriteCall], is_answer = False) -> torch.FloatTensor:
     """Using the prompt and call responses returns rewards for each response.
 
     Args:
@@ -194,7 +194,7 @@ def reward_completions(self, prompt: str, responses: List[bt.DendriteCall]) -> t
     """
     # Filters out unsuccessful responses.
     successful_completions_indices: List[int] = [
-        idx for idx, resp in enumerate(responses) if is_successful_completion(self, resp)
+        idx for idx, resp in enumerate(responses) if is_successful_completion(self, prompt, resp, is_answer = is_answer)
     ]
     successful_completions: List[str] = [responses[idx].completion.strip() for idx in successful_completions_indices]
 
@@ -220,49 +220,6 @@ def reward_completions(self, prompt: str, responses: List[bt.DendriteCall]) -> t
 
     # Return the filled rewards.
     return filled_rewards
-
-
-def is_nsfw(self, message, bound_score=0.5, return_score=False) -> Union[bool, float]:
-    """Check if the message contains hateful content.
-
-    Args:
-        message (str):
-            The message that we check if we should filter out.
-        bound_score (float):
-            Threshold for the logit score to filter out the message.
-        return_score (bool):
-            Whether to return the logit score for the message being unsafe.
-    Returns:
-        result (bool if return_score is False, float if return_score is True):
-            bool: True indicates we should filter out the result, false indicates the result is safe.
-            float: The logit score for the message being unsafe.
-
-    """
-    tokenized = self.nsfw_filter_tokenizer(message)
-    input_ids = tokenized["input_ids"]
-    score = -1000
-    # The model can only support 512 tokens at a time, so we have to break up the check
-    # if there are too many tokens in a single message.
-    while len(input_ids) > 0:
-        _input_ids = input_ids[:512]
-
-        with torch.no_grad():
-            output = self.nsfw_filter_model(torch.tensor([_input_ids]).to(self.device))
-
-        nothate, hate = output.logits[0].tolist()
-        if return_score:
-            # Return the max logit score across the message.
-            score = max(hate, score)
-        elif hate > bound_score or nothate < bound_score:
-            # Filter out if the logit score is out of bound.
-            return True
-
-        input_ids = input_ids[512:]
-
-    if return_score:
-        return score
-    else:
-        return False
 
 
 async def forward(self):
@@ -294,7 +251,7 @@ async def forward(self):
         timeout=self.config.neuron.followup_timeout,
     )
     # Reward model evaluation.
-    followup_rewards = reward_completions(self, followup_prompt, followup_responses).to(self.device)
+    followup_rewards = reward_completions(self, followup_prompt, followup_responses, is_answer = False).to(self.device)
     followup_completions = [comp.completion for comp in followup_responses]
     best_followup = followup_completions[followup_rewards.argmax(dim=0)].strip()
 
@@ -306,6 +263,7 @@ async def forward(self):
             scoring_template=followup_scoring_template,
             responses=followup_responses,
             exclude_uids=followup_uids,
+            is_answer=False
         )
 
     # Backward call sends reward info back to followup_uids.
@@ -329,7 +287,7 @@ async def forward(self):
 
     reward_prompt = f"Question: {best_followup}\n"
     # Reward model evaluation.
-    answer_rewards = reward_completions(self, reward_prompt, answer_responses).to(self.device)
+    answer_rewards = reward_completions(self, reward_prompt, answer_responses, is_answer = True).to(self.device)
     answer_completions = [ans.completion for ans in answer_responses]
     best_answer = answer_completions[answer_rewards.argmax(dim=0)].strip()
 
@@ -341,6 +299,7 @@ async def forward(self):
             scoring_template=answer_scoring_template,
             responses=answer_responses,
             exclude_uids=answer_uids,
+            is_answer = True
         )
 
     # Backward call sends reward info back to answer_uids.

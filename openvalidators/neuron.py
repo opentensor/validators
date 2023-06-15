@@ -22,7 +22,7 @@ import torch
 import asyncio
 import bittensor as bt
 from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoModel, AutoTokenizer, AutoModelForSequenceClassification
 
 from openvalidators.dendrite import AsyncDendritePool
 from openvalidators.reward import RewardModel
@@ -148,8 +148,14 @@ class neuron:
             nsfw_filter_model_path = "facebook/roberta-hate-speech-dynabench-r4-target"
             self.nsfw_filter_model = AutoModelForSequenceClassification.from_pretrained(nsfw_filter_model_path).to(self.device)
             self.nsfw_filter_tokenizer = AutoTokenizer.from_pretrained(nsfw_filter_model_path)
-            self.nsfw_filter_tokenizer.pad_token = self.filter_tokenizer.eos_token
+            self.nsfw_filter_tokenizer.pad_token = self.nsfw_filter_tokenizer.eos_token
  
+        # init relev
+        relevance_model_path = "bert-base-uncased"
+        self.relevance_model = AutoModel.from_pretrained(relevance_model_path).to(self.device)
+        self.relevance_tokenizer = AutoTokenizer.from_pretrained(relevance_model_path)
+        self.relevance_tokenizer.pad_token = self.relevance_tokenizer.eos_token
+        
         if self.config.neuron.epoch_length_override:
             self.config.neuron.epoch_length = self.config.neuron.epoch_length_override
         else:
