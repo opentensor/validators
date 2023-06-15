@@ -9,7 +9,6 @@
 
 </div>
 
-
 This repository contains Bittensor Validators designed by the OpenTensor Foundation team for the community.
 It offers several functionalities, such as:
 
@@ -37,20 +36,22 @@ To learn more about the Bittensor validation process, check out this [documentat
 These validators are designed to run and update themselves automatically. To run a validator, follow these steps:
 
 1. Install this repository, you can do so by following the steps outlined in [the installation section](#install).
-2. Install [Weights and Biases](https://docs.wandb.ai/quickstart) and run `wandb.init()` within this repository. This will initialize Weights and Biases, enabling you to view KPIs and Metrics on your validator.
+2. Install [Weights and Biases](https://docs.wandb.ai/quickstart) and run `wandb login` within this repository. This will initialize Weights and Biases, enabling you to view KPIs and Metrics on your validator. (Strongly recommended to help the network improve from data sharing)
 3. Install [PM2](https://pm2.io/docs/runtime/guide/installation/) and the [`jq` package](https://jqlang.github.io/jq/) on your system.
-      **On Linux**:
+   **On Linux**:
    ```bash
-   sudo apt update && sudo apt install jq
+   sudo apt update && sudo apt install jq && sudo apt install npm && sudo npm install pm2 -g && pm2 update
    ``` 
    **On Mac OS**
    ```bash
-   brew update && brew install jq
+   brew update && brew install jq && brew install npm && sudo npm install pm2 -g && pm2 update
    ```
 4. Run the `run.sh` script which will handle running your validator and pulling the latest updates as they are issued. 
    ```bash
-   $ pm2 start autorun.sh -- script validators/openvalidators/neuron.py --wallet.name <your-wallet-name> --wallet.hotkey <your-wallet-hot-key>
+   pm2 start run.sh --name openvalidators_autoupdate -- --wallet.name <your-wallet-name> --wallet.hotkey <your-wallet-hot-key>
    ```
+
+This will run **two** PM2 process: one for the validator which is called `auto_run_validator` by default (you can change this in `run.sh`), and one for the run.sh script (in step 4, we named it `validator_maintainer`). The script will check for updates every 30 minutes, if there is an update then it will pull it, install it, restart `auto_run_validator` and then restart itself.
 
 # Usage
 There are currently four main avenues for engaging with this repository:
@@ -92,22 +93,6 @@ Participation in Network Validation is available to TAO holders. The validation 
 Once you have your wallet ready for validation, you can start the foundation validator by running the following command:
 ```bash
 $ python3 validators/openvalidators/neuron.py --wallet.name <your-wallet-name> --wallet.hotkey <your-wallet-hot-key>
-```
-
-# Automatic Mode
-You can run the validator with automatic execution and updates so that it will remain up to date with the latest changes without you needing to continuously update it manually.
-
-The script `run.sh` in the root of this repository accomplishes this in conjuction with PM2. 
-
-To do this, first ensure you have installed the [`jq` package](https://jqlang.github.io/jq/) on your system.
-
-   On Ubuntu: `sudo apt update && sudo apt install jq` 
-   On OS X: `brew update && brew install jq`
-
-Once you have installed `jq`, you can start the validator in automatic mode by running the following command:
-
-```bash
-$ pm2 start autorun.sh -- script validators/openvalidators/neuron.py --wallet.name <your-wallet-name> --wallet.hotkey <your-wallet-hot-key>
 ```
 
 # Real-time monitoring with wandb integration
