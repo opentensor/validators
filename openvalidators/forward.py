@@ -238,7 +238,7 @@ def is_nsfw(self, message, bound_score=0.5, return_score=False) -> Union[bool, f
             float: The logit score for the message being unsafe.
 
     """
-    tokenized = self.filter_tokenizer(message)
+    tokenized = self.nsfw_filter_tokenizer(message)
     input_ids = tokenized["input_ids"]
     score = -1000
     # The model can only support 512 tokens at a time, so we have to break up the check
@@ -247,7 +247,7 @@ def is_nsfw(self, message, bound_score=0.5, return_score=False) -> Union[bool, f
         _input_ids = input_ids[:512]
 
         with torch.no_grad():
-            output = self.filter_model(torch.tensor([_input_ids]).to(self.device))
+            output = self.nsfw_filter_model(torch.tensor([_input_ids]).to(self.device))
 
         nothate, hate = output.logits[0].tolist()
         if return_score:

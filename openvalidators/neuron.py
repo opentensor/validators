@@ -145,11 +145,11 @@ class neuron:
 
         # Init Filter model
         if self.config.neuron.nsfw_filter:
-            filter_model_path = "facebook/roberta-hate-speech-dynabench-r4-target"
-            self.filter_model = AutoModelForSequenceClassification.from_pretrained(filter_model_path).to(self.device)
-            self.filter_tokenizer = AutoTokenizer.from_pretrained(filter_model_path)
-            self.filter_tokenizer.pad_token = self.filter_tokenizer.eos_token
-
+            nsfw_filter_model_path = "facebook/roberta-hate-speech-dynabench-r4-target"
+            self.nsfw_filter_model = AutoModelForSequenceClassification.from_pretrained(nsfw_filter_model_path).to(self.device)
+            self.nsfw_filter_tokenizer = AutoTokenizer.from_pretrained(nsfw_filter_model_path)
+            self.nsfw_filter_tokenizer.pad_token = self.filter_tokenizer.eos_token
+ 
         if self.config.neuron.epoch_length_override:
             self.config.neuron.epoch_length = self.config.neuron.epoch_length_override
         else:
