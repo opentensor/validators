@@ -3,6 +3,8 @@ import bittensor as bt
 from huggingface_hub import login
 from metadata import load_metadata_info
 from wandb_utils import collect_wandb_data
+from openai_dataset_collector import extract_openai_data, OPENAI_DATASET_PATH
+from openai_dataset_collector import DEFAULT_HF_DATASET_OUTPUT_DIR as OPENAI_HF_DATASET_OUTPUT_DIR
 
 #DEFAULT_VERSION = openvalidators.__version__
 DEFAULT_VERSION = '1.0.0'
@@ -12,7 +14,7 @@ HF_TOKEN = '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'
 
 
 def start_collector(version: str, hf_dataset_output_dir: str, wandb_project: str):
-    """Starts the data collector script
+    """Starts the data collector script to extract data from wandb into Hugging Face datasets
     Args:
         version (str): Version of the dataset to collect
         hf_dataset_output_dir (str): Hugging Face dataset output directory
@@ -49,14 +51,23 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     hf_token = args.hf_token
-    hf_dataset_output_dir = args.hf_dataset_output_dir
+    openvalidators_hf_dataset_dir = args.hf_dataset_output_dir
     wandb_project = args.wandb_project
 
     # Login to hugging face
     login(hf_token)
 
     for version in SUPPORTED_VERSIONS:
-        start_collector(version=version, hf_dataset_output_dir=hf_dataset_output_dir, wandb_project=wandb_project)
+        # Start data collector from wandb to hf datasets
+        start_collector(version=version, hf_dataset_output_dir=openvalidators_hf_dataset_dir, wandb_project=wandb_project)
+
+        # Extract data openvalidators hf datasets to openvalidators openai dataset
+        extract_openai_data(
+            openvalidators_version=version,
+            hf_source_dataset=openvalidators_hf_dataset_dir,
+            hf_dataset_output_dir=OPENAI_HF_DATASET_OUTPUT_DIR,
+            openai_dataset_path=OPENAI_DATASET_PATH
+        )
 
 
 
