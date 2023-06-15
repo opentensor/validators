@@ -121,16 +121,17 @@ def export_df_to_hf(
 
 
 def handle_problematic_run_id(
-        problematic_run: ProblematicRun,
-        metadata_info_df: pd.DataFrame,
-        hf_datasets_path: str,
-        version: str
+    problematic_run: ProblematicRun,
+    metadata_info_df: pd.DataFrame,
+    hf_datasets_path: str,
+    version: str
 ):
     try:
         run_id_metadata_row = metadata_info_df.loc[metadata_info_df['run_id'] == problematic_run.run_id]
         run_id_already_captured = len(run_id_metadata_row) != 0
 
         if run_id_already_captured:
+            metadata_info_df.loc[run_id_metadata_row.index, 'wandb_state'] = problematic_run.state
             metadata_info_df.loc[run_id_metadata_row.index, 'problematic'] = True
             metadata_info_df.loc[run_id_metadata_row.index, 'problematic_reason'] = problematic_run.error
 
@@ -152,6 +153,9 @@ def handle_problematic_run_id(
                 wandb_user_info=wandb_metadata.wandb_user_info,
                 wandb_tags=wandb_metadata.wandb_tags,
                 wandb_createdAt=wandb_metadata.wandb_createdAt,
+                wandb_heartbeatAt=wandb_metadata.wandb_heartbeatAt,
+                wandb_state=problematic_run.state,
+                logged_rows=0
             )
 
             metadata_info_df = append_metadata_info(
@@ -186,7 +190,9 @@ def consume_wandb_run(
         # Checks if run_id is still running. If so, skips run_id and updates last checkpoint
         bt.logging.info(f'Run {run.id} is still in progress, skipping and updating checkpoint...')
 
-        # Updates last checkpoint of run_id
+        # Updates last state and checkpoint of run_id
+        metadata_info_df.loc[run_id_metadata_row.index, 'wandb_state'] = run.state
+        metadata_info_df.loc[run_id_metadata_row.index, 'wandb_heartbeatAt'] = run.heartbeat_at
         metadata_info_df.loc[run_id_metadata_row.index, 'last_checkpoint'] = datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S")
 
@@ -208,6 +214,9 @@ def consume_wandb_run(
         # Updates metadata info
         metadata_info_df.loc[run_id_metadata_row.index, 'completed'] = True
         metadata_info_df.loc[run_id_metadata_row.index, 'downloaded'] = True
+        metadata_info_df.loc[run_id_metadata_row.index, 'logged_rows'] = len(run_df)
+        metadata_info_df.loc[run_id_metadata_row.index, 'wandb_state'] = run.state
+        metadata_info_df.loc[run_id_metadata_row.index, 'wandb_heartbeatAt'] = run.heartbeat_at
         metadata_info_df.loc[run_id_metadata_row.index, 'last_checkpoint'] = datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S")
         metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True,
@@ -220,16 +229,16 @@ def consume_wandb_run(
 
 
 def collect_wandb_data(
-        metadata_info_df: pd.DataFrame,
-        wandb_project: str,
-        version: str,
-        hf_datasets_path: str
+    metadata_info_df: pd.DataFrame,
+    wandb_project: str,
+    version: str,
+    hf_datasets_path: str
 ) -> CollectionOutputResult:
     api = wandb.Api()
     wandb.login(anonymous="allow")
 
     non_processed_runs = get_non_processed_runs(api, wandb_project, version, metadata_info_df)
-    runs_pbar = tqdm.tqdm(non_processed_runs, desc="Loading unprocessed run_ids from wandb",
+    runs_pbar = tqdm.tqdm(non_processed_runs, desc=f"Loading unprocessed run_ids from wandb version {version}",
                           total=len(non_processed_runs), unit="run")
 
     output_result = CollectionOutputResult(problematic_runs=[], skipped_run_ids=0, new_downloaded_run_ids=0)
@@ -266,7 +275,10 @@ def collect_wandb_data(
                     wandb_run_name=wandb_metadata.wandb_run_name,
                     wandb_user_info=wandb_metadata.wandb_user_info,
                     wandb_tags=wandb_metadata.wandb_tags,
+                    wandb_state=wandb_metadata.wandb_state,
                     wandb_createdAt=wandb_metadata.wandb_createdAt,
+                    wandb_heartbeatAt=wandb_metadata.wandb_heartbeatAt,
+                    logged_rows=0
                 )
 
                 metadata_info_df = append_metadata_info(

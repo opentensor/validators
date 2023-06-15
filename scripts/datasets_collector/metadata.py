@@ -5,10 +5,8 @@ from dataclasses import dataclass, asdict
 from hf_utils import check_file_exists
 
 METADATA_COLUMNS = ["run_id", "completed", "downloaded", "last_checkpoint", "hotkey", "openvalidators_version",
-                    "problematic", "problematic_reason", "wandb_json_config", "wandb_run_name", "wandb_user_info",
-                    "wandb_tags",
-                    "wandb_createdAt"]
-
+                    "problematic", "problematic_reason", "wandb_json_config", "logged_rows", "wandb_run_name",
+                    "wandb_user_info", "wandb_tags", "wandb_createdAt","wandb_heartbeatAt", "wandb_state", ]
 
 @dataclass
 class WandbMetadata:
@@ -17,6 +15,8 @@ class WandbMetadata:
     wandb_user_info: str
     wandb_tags: str
     wandb_createdAt: str
+    wandb_heartbeatAt: str
+    wandb_state: str
 
 
 @dataclass
@@ -29,6 +29,7 @@ class MetadataInfo(WandbMetadata):
     openvalidators_version: str
     problematic: bool
     problematic_reason: Optional[str]
+    logged_rows: int
 
 
 def load_metadata_info(hf_datasets_path: str, version: str) -> pd.DataFrame:
@@ -67,6 +68,8 @@ def get_wandb_metadata_info(wandb_run: "wandb_sdk.wandb_run.Run") -> WandbMetada
         wandb_user_info=wandb_run.user.username,
         wandb_tags=wandb_run.tags,
         wandb_createdAt=wandb_run.createdAt,
+        wandb_heartbeatAt=wandb_run.heartbeatAt,
+        wandb_state=wandb_run.state
     )
 
     return wandb_metadata
