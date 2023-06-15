@@ -131,12 +131,11 @@ def handle_problematic_run_id(
         run_id_already_captured = len(run_id_metadata_row) != 0
 
         if run_id_already_captured:
-            metadata_info_df.loc[run_id_metadata_row.index, 'wandb_state'] = problematic_run.state
+            metadata_info_df.loc[run_id_metadata_row.index, 'wandb_state'] = problematic_run.run.state
             metadata_info_df.loc[run_id_metadata_row.index, 'problematic'] = True
             metadata_info_df.loc[run_id_metadata_row.index, 'problematic_reason'] = problematic_run.error
 
-            metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True,
-                                    index_label="index")
+            metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv")
         else:
             wandb_metadata = get_wandb_metadata_info(problematic_run)
             run_id_metadata = MetadataInfo(
@@ -154,7 +153,7 @@ def handle_problematic_run_id(
                 wandb_tags=wandb_metadata.wandb_tags,
                 wandb_createdAt=wandb_metadata.wandb_createdAt,
                 wandb_heartbeatAt=wandb_metadata.wandb_heartbeatAt,
-                wandb_state=problematic_run.state,
+                wandb_state=problematic_run.run.state,
                 logged_rows=0
             )
 
@@ -163,8 +162,7 @@ def handle_problematic_run_id(
                 new_metadata_info=run_id_metadata
             )
 
-            metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True,
-                                    index_label="index")
+            metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv")
             bt.logging.error('Problematic run_id updated successfully')
     except Exception as e:
         bt.logging.error(f'Error while handling problematic run {problematic_run.run_id}: {e}')
@@ -196,8 +194,7 @@ def consume_wandb_run(
         metadata_info_df.loc[run_id_metadata_row.index, 'last_checkpoint'] = datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S")
 
-        metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True,
-                                index_label="index")
+        metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv")
         collection_output_result.skipped_run_ids += 1
         return
     elif run.state in completed_states and not run_id_metadata["downloaded"]:
@@ -219,8 +216,7 @@ def consume_wandb_run(
         metadata_info_df.loc[run_id_metadata_row.index, 'wandb_heartbeatAt'] = run.heartbeat_at
         metadata_info_df.loc[run_id_metadata_row.index, 'last_checkpoint'] = datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S")
-        metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True,
-                                index_label="index")
+        metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv")
         bt.logging.info(f'Metadata info updated successfully!')
         collection_output_result.new_downloaded_run_ids += 1
         return
@@ -287,8 +283,7 @@ def collect_wandb_data(
                 )
 
                 # Sends metadata info to Hugging Face Hub
-                metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv", index=True,
-                                        index_label="index")
+                metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv")
 
                 bt.logging.info(f'Run {run.id} captured successfully! Consuming run...')
 

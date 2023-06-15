@@ -6,9 +6,9 @@ from wandb_utils import collect_wandb_data
 from openai_dataset_collector import extract_openai_data, OPENAI_DATASET_PATH
 from openai_dataset_collector import DEFAULT_HF_DATASET_OUTPUT_DIR as OPENAI_HF_DATASET_OUTPUT_DIR
 
-#DEFAULT_VERSION = openvalidators.__version__
-DEFAULT_VERSION = '1.0.0'
-DEFAULT_HF_DATASET_OUTPUT_DIR = 'opentensor/openvalidators-test'
+SUPPORTED_VERSIONS = ['1.0.0', '1.0.1', '1.0.2', '1.0.3', '1.0.4', '1.0.5', '1.0.6']
+
+DEFAULT_HF_DATASET_OUTPUT_DIR = 'pedroferreira/openvalidators'
 DEFAULT_WANDB_PROJECT = 'opentensor-dev/openvalidators'
 HF_TOKEN = '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'
 

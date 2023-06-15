@@ -10,11 +10,11 @@ from metadata import load_metadata_info
 
 disable_progress_bar()
 
-
 SCANNED_RUNS_COLUMNS = ["run_id", "unique_rows_contrib"]
 SUPPORTED_VERSIONS = ['1.0.0', '1.0.1', '1.0.2', '1.0.3', '1.0.4']
-DEFAULT_HF_SOURCE_DATASET = 'opentensor/openvalidators-test'
-DEFAULT_HF_DATASET_OUTPUT_DIR = 'pedroferreira/test-release'
+
+DEFAULT_HF_SOURCE_DATASET = 'pedroferreira/openvalidators'
+DEFAULT_HF_DATASET_OUTPUT_DIR = 'pedroferreira/openvalidators-mining'
 OPENAI_DATASET_PATH = 'openai/openvalidators-openai.jsonl'
 HF_TOKEN = ''
 
@@ -113,7 +113,7 @@ def load_openai_dataset(hf_datasets_path: str, dataset_path: str) -> pd.DataFram
     files_exists = check_file_exists(openai_dataset_path)
 
     if files_exists:
-        openai_dataset_df = pd.read_json(f'hf://datasets/{DEFAULT_HF_DATASET_OUTPUT_DIR}/{OPENAI_DATASET_PATH}', lines=True)
+        openai_dataset_df = pd.read_json(f'hf://datasets/{hf_datasets_path}/{dataset_path}', lines=True)
         return openai_dataset_df
 
     new_openai_dataset_df = pd.DataFrame.from_dict({
@@ -145,13 +145,13 @@ def extract_openai_data(
     scanned_runs_df = get_scanned_runs_df(hf_source_dataset=hf_source_dataset)
     scanned_ids = scanned_runs_df['run_id'].tolist()
 
-    downloaded_runs_ids = get_downloaded_runs(hf_data_source_path=DEFAULT_HF_SOURCE_DATASET, version=openvalidators_version)
+    downloaded_runs_ids = get_downloaded_runs(hf_data_source_path=hf_source_dataset, version=openvalidators_version)
 
     new_runs_ids = list(set(downloaded_runs_ids) - set(scanned_ids))
 
     bt.logging.info(f'Number of new runs to be ingested: {len(new_runs_ids)}')
 
-    openai_dataset_df = load_openai_dataset(hf_datasets_path=DEFAULT_HF_DATASET_OUTPUT_DIR, dataset_path=openai_dataset_path)
+    openai_dataset_df = load_openai_dataset(hf_datasets_path=hf_dataset_output_dir, dataset_path=openai_dataset_path)
 
     problematic_run_ids = []
 
@@ -160,7 +160,7 @@ def extract_openai_data(
             bt.logging.info(f'Ingesting run {run_id}...')
             new_samples_df = get_new_samples(
                 openai_dataset_df=openai_dataset_df,
-                hf_data_source_path=DEFAULT_HF_SOURCE_DATASET,
+                hf_data_source_path=hf_source_dataset,
                 run_id=run_id,
                 version=openvalidators_version,
                 blacklist=[])
