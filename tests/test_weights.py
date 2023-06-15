@@ -48,7 +48,7 @@ def test_uid_weights_unchanged_unless_queried(n_steps=10, n_concurrent=1):
             # get current scores
             next_scores = copy.deepcopy(neuron.moving_averaged_scores)
 
-            queried_uids = sorted(set(event["followup_uids"] + event["answer_uids"]))
+            queried_uids = sorted(set(event["followup_uids"] + event["answer_uids"] + event['augment_uids']))
             ignored_uids = [uid for uid in torch.arange(neuron.metagraph.n.item()) if uid not in queried_uids]
 
             # ther is a floating point difference (~1e-10) between the scores, so we can't use exact equality
