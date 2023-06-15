@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Initialize variables
-script=""
+script="openvalidators/neuron.py"
 autoRunLoc=$(readlink -f "$0")
 proc_name="auto_run_validator" 
 args=()
