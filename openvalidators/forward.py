@@ -407,9 +407,9 @@ async def forward(self):
         "answer_times": [ans.elapsed_time for ans in answer_responses],
         "answer_rewards": answer_rewards.tolist(),
         "augment_prompt": augment_prompt,
-        "augment_uids":augment_uids,
+        "augment_uids":augment_uids.tolist(),
         "augment_completions":augment_completions,
-        "augment_rewards":augment_rewards,
+        "augment_rewards":augment_rewards.tolist(),
         "best_augment":best_augment,
     }
 
