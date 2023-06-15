@@ -293,11 +293,6 @@ async def forward(self):
     random_level = random.randint(0,4)
     augment_prompt = f"{bootstrap_prompt}\n\n{augment_request_template} {school_levels[random_level]} level\n\n"
 
-    print("#########")
-    print("augment_prompt")
-    print(augment_prompt)
-    print("#########")
-
     augment_uids = get_random_uids(self, k=self.config.neuron.followup_sample_size).to(self.device)
     augment_responses = await self.dendrite_pool.async_forward(
         uids=augment_uids,
@@ -309,11 +304,6 @@ async def forward(self):
     augment_rewards = reward_completions(self, augment_prompt, augment_responses).to(self.device)
     augment_completions = [comp.completion for comp in augment_responses]
     best_augment = augment_completions[augment_rewards.argmax(dim=0)].strip()
-
-    print("#########")
-    print("best_augment")
-    print(best_augment)
-    print("#########")
 
     # Query the network with the base prompt and get the question extensions.
     followup_prompt = f"{best_augment}\n\n{followup_request_template}\n\n"
@@ -328,11 +318,6 @@ async def forward(self):
     followup_rewards = reward_completions(self, followup_prompt, followup_responses).to(self.device)
     followup_completions = [comp.completion for comp in followup_responses]
     best_followup = followup_completions[followup_rewards.argmax(dim=0)].strip()
-
-    print("#########")
-    print("best_followup")
-    print(best_followup)
-    print("#########")
 
     # Prompt-based scoring via network. Prohibits self-scoring.
     if self.config.neuron.outsource_scoring:
@@ -368,11 +353,6 @@ async def forward(self):
     answer_rewards = reward_completions(self, reward_prompt, answer_responses).to(self.device)
     answer_completions = [ans.completion for ans in answer_responses]
     best_answer = answer_completions[answer_rewards.argmax(dim=0)].strip()
-
-    print("#########")
-    print("best_answer")
-    print(best_answer)
-    print("#########")
 
     # Prompt-based scoring via network. Prohibits self-scoring.
     if self.config.neuron.outsource_scoring:
@@ -426,6 +406,11 @@ async def forward(self):
         "answer_completions": answer_completions,
         "answer_times": [ans.elapsed_time for ans in answer_responses],
         "answer_rewards": answer_rewards.tolist(),
+        "augment_prompt": augment_prompt,
+        "augment_uids":augment_uids,
+        "augment_completions":augment_completions,
+        "augment_rewards":augment_rewards,
+        "best_augment":best_augment,
     }
 
     if self.config.neuron.nsfw_filter:
