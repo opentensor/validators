@@ -3,7 +3,7 @@
 # Initialize variables
 script="openvalidators/neuron.py"
 autoRunLoc=$(readlink -f "$0")
-proc_name="auto_run_validator" 
+proc_name="openvalidators_main_process" 
 args=()
 version_location="./openvalidators/__init__.py"
 version="__version__"
