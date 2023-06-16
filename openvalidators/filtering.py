@@ -106,7 +106,7 @@ def L2(emb1: torch.FloatTensor, emb2: torch.FloatTensor) -> torch.FloatTensor:
     """
     return (( emb1 - emb2 )**2).mean()**0.5
 
-def is_relevant(self, prompt:str, completion: str, is_answer: bool) -> bool:
+def is_relevant(self, prompt:str, completion: str, is_answer: bool, answer_bound:float = 0.0275, prompt_bound:float = 0.0325 ) -> bool:
     """Check the relevancy between prompt and completion.
     Args: 
         prompt (:type:`str`):
@@ -125,6 +125,6 @@ def is_relevant(self, prompt:str, completion: str, is_answer: bool) -> bool:
     prompt_embedding = get_embedding(self, prompt)
     diff = L2( completion_embedding, prompt_embedding)
     if is_answer:
-        return (diff < 0.0275).bool()
+        return (diff < answer_bound).bool()
     else:
-        return (diff < 0.0325).bool() 
+        return (diff < prompt_bound).bool() 
