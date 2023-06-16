@@ -110,14 +110,14 @@ def export_df_to_hf(
                          Actual columns: {run_df.columns.tolist()}')
 
     run_id_file_output_path = f"hf://datasets/{hf_datasets_path}/{version}/raw_data/{run.id}.parquet"
-    bt.logging.info(f'Exporting run data to {run_id_file_output_path}...')
+    bt.logging.debug(f'Exporting run data to {run_id_file_output_path}...')
 
     # Needs to convert to pyarrow table with schema and reconvert to pandas dataframe to export to Hugging Face Hub
     pa.Table.from_pandas(run_df, schema=DATASET_SCHEMA) \
         .to_pandas() \
         .to_parquet(run_id_file_output_path)
 
-    bt.logging.info(f'Run data exported successfully!')
+    bt.logging.success(f'Run data exported successfully!')
 
 
 def handle_problematic_run_id(
@@ -207,7 +207,7 @@ def consume_wandb_run(
         # Sends run data to Hugging Face Hub
         export_df_to_hf(run_df, hf_datasets_path, version, run)
 
-        bt.logging.info(f'Updating metadata info...')
+        bt.logging.debug(f'Updating metadata info...')
         # Updates metadata info
         metadata_info_df.loc[run_id_metadata_row.index, 'completed'] = True
         metadata_info_df.loc[run_id_metadata_row.index, 'downloaded'] = True
@@ -217,7 +217,7 @@ def consume_wandb_run(
         metadata_info_df.loc[run_id_metadata_row.index, 'last_checkpoint'] = datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S")
         metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv")
-        bt.logging.info(f'Metadata info updated successfully!')
+        bt.logging.success(f'Metadata info updated successfully!')
         collection_output_result.new_downloaded_run_ids += 1
         return
     else:
@@ -233,11 +233,17 @@ def collect_wandb_data(
     api = wandb.Api()
     wandb.login(anonymous="allow")
 
+    output_result = CollectionOutputResult(problematic_runs=[], skipped_run_ids=0, new_downloaded_run_ids=0)
     non_processed_runs = get_non_processed_runs(api, wandb_project, version, metadata_info_df)
+
+    if len(non_processed_runs) == 0:
+        bt.logging.info(f"No new unprocessed run_ids found for version {version}")
+        return output_result
+
     runs_pbar = tqdm.tqdm(non_processed_runs, desc=f"Loading unprocessed run_ids from wandb version {version}",
                           total=len(non_processed_runs), unit="run")
 
-    output_result = CollectionOutputResult(problematic_runs=[], skipped_run_ids=0, new_downloaded_run_ids=0)
+    bt.logging.info(f"Total of {len(non_processed_runs)} run_ids to be processed, starting consumption...")
 
     for run in runs_pbar:
         try:
@@ -285,7 +291,7 @@ def collect_wandb_data(
                 # Sends metadata info to Hugging Face Hub
                 metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv")
 
-                bt.logging.info(f'Run {run.id} captured successfully! Consuming run...')
+                bt.logging.debug(f'Run {run.id} captured successfully! Consuming run...')
 
                 consume_wandb_run(
                     run=run,

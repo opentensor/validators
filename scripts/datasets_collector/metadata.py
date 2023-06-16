@@ -45,14 +45,14 @@ def load_metadata_info(hf_datasets_path: str, version: str) -> pd.DataFrame:
     repo_metadata_exists = check_file_exists(metadata_path)
 
     if repo_metadata_exists:
-        bt.logging.info(f'Metadata file located at {metadata_path}, loading metadata file...')
+        bt.logging.debug(f'Metadata file located at {metadata_path}, loading metadata file...')
         # Reads CSV file directly from Hugging Face Hub
         metadata_info_df = pd.read_csv(f"hf://{metadata_path}")
-        bt.logging.info(f'Metadata file loaded successfully!')
+        bt.logging.debug(f'Metadata file loaded successfully!')
 
         return metadata_info_df
     else:
-        bt.logging.info(f'No metadata file located at {metadata_path}, new metadata file will be created...')
+        bt.logging.debug(f'No metadata file located at {metadata_path}, new metadata file will be created...')
         columns = METADATA_COLUMNS
         return pd.DataFrame(columns=columns)
 

@@ -10,7 +10,7 @@ from metadata import load_metadata_info
 
 disable_progress_bar()
 
-SCANNED_RUNS_COLUMNS = ["run_id", "unique_rows_contrib"]
+SCANNED_RUNS_COLUMNS = ["run_id", "sample_size", "unique_rows_contrib"]
 SUPPORTED_VERSIONS = ['1.0.0', '1.0.1', '1.0.2', '1.0.3', '1.0.4']
 
 DEFAULT_HF_SOURCE_DATASET = 'pedroferreira/openvalidators'
@@ -18,20 +18,20 @@ DEFAULT_HF_DATASET_OUTPUT_DIR = 'pedroferreira/openvalidators-mining'
 OPENAI_DATASET_PATH = 'openai/openvalidators-openai.jsonl'
 HF_TOKEN = ''
 
-def get_scanned_runs_df(hf_source_dataset: str) -> pd.DataFrame:
-    scanned_runs_path = f"datasets/{hf_source_dataset}/openai/scanned_runs.csv"
+def get_scanned_runs_df(hf_datasets_path: str) -> pd.DataFrame:
+    scanned_runs_path = f"datasets/{hf_datasets_path}/openai/scanned_runs.csv"
 
     repo_metadata_exists = check_file_exists(scanned_runs_path)
 
     if repo_metadata_exists:
-        bt.logging.info(f'Scanned runs file located at {scanned_runs_path}, loading file...')
+        bt.logging.debug(f'Scanned runs file located at {scanned_runs_path}, loading file...')
         # Reads CSV file directly from Hugging Face Hub
         scanned_runs_df = pd.read_csv(f"hf://{scanned_runs_path}")
-        bt.logging.info(f'Scanned runs loaded successfully!')
+        bt.logging.debug(f'Scanned runs loaded successfully!')
 
         return scanned_runs_df
     else:
-        bt.logging.info(f'No scanned run file located at {scanned_runs_path}, new file will be created...')
+        bt.logging.debug(f'No scanned run file located at {scanned_runs_path}, new file will be created...')
         new_scanned_runs_df = pd.DataFrame(columns=SCANNED_RUNS_COLUMNS)
         new_scanned_runs_df.to_csv(f"hf://{scanned_runs_path}", index=False)
 
@@ -57,8 +57,8 @@ def clean_df(df: pd.DataFrame) -> pd.DataFrame:
 
 def is_valid_pair(openapi_dataset_df: pd.DataFrame, prompt: str, completion: str) -> bool:
     bt.logging.debug("Checking if pair is valid...")
-    prompt_invalid = prompt is None or prompt == ''
-    completion_invalid = completion is None or completion == ''
+    prompt_invalid = prompt is None or prompt == '' or prompt.isspace()
+    completion_invalid = completion is None or completion == '' or completion.isspace()
 
     if prompt_invalid or completion_invalid:
         return False
@@ -99,7 +99,7 @@ def get_new_samples(
             new_samples_dict['prompt'].append(base_prompt)
             new_samples_dict['completion'].append(best_followup)
 
-        if best_answer not in blacklist and is_valid_pair(openai_dataset_df, base_prompt, best_followup):
+        if best_answer not in blacklist and is_valid_pair(openai_dataset_df, answer_prompt, best_answer):
             new_samples_dict['prompt'].append(answer_prompt)
             new_samples_dict['completion'].append(best_answer)
 
@@ -124,10 +124,17 @@ def load_openai_dataset(hf_datasets_path: str, dataset_path: str) -> pd.DataFram
     return new_openai_dataset_df
 
 
-def append_scanned_runs_batch(scanned_runs_df: pd.DataFrame, run_id: str, sample_size: int) -> pd.DataFrame:
+def append_scanned_runs_batch(
+    scanned_runs_df: pd.DataFrame,
+    run_id: str,
+    sample_size: int,
+    unique_rows_contrib: int
+) -> pd.DataFrame:
+
     new_scanned_runs_df = pd.DataFrame.from_dict({
         'run_id': run_id,
-        'unique_rows_contrib': sample_size
+        'sample_size': sample_size,
+        'unique_rows_contrib': unique_rows_contrib,
     }, orient='index').T
 
     appended_scanned_runs_df = pd.concat([scanned_runs_df, new_scanned_runs_df])
@@ -142,17 +149,17 @@ def extract_openai_data(
     hf_dataset_output_dir: str,
     openai_dataset_path: str,
 ):
-    scanned_runs_df = get_scanned_runs_df(hf_source_dataset=hf_source_dataset)
+    scanned_runs_df = get_scanned_runs_df(hf_datasets_path=hf_dataset_output_dir)
     scanned_ids = scanned_runs_df['run_id'].tolist()
-
     downloaded_runs_ids = get_downloaded_runs(hf_data_source_path=hf_source_dataset, version=openvalidators_version)
-
     new_runs_ids = list(set(downloaded_runs_ids) - set(scanned_ids))
 
+    if len(new_runs_ids) == 0:
+        bt.logging.info('No new runs to be ingested.')
+        return
+
     bt.logging.info(f'Number of new runs to be ingested: {len(new_runs_ids)}')
-
     openai_dataset_df = load_openai_dataset(hf_datasets_path=hf_dataset_output_dir, dataset_path=openai_dataset_path)
-
     problematic_run_ids = []
 
     for run_id in tqdm.tqdm(new_runs_ids, desc=f'Ingesting runs from version {openvalidators_version}', total=len(new_runs_ids), unit='run'):
@@ -173,14 +180,14 @@ def extract_openai_data(
 
             new_unique_samples = updated_dataset_size - dataset_size
 
-            bt.logging.info(f'Run {run_id} collected with {new_unique_samples} new unique samples...')
-            bt.logging.info(f'OpenAI dataset size: {len(openai_dataset_df)}')
+            bt.logging.success(f'Run {run_id} collected with {new_unique_samples} new unique samples...')
 
             # Append new run_id to the scanned runs
             scanned_runs_df = append_scanned_runs_batch(
                 scanned_runs_df=scanned_runs_df,
                 run_id=run_id,
-                sample_size=len(new_samples_df))
+                sample_size=len(new_samples_df),
+                unique_rows_contrib=new_unique_samples)
         except Exception as e:
             bt.logging.error(f'Error while ingesting run id {run_id}: {e}')
             problematic_run_ids.append(run_id)
@@ -191,7 +198,7 @@ def extract_openai_data(
     if len(problematic_run_ids) > 0:
         bt.logging.warning(f'Problematic runs: {problematic_run_ids}')
 
-    bt.logging.info(f'Data from version {openvalidators_version} ingested successfully!')
+    bt.logging.success(f'Data from version {openvalidators_version} ingested successfully!')
 
 
 if __name__ == "__main__":
@@ -207,7 +214,7 @@ if __name__ == "__main__":
     login(args.hf_token)
 
     for version in SUPPORTED_VERSIONS:
-        bt.logging.info('Starting version ', version)
+        bt.logging.info('Starting consumption with version ', version)
         extract_openai_data(
             openvalidators_version=version,
             hf_source_dataset=args.hf_source_dataset,
