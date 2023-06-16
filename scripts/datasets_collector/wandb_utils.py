@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
 from schemas import DATASET_SCHEMA
-from metadata import get_wandb_metadata_info, MetadataInfo, append_metadata_info
+from metadata import get_wandb_metadata_info, MetadataInfo, append_metadata_info, save_metadata_info
 from substrateinterface.base import is_valid_ss58_address
 
 import bittensor as bt
@@ -135,7 +135,7 @@ def handle_problematic_run_id(
             metadata_info_df.loc[run_id_metadata_row.index, 'problematic'] = True
             metadata_info_df.loc[run_id_metadata_row.index, 'problematic_reason'] = problematic_run.error
 
-            metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv")
+            save_metadata_info(metadata_info_df, hf_datasets_path, version)
         else:
             wandb_metadata = get_wandb_metadata_info(problematic_run)
             run_id_metadata = MetadataInfo(
@@ -162,7 +162,7 @@ def handle_problematic_run_id(
                 new_metadata_info=run_id_metadata
             )
 
-            metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv")
+            save_metadata_info(metadata_info_df, hf_datasets_path, version)
             bt.logging.error('Problematic run_id updated successfully')
     except Exception as e:
         bt.logging.error(f'Error while handling problematic run {problematic_run.run_id}: {e}')
@@ -194,7 +194,7 @@ def consume_wandb_run(
         metadata_info_df.loc[run_id_metadata_row.index, 'last_checkpoint'] = datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S")
 
-        metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv")
+        save_metadata_info(metadata_info_df, hf_datasets_path, version)
         collection_output_result.skipped_run_ids += 1
         return
     elif run.state in completed_states and not run_id_metadata["downloaded"]:
@@ -216,8 +216,8 @@ def consume_wandb_run(
         metadata_info_df.loc[run_id_metadata_row.index, 'wandb_heartbeatAt'] = run.heartbeat_at
         metadata_info_df.loc[run_id_metadata_row.index, 'last_checkpoint'] = datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S")
-        metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv")
-        bt.logging.success(f'Metadata info updated successfully!')
+
+        save_metadata_info(metadata_info_df, hf_datasets_path, version)
         collection_output_result.new_downloaded_run_ids += 1
         return
     else:
@@ -237,7 +237,7 @@ def collect_wandb_data(
     non_processed_runs = get_non_processed_runs(api, wandb_project, version, metadata_info_df)
 
     if len(non_processed_runs) == 0:
-        bt.logging.info(f"No new unprocessed run_ids found for version {version}")
+        bt.logging.success(f"OpenValidators dataset: No new unprocessed run_ids found for version {version}")
         return output_result
 
     runs_pbar = tqdm.tqdm(non_processed_runs, desc=f"Loading unprocessed run_ids from wandb version {version}",
@@ -289,8 +289,7 @@ def collect_wandb_data(
                 )
 
                 # Sends metadata info to Hugging Face Hub
-                metadata_info_df.to_csv(f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv")
-
+                save_metadata_info(metadata_info_df, hf_datasets_path, version)
                 bt.logging.debug(f'Run {run.id} captured successfully! Consuming run...')
 
                 consume_wandb_run(

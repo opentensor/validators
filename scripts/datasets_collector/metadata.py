@@ -90,3 +90,15 @@ def append_metadata_info(metadata_info_df: pd.DataFrame, new_metadata_info: Meta
     new_metadata_info_df.reset_index(inplace=True, drop=True)
 
     return new_metadata_info_df
+
+
+def save_metadata_info(metadata_info_df: pd.DataFrame, hf_datasets_path: str, version: str):
+    """Saves metadata info to Hugging Face Hub
+    Args:
+        metadata_info_df (pd.DataFrame): Metadata info dataframe
+        hf_datasets_path (str): Hugging Face dataset output directory
+        version (str): Version of the dataset to collect
+    """
+    path = f"hf://datasets/{hf_datasets_path}/{version}/metadata.csv"
+    metadata_info_df.to_csv(path, index=False)
+    bt.logging.debug(f'Metadata info updated successfully!')

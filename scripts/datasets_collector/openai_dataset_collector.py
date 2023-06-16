@@ -13,8 +13,8 @@ disable_progress_bar()
 SCANNED_RUNS_COLUMNS = ["run_id", "sample_size", "unique_rows_contrib"]
 SUPPORTED_VERSIONS = ['1.0.0', '1.0.1', '1.0.2', '1.0.3', '1.0.4']
 
-DEFAULT_HF_SOURCE_DATASET = 'pedroferreira/openvalidators'
-DEFAULT_HF_DATASET_OUTPUT_DIR = 'pedroferreira/openvalidators-mining'
+DEFAULT_HF_SOURCE_DATASET = 'opentensor/openvalidators'
+DEFAULT_HF_DATASET_OUTPUT_DIR = 'opentensor/openvalidators-mining'
 OPENAI_DATASET_PATH = 'openai/openvalidators-openai.jsonl'
 HF_TOKEN = ''
 
@@ -155,7 +155,7 @@ def extract_openai_data(
     new_runs_ids = list(set(downloaded_runs_ids) - set(scanned_ids))
 
     if len(new_runs_ids) == 0:
-        bt.logging.info('No new runs to be ingested.')
+        bt.logging.success(f'OpenAI dataset: No new unprocessed run_ids found for version {openvalidators_version}')
         return
 
     bt.logging.info(f'Number of new runs to be ingested: {len(new_runs_ids)}')

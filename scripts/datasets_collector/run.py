@@ -1,3 +1,4 @@
+import tqdm
 import argparse
 import bittensor as bt
 from huggingface_hub import login
@@ -9,7 +10,7 @@ from datasets import disable_progress_bar
 
 SUPPORTED_VERSIONS = ['1.0.0', '1.0.1', '1.0.2', '1.0.3', '1.0.4', '1.0.5', '1.0.6']
 
-DEFAULT_HF_DATASET_OUTPUT_DIR = 'pedroferreira/openvalidators'
+DEFAULT_HF_DATASET_OUTPUT_DIR = 'opentensor/openvalidators'
 DEFAULT_WANDB_PROJECT = 'opentensor-dev/openvalidators'
 HF_TOKEN = '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'
 
@@ -57,10 +58,13 @@ if __name__ == "__main__":
     parser.add_argument("--wandb_project", type=str, help="Wandb project to crawl", default=DEFAULT_WANDB_PROJECT)
     parser.add_argument("--hf_dataset_output_dir", type=str, help="Hugging Face dataset output directory", default=DEFAULT_HF_DATASET_OUTPUT_DIR)
     parser.add_argument("--hf_token", type=str, help="Hugging Face token", default=HF_TOKEN)
+    parser.add_argument("--disable_progress_bar", type=bool, help="Disable progress bar", default=True)
     args = parser.parse_args()
 
-    # Disables hf progress bar
-    disable_progress_bar()
+    # Disables hf and tqdm progress bar
+    if args.disable_progress_bar:
+        disable_progress_bar()
+        tqdm.tqdm = (lambda it, *a, **k: it)
 
     hf_token = args.hf_token
     openvalidators_hf_dataset_dir = args.hf_dataset_output_dir
