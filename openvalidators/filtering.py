@@ -121,8 +121,8 @@ def is_relevant(self, prompt:str, completion: str, is_answer: bool) -> bool:
             True if the prompt and completion are considered relating to each other, else False
     """
     
-    completion_embedding = np.array(get_embedding(self, completion).tolist())
-    prompt_embedding = np.array(get_embedding(self, prompt).tolist())
+    completion_embedding = get_embedding(self, completion)
+    prompt_embedding = get_embedding(self, prompt)
     diff = L2( completion_embedding, prompt_embedding)
     if is_answer:
         return (diff < 0.0275).bool()

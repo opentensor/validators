@@ -154,7 +154,6 @@ class neuron:
         relevance_model_path = "bert-base-uncased"
         self.relevance_model = AutoModel.from_pretrained(relevance_model_path).to(self.device)
         self.relevance_tokenizer = AutoTokenizer.from_pretrained(relevance_model_path)
-        self.relevance_tokenizer.pad_token = self.relevance_tokenizer.eos_token
         
         if self.config.neuron.epoch_length_override:
             self.config.neuron.epoch_length = self.config.neuron.epoch_length_override
