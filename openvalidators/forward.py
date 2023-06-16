@@ -307,7 +307,7 @@ async def forward(self):
 
     # Query the network with the base prompt and get the question extensions.
     followup_prompt = f"{best_augment}\n\n{followup_request_template}\n\n"
-    followup_uids = get_random_uids(self, k=self.config.neuron.followup_sample_size).to(self.device)
+    followup_uids = get_random_uids(self, k=self.config.neuron.followup_sample_size, exclude=augment_uids).to(self.device)
     followup_responses = await self.dendrite_pool.async_forward(
         uids=followup_uids,
         roles=["user"],
@@ -340,7 +340,7 @@ async def forward(self):
 
     # Query the network with the question and get responses.
     answer_prompt = f"{bootstrap_prompt}\n\n{best_followup}"
-    answer_uids = get_random_uids(self, k=self.config.neuron.answer_sample_size, exclude=followup_uids).to(self.device)
+    answer_uids = get_random_uids(self, k=self.config.neuron.answer_sample_size, exclude= followup_uids.tolist() + augment_uids.tolist()).to(self.device)
     answer_responses = await self.dendrite_pool.async_forward(
         uids=answer_uids,
         roles=["user"],
