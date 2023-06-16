@@ -12,7 +12,7 @@ SUPPORTED_VERSIONS = ['1.0.0', '1.0.1', '1.0.2', '1.0.3', '1.0.4', '1.0.5', '1.0
 
 DEFAULT_HF_DATASET_OUTPUT_DIR = 'opentensor/openvalidators'
 DEFAULT_WANDB_PROJECT = 'opentensor-dev/openvalidators'
-HF_TOKEN = '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'
+HF_TOKEN = ''
 
 
 def start_collector(version: str, hf_dataset_output_dir: str, wandb_project: str):
