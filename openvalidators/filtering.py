@@ -93,8 +93,8 @@ def get_embedding(self, message: str) -> "torch.FloatTensor":
     batch_representation = torch.mean(sentence_embeddings, dim=0)
     return batch_representation
 
-def L2(emb1: torch.FloatTensor, emb2: torch.FloatTensor) -> torch.FloatTensor:
-    """Calculate the L2 distance for the 2 embeddings.
+def RMSE(emb1: torch.FloatTensor, emb2: torch.FloatTensor) -> torch.FloatTensor:
+    """Calculate the RMSE distance for the 2 embeddings.
     Args: 
         emb1 (:obj:`torch.FloatTensor`):
             The first tensor embedding.
@@ -102,7 +102,7 @@ def L2(emb1: torch.FloatTensor, emb2: torch.FloatTensor) -> torch.FloatTensor:
             The second tensor embedding.
     Returns:
         diff (:obj:`torch.FloatTensor`):
-            The L2 difference in the 2 embeddings. 
+            The RMSE difference in the 2 embeddings. 
     """
     return (( emb1 - emb2 )**2).mean()**0.5
 
@@ -123,7 +123,7 @@ def is_relevant(self, prompt:str, completion: str, is_answer: bool, answer_bound
     
     completion_embedding = get_embedding(self, completion)
     prompt_embedding = get_embedding(self, prompt)
-    diff = L2( completion_embedding, prompt_embedding)
+    diff = RMSE( completion_embedding, prompt_embedding)
     if is_answer:
         return (diff < answer_bound).bool()
     else:
