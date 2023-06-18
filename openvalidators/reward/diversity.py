@@ -22,9 +22,8 @@ class DiversityRewardModel( BaseRewardModel ):
     @property
     def name(self) -> str: return "diversity-reward-function"
 
-    def __init__( self , device: str ):
+    def __init__( self ):
         super().__init__()
-        self.device = device
         self.counters = {}
 
     def reward( self, prompt: str, completion: str ) -> float:
