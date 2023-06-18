@@ -42,8 +42,9 @@ class DahoasRewardModel( BaseRewardModel ):
     def __init__(self, path: str, device: str ):
         super().__init__()
         DahoasRewardModel.load_weights( path = path )
+        self.device = torch.device(device)
         config = AutoConfig.from_pretrained( DahoasRewardModel.model_name )
-        self.model = AutoModelForCausalLM.from_config( config )
+        self.model = AutoModelForCausalLM.from_config( config ).to(self.device)
         self.config = self.model.config
 
         # `gpt-neo(x)` models use `hidden_size` attribute names instead of `n_embd``
@@ -51,7 +52,6 @@ class DahoasRewardModel( BaseRewardModel ):
             config = DahoasRewardModel.config()
 
         self.config.n_embd = self.config.hidden_size if hasattr(self.config, "hidden_size") else self.config.n_embd
-        self.device = torch.device(device)
         self.transformer = self.model.transformer
         self.v_head = torch.nn.Linear(self.config.n_embd, 1, bias=False)
         self.tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-j-6b")
@@ -82,8 +82,8 @@ class DahoasRewardModel( BaseRewardModel ):
                 attn_masks = attn_masks.repeat(2, 1)
                 with torch.no_grad():
                     sub_scores = self.forward(
-                        input_ids=input_ids.to(self.device),
-                        attention_mask=attn_masks.to(self.device),
+                        input_ids = input_ids.to(self.device),
+                        attention_mask = attn_masks.to(self.device),
                     )
                 scores_list.append(sub_scores["chosen_end_scores"])
             scores = torch.cat(scores_list, dim=0).mean().item()
@@ -111,8 +111,8 @@ class DahoasRewardModel( BaseRewardModel ):
     ):
         loss = None
         transformer_outputs = self.transformer(
-            input_ids,
-            attention_mask=attention_mask,
+            input_ids.to(self.device),
+            attention_mask = attention_mask.to(self.device),
         )
 
         hidden_states = transformer_outputs[0]
