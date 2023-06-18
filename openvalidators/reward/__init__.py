@@ -5,3 +5,4 @@ from .reciprocate import ReciprocateRewardModel
 from .relevance import BertRelevanceRewardModel
 from .reward import BaseRewardModel
 from .reward import MockRewardModel
+from .dahoas import DahoasRewardModel

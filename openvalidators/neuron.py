@@ -34,7 +34,15 @@ from openvalidators.misc import ttl_get_block
 from openvalidators.utils import init_wandb
 
 # Load gating models
-from openvalidators.reward import Blacklist, NSFWRewardModel, OpenAssistantRewardModel, ReciprocateRewardModel, BertRelevanceRewardModel, MockRewardModel
+from openvalidators.reward import (
+    Blacklist, 
+    NSFWRewardModel, 
+    OpenAssistantRewardModel, 
+    ReciprocateRewardModel, 
+    BertRelevanceRewardModel, 
+    MockRewardModel, 
+    DahoasRewardModel
+)
 
 class neuron:
     @classmethod
@@ -126,6 +134,7 @@ class neuron:
                 OpenAssistantRewardModel( device = self.device ) if not self.config.neuron.openassistant_off else MockRewardModel('mock-openassistant'), 
                 ReciprocateRewardModel( device = self.device ) if not self.config.neuron.reciprocate_off else MockRewardModel('mock-reciprocate'),
                 BertRelevanceRewardModel( device = self.device ) if not self.config.neuron.relevance_off else MockRewardModel('mock-relevance'),
+                DahoasRewardModel( path = self.config.neuron.full_path, device = self.device ) if not self.config.neuron.dahoas_off else MockRewardModel('mock-dahoas'),
             ]
             bt.logging.debug(str(self.reward_functions))
 
