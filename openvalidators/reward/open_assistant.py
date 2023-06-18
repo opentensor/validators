@@ -28,6 +28,7 @@ class OpenAssistantRewardModel( BaseRewardModel ):
 
     def __init__( self , device: str ):
         super().__init__()
+        self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained( OpenAssistantRewardModel.reward_model_name )
         self.model = AutoModelForSequenceClassification.from_pretrained( OpenAssistantRewardModel.reward_model_name ) .to(self.device)
 
