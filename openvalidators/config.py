@@ -231,6 +231,12 @@ def add_args(cls, parser):
         default=False,
     )
     parser.add_argument(
+        "--neuron.dahoas_off",
+        action="store_true",
+        help="Dont apply the openassistant reward model",
+        default=False,
+    )
+    parser.add_argument(
         "--neuron.mock_dendrite_pool",
         action="store_true",
         help="Dont download the dendrite pool.",
