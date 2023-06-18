@@ -36,9 +36,10 @@ class NSFWRewardModel( BaseRewardModel ):
 
     def reward( self, prompt: str, completion: str ) -> float:
 
+        boundary = 0.0
         with torch.no_grad():
             message = completion
-            input_ids = self.nsfw_filter_tokenizer(message)["input_ids"][:512]
+            input_ids = self.tokenizer(message)["input_ids"][:512]
 
             # Returns the nsfw hate score for the chunk.
             def hate_score( chunk ) -> float:
@@ -54,4 +55,4 @@ class NSFWRewardModel( BaseRewardModel ):
                     max_score += max(hate_score_i, max_score)
                 return max_score
             
-            return float( sum_nsfw_scores( input_ids, chunk_size = 512 ) )
+            return 0 if sum_nsfw_scores( input_ids, chunk_size = 512 ) > boundary else 1.0
