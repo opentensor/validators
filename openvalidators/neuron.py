@@ -41,7 +41,8 @@ from openvalidators.reward import (
     ReciprocateRewardModel, 
     BertRelevanceRewardModel, 
     MockRewardModel, 
-    DahoasRewardModel
+    DahoasRewardModel,
+    DiversityRewardModel
 )
 
 class neuron:
@@ -135,6 +136,7 @@ class neuron:
                 ReciprocateRewardModel( device = self.device ) if not self.config.neuron.reciprocate_off else MockRewardModel('mock-reciprocate'),
                 BertRelevanceRewardModel( device = self.device ) if not self.config.neuron.relevance_off else MockRewardModel('mock-relevance'),
                 DahoasRewardModel( path = self.config.neuron.full_path, device = self.device ) if not self.config.neuron.dahoas_off else MockRewardModel('mock-dahoas'),
+                DiversityRewardModel()  if not self.config.neuron.diversity_off else MockRewardModel('mock-diversity'),
             ]
             bt.logging.debug(str(self.reward_functions))
 

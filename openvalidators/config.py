@@ -231,9 +231,15 @@ def add_args(cls, parser):
         default=False,
     )
     parser.add_argument(
+        "--neuron.diversity_off",
+        action="store_true",
+        help="Dont apply the diversity_off reward model",
+        default=False,
+    )
+    parser.add_argument(
         "--neuron.dahoas_off",
         action="store_true",
-        help="Dont apply the openassistant reward model",
+        help="Dont apply the dahoas reward model",
         default=False,
     )
     parser.add_argument(
