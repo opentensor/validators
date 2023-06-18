@@ -124,8 +124,8 @@ class neuron:
                 Blacklist(), 
                 NSFWRewardModel( device = self.device ), 
                 OpenAssistantRewardModel( device = self.device ), 
-                ReciprocateRewardModel( device = self.device ), 
-                BertRelevanceRewardModel( device = self.device )
+                #ReciprocateRewardModel( device = self.device ), 
+                #BertRelevanceRewardModel( device = self.device )
             ]
             bt.logging.debug(str(self.reward_functions))
 

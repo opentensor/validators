@@ -43,7 +43,7 @@ class NSFWRewardModel( BaseRewardModel ):
 
             # Returns the nsfw hate score for the chunk.
             def hate_score( chunk ) -> float:
-                hate = self.model(torch.tensor( chunk ).to(self.device)).logits[0].tolist()
+                _, hate = self.model(torch.tensor( [chunk] ).to(self.device)).logits[0].tolist()
                 return hate
 
             # Returns the max hate score from each chunk of size chunk_size
