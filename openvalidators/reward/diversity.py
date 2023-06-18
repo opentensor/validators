@@ -34,8 +34,7 @@ class DiversityRewardModel( BaseRewardModel ):
         if completion not in self.counters[ prompt ]:
             self.counters[ prompt ][ completion ] = 0
 
-        reward = 1.0 / self.counters[ prompt ][ completion ]
         self.counters[ prompt ][ completion ] += 1
-
+        reward = 1.0 / self.counters[ prompt ][ completion ]
         return reward 
 
