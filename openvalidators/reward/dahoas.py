@@ -27,6 +27,9 @@ class DahoasRewardModel( BaseRewardModel ):
 
     model_name = "EleutherAI/gpt-j-6b"
 
+    @property
+    def name(self) -> str: return "dahoas-reward-model"
+
     @staticmethod
     def load_weights( path: str ):
         if not os.path.exists( path + "/hf_ckpt.pt"):
