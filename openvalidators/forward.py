@@ -63,6 +63,7 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str ):
     event = {'name': name}
     start_time = time.time()
 
+
     # Get the list of uids to query for this step.
     uids = get_random_uids( self, k = k ).to(self.device)
 
