@@ -90,7 +90,7 @@ class BertRelevanceRewardModel( BaseRewardModel ):
         prompt_embedding = self.get_embedding( prompt)
 
         # Calculate the RMSE distance for the 2 embeddings.
-        diff =  (( completion_embedding - prompt_embedding )**2).mean()**0.5
+        diff = (( completion_embedding - prompt_embedding )**2).mean()**0.5
 
         # Return relevance scoring.
-        return float(diff)
+        return float(-diff)
