@@ -107,7 +107,7 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str ):
         'uids': uids.tolist(),
         'completions': completions,
         'rewards': rewards.tolist(),
-        'gating_loss': gating_loss,
+        'gating_loss': gating_loss.item(),
         'best': best
     })
     bt.logging.debug( "event:", str(event) )
