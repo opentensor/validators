@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Initialize variables
-script=""
+script="openvalidators/neuron.py"
 autoRunLoc=$(readlink -f "$0")
-proc_name="auto_run_validator" 
+proc_name="openvalidators_main_process" 
 args=()
 version_location="./openvalidators/__init__.py"
 version="__version__"
@@ -146,31 +146,32 @@ strip_quotes() {
     echo "$stripped"
 }
 
-# Parse command line arguments
-while [[ "$#" -gt 0 ]]; do
-    case $1 in
-        --script) 
+# Loop through all command line arguments
+while [[ $# -gt 0 ]]; do
+  arg="$1"
+  
+  # Check if the argument starts with a hyphen (flag)
+  if [[ "$arg" == -* ]]; then
+    # Check if the argument has a value
+    if [[ $# -gt 1 && "$2" != -* ]]; then
+          if [[ "$arg" == "--script" ]]; then
             script="$2";
-            shift ;;
-        --name) 
-            name="$2"
-            shift ;;
-        --*) 
-            flag="$1";
-            value="$2";
-            if [[ $value == *"--"*  ]]; then
-                value="True";
-                args+=("$flag=$value");
-            else
-                args+=("$flag=$value");
-                shift;
-            fi
-            ;;
-        *) 
-            echo "Unknown parameter passed"
-            shift ;;
-    esac
+            shift 2
+        else
+            # Add '=' sign between flag and value
+            args+=("$arg=$2");
+            shift 2
+        fi
+    else
+      # Add '=True' for flags with no value
+      args+=("$arg");
+      shift
+    fi
+  else
+    # Argument is not a flag, add it as it is
+    args+=("$arg ");
     shift
+  fi
 done
 
 # Check if script argument was provided
@@ -194,8 +195,14 @@ fi
 
 # Run the Python script with the arguments using pm2
 echo "Running $script with the following arguments with pm2:"
-echo "pm2 start $script --name $proc_name --interpreter python3 -- ${args[@]}"
-pm2 start "$script" --name $proc_name --interpreter python3 -- "${args[@]}"
+if [ ${#args[@]} -eq 0 ]; then
+    echo "pm2 start $script --name $proc_name --interpreter python3"
+    pm2 start "$script" --name $proc_name --interpreter python3
+else
+    echo "pm2 start $script --name $proc_name --interpreter python3 -- ${args[@]}"
+    pm2 start "$script" --name $proc_name --interpreter python3 -- "${args[@]}"
+fi
+
 
 # Check if packages are installed.
 check_package_installed "jq"
