@@ -121,11 +121,11 @@ class neuron:
             bt.logging.debug(str(self.reward_functions))
         else:
             self.reward_functions = [ 
-                Blacklist(), 
-                NSFWRewardModel( device = self.device ), 
-                OpenAssistantRewardModel( device = self.device ), 
-                ReciprocateRewardModel( device = self.device ), 
-                #BertRelevanceRewardModel( device = self.device )
+                Blacklist() if not self.config.neuron.blacklist_off else MockRewardModel('mock-blacklist'),
+                NSFWRewardModel( device = self.device ) if not self.config.neuron.nsfw_off else MockRewardModel('mock-nsfw'),
+                OpenAssistantRewardModel( device = self.device ) if not self.config.neuron.openassistant_off else MockRewardModel('mock-openassistant'), 
+                ReciprocateRewardModel( device = self.device ) if not self.config.neuron.reciprocate_off else MockRewardModel('mock-reciprocate'),
+                BertRelevanceRewardModel( device = self.device ) if not self.config.neuron.relevance_off else MockRewardModel('mock-relevance'),
             ]
             bt.logging.debug(str(self.reward_functions))
 
