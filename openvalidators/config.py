@@ -31,10 +31,11 @@ def check_config(cls, config: "bt.Config"):
     bt.subtensor.check_config(config)
 
     if config.mock:
-        config.neuron.mock_reward_model = True
+        config.neuron.mock_reward_models = True
         config.neuron.mock_dendrite_pool = True
         config.neuron.mock_gating_model = True
         config.neuron.mock_dataset = True
+        config.wallet._mock = True
 
     full_path = os.path.expanduser(
         "{}/{}/{}/netuid{}/{}".format(
@@ -46,16 +47,8 @@ def check_config(cls, config: "bt.Config"):
         )
     )
     config.neuron.full_path = os.path.expanduser(full_path)
-    config.neuron.reward_path = os.path.expanduser(config.neuron.reward_path)
-
     if not os.path.exists(config.neuron.full_path):
         os.makedirs(config.neuron.full_path, exist_ok=True)
-    if not config.neuron.mock_reward_model and not os.path.exists(config.neuron.reward_path + "/hf_ckpt.pt"):
-        os.makedirs(config.neuron.reward_path, exist_ok=True)
-        os.system(
-            f"wget -O { config.neuron.reward_path + '/hf_ckpt.pt'} \
-            https://huggingface.co/Dahoas/gptj-rm-static/resolve/main/hf_ckpt.pt"
-        )
 
     if not config.neuron.dont_save_events:
         # Add custom event logger for the events.
@@ -75,6 +68,7 @@ def check_config(cls, config: "bt.Config"):
 def add_args(cls, parser):
     # Netuid Arg
     parser.add_argument("--netuid", type=int, help="Prompting network netuid", default=1)
+
     parser.add_argument(
         "--neuron.name",
         type=str,
@@ -108,14 +102,6 @@ def add_args(cls, parser):
     )
 
     parser.add_argument(
-        "--neuron.reward_path",
-        type=str,
-        help="Path to reward model.",
-        default="~/.bittensor/reward_models",
-    )
-    parser.add_argument("--neuron.reward_shift", type=int, help="Reward model shift.", default=3)
-
-    parser.add_argument(
         "--neuron.followup_timeout",
         type=float,
         help="Follow up query timeout.",
@@ -134,14 +120,6 @@ def add_args(cls, parser):
         type=int,
         help="How many miners to query for the answer.",
         default=50,
-    )
-
-    parser.add_argument("--neuron.scoring_timeout", type=float, help="Scoring query timeout", default=10)
-    parser.add_argument(
-        "--neuron.scoring_sample_size",
-        type=int,
-        help="How many miners to query for the scoring prompt.",
-        default=2,
     )
 
     parser.add_argument(
@@ -217,7 +195,7 @@ def add_args(cls, parser):
     # Mocks
     parser.add_argument("--mock", action="store_true", help="Mock all items.", default=False)
     parser.add_argument(
-        "--neuron.mock_reward_model",
+        "--neuron.mock_reward_models",
         action="store_true",
         help="Dont download the reward model.",
         default=False,
@@ -246,19 +224,6 @@ def add_args(cls, parser):
         help="Use a custom gating model.",
         default=False,
     )
-    parser.add_argument(
-        "--neuron.nsfw_filter",
-        action="store_true",
-        help="If set, filter out not-safe-for-work messages.",
-        default=False,
-    )
-    parser.add_argument(
-        "--neuron.outsource_scoring",
-        action="store_true",
-        help="If set, enable outsourced scoring.",
-        default=False,
-    )
-
 
 def config(cls):
     parser = argparse.ArgumentParser()

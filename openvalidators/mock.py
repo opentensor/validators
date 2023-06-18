@@ -69,6 +69,7 @@ class MockDataset(Iterator):
 class MockDendriteResponse:
     completion = ""
     elapsed_time = 0
+    is_success = True
 
     def __init__(self, message: str):
         if is_firewall(message):

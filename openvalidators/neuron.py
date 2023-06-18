@@ -22,10 +22,8 @@ import torch
 import asyncio
 import bittensor as bt
 from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 from openvalidators.dendrite import AsyncDendritePool
-from openvalidators.reward import RewardModel
 from openvalidators.gating import GatingModel, SentenceEmbedGatingModel
 from openvalidators.mock import MockDendritePool, MockDataset, MockRewardModel, MockGatingModel
 
@@ -35,6 +33,8 @@ from openvalidators.run import run
 from openvalidators.misc import ttl_get_block
 from openvalidators.utils import init_wandb
 
+# Load gating models
+from openvalidators.reward import Blacklist, NSFWRewardModel, OpenAssistantRewardModel, ReciprocateRewardModel, BertRelevanceRewardModel, MockRewardModel
 
 class neuron:
     @classmethod
@@ -114,6 +114,22 @@ class neuron:
             self.dendrite_pool = AsyncDendritePool(keypair=self.wallet.hotkey, metagraph=self.metagraph)
         bt.logging.debug(str(self.dendrite_pool))
 
+        # Init Reward model
+        bt.logging.debug("loading", "reward_functions")
+        if self.config.neuron.mock_reward_models:
+            self.reward_functions = [ MockRewardModel('mock-blacklist'), MockRewardModel('mock-nsfw') ]
+            print (self.reward_functions)
+            bt.logging.debug(str(self.reward_functions))
+        else:
+            self.reward_functions = [ 
+                Blacklist(), 
+                NSFWRewardModel( device = self.device ), 
+                OpenAssistantRewardModel( device = self.device ), 
+                ReciprocateRewardModel( device = self.device ), 
+                BertRelevanceRewardModel( device = self.device )
+            ]
+            bt.logging.debug(str(self.reward_functions))
+
         # Init the event loop.
         self.loop = asyncio.get_event_loop()
 
@@ -122,40 +138,10 @@ class neuron:
             bt.logging.debug("loading", "wandb")
             init_wandb(self)
 
-        # Init Reward model
-        bt.logging.debug("loading", "reward_model")
-        if self.config.neuron.mock_reward_model:
-            self.reward_model = MockRewardModel()
-            bt.logging.debug(str(self.reward_model))
-
-        else:
-            bt.logging.info("Loading reward model")
-            self.reward_model = RewardModel(model_path="EleutherAI/gpt-j-6b", device=self.config.neuron.device)
-            for fpath in os.listdir(self.config.neuron.reward_path):
-                if fpath.endswith(".pt") or fpath.endswith(".bin"):
-                    checkpoint = os.path.join(self.config.neuron.reward_path, fpath)
-                    break
-            ckpt_state = torch.load(checkpoint)
-            self.reward_model.load_state_dict(ckpt_state)
-            self.reward_model.eval()
-            self.reward_model.half()
-            self.reward_model.requires_grad_(False)
-            self.reward_model.to(self.device)
-            bt.logging.debug(str(self.reward_model))
-
-        # Init Filter model
-        if self.config.neuron.nsfw_filter:
-            filter_model_path = "facebook/roberta-hate-speech-dynabench-r4-target"
-            self.filter_model = AutoModelForSequenceClassification.from_pretrained(filter_model_path).to(self.device)
-            self.filter_tokenizer = AutoTokenizer.from_pretrained(filter_model_path)
-            self.filter_tokenizer.pad_token = self.filter_tokenizer.eos_token
-
         if self.config.neuron.epoch_length_override:
             self.config.neuron.epoch_length = self.config.neuron.epoch_length_override
         else:
             self.config.neuron.epoch_length = self.subtensor.validator_epoch_length(self.config.netuid)
-
-        self.prev_block = ttl_get_block(self)
 
         self.prev_block = ttl_get_block(self)
         self.step = 0
