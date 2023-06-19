@@ -55,4 +55,4 @@ class NSFWRewardModel( BaseRewardModel ):
                     max_score += max(hate_score_i, max_score)
                 return max_score
             
-            return 0 if sum_nsfw_scores( input_ids, chunk_size = 512 ) > boundary else 1.0
+            return 0.0 if sum_nsfw_scores( input_ids, chunk_size = 512 ) > boundary else 1.0

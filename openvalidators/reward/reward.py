@@ -39,13 +39,10 @@ class BaseRewardModel:
         successful_completions_indices: List[int] = [ idx for idx, resp in enumerate(responses) if resp.is_success ]
 
         # Get all completions from responding calls.
-        successful_completions: List[str] = [ responses[idx].completion.strip() for idx in successful_completions_indices]
+        successful_completions: List[str] = [ responses[idx].completion.strip() for idx in successful_completions_indices ]
 
         # Reward each completion.
         successful_rewards = torch.tensor( [ self.reward( prompt, completion ) for completion in successful_completions ], dtype = torch.float32 )
-
-        # Softmax rewards across samples.
-        successful_rewards = successful_rewards.softmax(0)
 
         # Init zero rewards for all calls.
         filled_rewards = torch.zeros( len( responses ), dtype=torch.float32)
