@@ -22,6 +22,7 @@ import torch
 import asyncio
 import bittensor as bt
 from datasets import load_dataset
+import random
 
 from openvalidators.dendrite import AsyncDendritePool
 from openvalidators.gating import GatingModel, SentenceEmbedGatingModel
@@ -102,7 +103,8 @@ class neuron:
         if self.config.neuron.mock_dataset:
             self.dataset = MockDataset()
         else:
-            self.dataset = iter(load_dataset("squad_v2", split="train", streaming=True).shuffle(buffer_size=10000))
+            seed = random.randint(0,1000)
+            self.dataset = iter(load_dataset("openwebtext", split="train", streaming=True).shuffle(seed=seed, buffer_size=100000))
         bt.logging.debug(str(self.dataset))
 
         # Init the gating model which learns which miners to select for each query.
