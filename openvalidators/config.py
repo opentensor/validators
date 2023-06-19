@@ -108,12 +108,11 @@ def add_args(cls, parser):
     )
 
     parser.add_argument(
-        "--neuron.reward_path",
+        "--neuron.reward_model",
         type=str,
-        help="Path to reward model.",
-        default="~/.bittensor/reward_models",
+        help="HuggingFace path to constitutional reward model.",
+        default="VMware/open-llama-7b-open-instruct",
     )
-    parser.add_argument("--neuron.reward_shift", type=int, help="Reward model shift.", default=3)
 
     parser.add_argument(
         "--neuron.followup_timeout",

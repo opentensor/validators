@@ -15,11 +15,73 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-#### NOTE(carro): This code is modified from trlX
+import time
 import torch
 import bittensor as bt
+from openvalidators.prompts import BasePrompt
 from typing import List
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
+
+
+class PromptRewardModel(torch.nn.Module):
+    def __init__(self, model_path: str, device: str):
+        super().__init__()
+        config = AutoConfig.from_pretrained(model_path)
+        self.model = AutoModelForCausalLM.from_pretrained(model_path, config=config, torch_dtype=torch.float16)
+        self.config = self.model.config
+        self.device = torch.device(device)
+
+        # https://huggingface.co/VMware/open-llama-7b-open-instruct
+        # Fast tokenizer results in incorrect encoding, set the use_fast = False parameter.
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
+        # Generative default expects most recent token on right-hand side with padding on left.
+        # https://github.com/huggingface/transformers/pull/10552
+        self.tokenizer.padding_side = "left"
+
+    def reward(
+        self,
+        prompt: str,
+        responses: List[str],
+        scoring_prompt: BasePrompt,
+    ) -> torch.FloatTensor:
+        """Computes the reward for each response to a prompt using a scoring_template for prompt-based scoring.
+
+        Args:
+            prompt (str):
+                Prompt to use for the reward model.
+            responses (List[str]):
+                List of response completions from the network.
+            scoring_prompt (BasePrompt):
+                Scoring template to use for the scoring prompt.
+        """
+
+        def reward_fn(response):
+            # Scoring prompt for this completion.
+            scoring_prompt_text = scoring_prompt.text(prompt, response)
+            encodings_dict = self.tokenizer(
+                scoring_prompt_text,
+                truncation=False,
+                max_length=2048,
+                padding="max_length",
+                return_tensors="pt",
+            )
+            input_ids = encodings_dict["input_ids"].to(self.device)
+            attn_masks = encodings_dict["attention_mask"].to(self.device)
+
+            # Prompt local reward model.
+            start_time = time.time()
+            generated_tokens = self.model.generate(input_ids, max_new_tokens=50, max_time=5)
+            duration = time.time() - start_time
+            generated_text = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
+
+            # Extract score from generated text.
+            score_text = generated_text[0][len(scoring_prompt_text):]
+            score = scoring_prompt.extract_score(score_text)
+            return score
+
+        with torch.no_grad():
+            full_rewards = [reward_fn(response) for response in responses]
+            return torch.FloatTensor(full_rewards, dtype=torch.float32)
 
 
 class RewardModel(torch.nn.Module):

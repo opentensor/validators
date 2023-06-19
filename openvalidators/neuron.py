@@ -25,7 +25,7 @@ from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 from openvalidators.dendrite import AsyncDendritePool
-from openvalidators.reward import RewardModel
+from openvalidators.reward import PromptRewardModel
 from openvalidators.gating import GatingModel, SentenceEmbedGatingModel
 from openvalidators.mock import MockDendritePool, MockDataset, MockRewardModel, MockGatingModel
 
@@ -130,13 +130,8 @@ class neuron:
 
         else:
             bt.logging.info("Loading reward model")
-            self.reward_model = RewardModel(model_path="EleutherAI/gpt-j-6b", device=self.config.neuron.device)
-            for fpath in os.listdir(self.config.neuron.reward_path):
-                if fpath.endswith(".pt") or fpath.endswith(".bin"):
-                    checkpoint = os.path.join(self.config.neuron.reward_path, fpath)
-                    break
-            ckpt_state = torch.load(checkpoint)
-            self.reward_model.load_state_dict(ckpt_state)
+            self.reward_model = PromptRewardModel(model_path=self.config.neuron.reward_model,
+                                                  device=self.config.neuron.device)
             self.reward_model.eval()
             self.reward_model.half()
             self.reward_model.requires_grad_(False)

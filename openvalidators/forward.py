@@ -26,12 +26,7 @@ import bittensor as bt
 from loguru import logger
 from typing import List, Union, Dict
 from openvalidators.misc import ttl_get_block
-from openvalidators.prompts import (
-    extract_score,
-    followup_request_template,
-    answer_scoring_template,
-    followup_scoring_template,
-)
+from openvalidators.prompts import BasePrompt, FollowupPrompt, AnswerPrompt, followup_request_template
 from openvalidators.utils import check_uid_availability
 
 
@@ -77,19 +72,18 @@ def is_successful_completion(self, response: bt.DendriteCall, min_len: int = 10,
     return len_check and filter_check
 
 
-async def scoring_completions(
-    self, prompt: str, scoring_template: str, responses: List[bt.DendriteCall], exclude_uids: List[int] = None
-) -> Dict:
+async def scoring_completions(self, prompt: str, responses: List[bt.DendriteCall], scoring_prompt: BasePrompt,
+                              exclude_uids: List[int] = None) -> Dict:
     """Using the prompt and call responses, outsource prompt-based scoring to network,
        return scoring average for each response.
 
     Args:
         prompt (str):
             Prompt to use for the reward model.
-        scoring_template (str):
-            Scoring template to use for the scoring prompt.
         responses (List[ bittensor.DendriteCall ]):
             List of responses from the network.
+        scoring_prompt (str):
+            Scoring prompt to use for scoring.
         exclude_uids (List[int]):
             UIDs to exclude when outsourcing scoring.
 
@@ -123,7 +117,7 @@ async def scoring_completions(
             continue
 
         # Scoring prompt for this completion.
-        scoring_prompt = scoring_template.format(question=prompt, answer=response.completion.strip())
+        scoring_prompt_text = scoring_prompt.text(prompt, response.completion.strip())
 
         # Random uids for scoring this completion.
         scoring_uids = get_random_uids(self, k=n_score, exclude=exclude_uids).to(self.device)
@@ -154,7 +148,8 @@ async def scoring_completions(
 
         # Scoring values for wandb log.
         scoring_values = [
-            extract_score(resp.completion) if is_successful_completion(self, resp) else None for resp in scoring_responses
+            scoring_prompt.extract_score(resp.completion) if is_successful_completion(self, resp) else None
+            for resp in scoring_responses
         ]
 
         all_scoring_values[i] = scoring_values
@@ -215,6 +210,41 @@ def reward_completions(self, prompt: str, responses: List[bt.DendriteCall]) -> t
     # Fill scores with zeros for non successful responses.
     successful_rewards = successful_rewards.softmax(0)
     filled_rewards = torch.zeros(len(responses), dtype=torch.float32)
+    for idx, reward in zip(successful_completions_indices, successful_rewards):
+        filled_rewards[idx] = reward
+
+    # Return the filled rewards.
+    return filled_rewards
+
+
+def prompt_reward_completions(self, prompt: str, responses: List[bt.DendriteCall],
+                              scoring_prompt: BasePrompt) -> torch.FloatTensor:
+    """Using the prompt and call responses returns prompt-based scoring rewards for each response.
+
+    Args:
+        prompt (str):
+            Prompt to use for the reward model.
+        responses (List[ bt.DendriteCall ]):
+            List of responses from the network.
+        scoring_prompt (BasePrompt):
+            Scoring prompt to use for the reward model.
+
+    Returns:
+        filled_rewards (torch.FloatTensor, shape = (len(responses)) ):
+            Rewards for each response.
+    """
+    # Filters out unsuccessful responses.
+    successful_completions_indices = [idx for idx, resp in enumerate(responses) if is_successful_completion(self, resp)]
+    successful_completions: List[str] = [responses[idx].completion.strip() for idx in successful_completions_indices]
+
+    # Query the local reward model for prompt-based scorings.
+    successful_rewards = self.reward_model.reward(prompt=prompt,
+                                                  responses=successful_completions,
+                                                  scoring_prompt=scoring_prompt).to(self.device)
+    # Scale 0-10 rewards to 0-1 range.
+    successful_rewards /= 10.
+    # Fill scores with zeros for unsuccessful responses.
+    filled_rewards = torch.FloatTensor(torch.zeros(len(responses), dtype=torch.float32))
     for idx, reward in zip(successful_completions_indices, successful_rewards):
         filled_rewards[idx] = reward
 
@@ -294,17 +324,18 @@ async def forward(self):
         timeout=self.config.neuron.followup_timeout,
     )
     # Reward model evaluation.
-    followup_rewards = reward_completions(self, followup_prompt, followup_responses).to(self.device)
+    followup_rewards = prompt_reward_completions(self, followup_prompt, followup_responses).to(self.device)
     followup_completions = [comp.completion for comp in followup_responses]
     best_followup = followup_completions[followup_rewards.argmax(dim=0)].strip()
 
     # Prompt-based scoring via network. Prohibits self-scoring.
     if self.config.neuron.outsource_scoring:
+        followup_prompt_obj = FollowupPrompt()
         followup_scoring = await scoring_completions(
             self,
             prompt=bootstrap_prompt,
-            scoring_template=followup_scoring_template,
             responses=followup_responses,
+            scoring_prompt=followup_prompt_obj,
             exclude_uids=followup_uids,
         )
 
@@ -329,17 +360,18 @@ async def forward(self):
 
     reward_prompt = f"Question: {best_followup}\n"
     # Reward model evaluation.
-    answer_rewards = reward_completions(self, reward_prompt, answer_responses).to(self.device)
+    answer_rewards = prompt_reward_completions(self, reward_prompt, answer_responses).to(self.device)
     answer_completions = [ans.completion for ans in answer_responses]
     best_answer = answer_completions[answer_rewards.argmax(dim=0)].strip()
 
     # Prompt-based scoring via network. Prohibits self-scoring.
     if self.config.neuron.outsource_scoring:
+        answer_prompt_obj = AnswerPrompt()
         answer_scoring = await scoring_completions(
             self,
             prompt=answer_prompt,
-            scoring_template=answer_scoring_template,
             responses=answer_responses,
+            scoring_prompt=answer_prompt_obj,
             exclude_uids=answer_uids,
         )
 
