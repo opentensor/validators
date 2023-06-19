@@ -52,7 +52,7 @@ def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor
     uids = torch.tensor(random.sample(available_uids.tolist(), k), dtype=torch.int64)
     return uids
 
-async def run_step( self, prompt: str, k: int, timeout: float, name: str, exclude: list):
+async def run_step( self, prompt: str, k: int, timeout: float, name: str, exclude: list = []):
     bt.logging.debug( "run_step", name )
 
     # Record event start time.
