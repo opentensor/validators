@@ -18,12 +18,7 @@
 import torch
 import asyncio
 import bittensor as bt
-from openvalidators.prompts import (
-    scoring_mock_response,
-    firewall_mock_response,
-    is_firewall,
-    is_scoring,
-)
+from openvalidators.prompts import FirewallPrompt, FollowupPrompt, AnswerPrompt
 from openvalidators.gating import BaseGatingModel
 from typing import List
 from collections.abc import Iterator
@@ -70,12 +65,17 @@ class MockDendriteResponse:
     completion = ""
     elapsed_time = 0
     is_success = True
+    firewall_prompt = FirewallPrompt()
+    followup_prompt = FollowupPrompt()
+    answer_prompt = AnswerPrompt()
 
     def __init__(self, message: str):
-        if is_firewall(message):
-            self.completion = firewall_mock_response()
-        elif is_scoring(message):
-            self.completion = scoring_mock_response()
+        if self.firewall_prompt.matches_template(message):
+            self.completion = self.firewall_prompt.mock_response()
+        elif self.followup_prompt.matches_template(message):
+            self.completion = self.followup_prompt.mock_response()
+        elif self.answer_prompt.matches_template(message):
+            self.completion = self.answer_prompt.mock_response()
         else:
             self.completion = "The capital of Texas is Austin."
 
