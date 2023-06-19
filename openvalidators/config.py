@@ -81,6 +81,13 @@ def add_args(cls, parser):
         help="Device to run the validator on.",
         default="cuda" if torch.cuda.is_available() else "cpu",
     )
+    parser.add_argument(
+        "--neuron.log_rewards",
+        action="store_true",
+        help="Turn on reward logging, logs all reward functions and their values to wandb.",
+        default=False,
+    )
+
 
     parser.add_argument(
         "--neuron.num_concurrent_forwards",
@@ -203,7 +210,7 @@ def add_args(cls, parser):
     parser.add_argument(
         "--neuron.blacklist_off",
         action="store_true",
-        help="Dont apply the nsfw reward model",
+        help="Dont apply the blacklist reward model",
         default=False,
     )
     parser.add_argument(

@@ -17,6 +17,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import torch
+import bittensor as bt
 from .reward import BaseRewardModel
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
