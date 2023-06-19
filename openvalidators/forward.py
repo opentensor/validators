@@ -25,12 +25,7 @@ import bittensor as bt
 from loguru import logger
 from typing import List, Union, Dict
 from openvalidators.misc import ttl_get_block
-from openvalidators.prompts import (
-    extract_score,
-    followup_request_template,
-    answer_scoring_template,
-    followup_scoring_template,
-)
+from openvalidators.prompts import followup_request_template
 from openvalidators.utils import check_uid_availability
 
 def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor:
