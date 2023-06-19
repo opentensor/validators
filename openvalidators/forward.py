@@ -285,9 +285,7 @@ async def forward(self):
 
     # Load a base prompt from the dataset.
     data = next(self.dataset)["text"]
-    bootstrap_prompt = ''
-    for i in data.split('.')[:20]:
-        bootstrap_prompt += i +'.'
+    bootstrap_prompt = '.'.join(data.split('.',maxsplit=20)[:-1])
 
     # Query the network with the base prompt and get an augmented base prompt.
     random_level = random.randint(0,4)
@@ -410,7 +408,9 @@ async def forward(self):
         "augment_uids":augment_uids.tolist(),
         "augment_completions":augment_completions,
         "augment_rewards":augment_rewards.tolist(),
+        "augment_times": [aug.elapsed_time for aug in augment_responses],
         "best_augment":best_augment,
+        "followup_prompt":followup_prompt,
     }
 
     if self.config.neuron.nsfw_filter:
