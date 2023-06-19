@@ -73,8 +73,7 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str ):
     # Compute the rewards for the responses gien the prompt.
     rewards:torch.FloatTensor = torch.ones( len( responses ), dtype=torch.float32).to(self.device) 
     for reward_fn_i in self.reward_functions:
-        reward_scores_i = reward_fn_i.apply( prompt, responses ).to( self.device )
-        rewards *= torch.functional.F.normalize( reward_scores_i, p=1, dim=0 )        
+        rewards *= reward_fn_i.apply( prompt, responses ).to( self.device )       
         # NOTE(const) Turning this off to reduce the event size.
         # event[ reward_fn_i.name ] = rewards.tolist()
 
