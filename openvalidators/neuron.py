@@ -42,7 +42,8 @@ from openvalidators.reward import (
     BertRelevanceRewardModel, 
     MockRewardModel, 
     DahoasRewardModel,
-    DiversityRewardModel
+    DiversityRewardModel,
+    PromptRewardModel
 )
 
 class neuron:
@@ -137,6 +138,7 @@ class neuron:
                 BertRelevanceRewardModel( device = self.device ) if not self.config.neuron.relevance_off else MockRewardModel('mock-relevance'),
                 DahoasRewardModel( path = self.config.neuron.full_path, device = self.device ) if not self.config.neuron.dahoas_off else MockRewardModel('mock-dahoas'),
                 DiversityRewardModel() if not self.config.neuron.diversity_off else MockRewardModel('mock-diversity'),
+                PromptRewardModel( device = self.device ) if not self.config.neuron.prompt_based_off else MockRewardModel('mock-prompt'),
             ]
             bt.logging.debug(str(self.reward_functions))
 

@@ -7,3 +7,4 @@ from .reward import BaseRewardModel
 from .reward import MockRewardModel
 from .dahoas import DahoasRewardModel
 from .diversity import DiversityRewardModel
+from .prompt import PromptRewardModel
