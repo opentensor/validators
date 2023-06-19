@@ -53,7 +53,7 @@ class DahoasRewardModel( BaseRewardModel ):
 
         self.config.n_embd = self.config.hidden_size if hasattr(self.config, "hidden_size") else self.config.n_embd
         self.transformer = self.model.transformer
-        self.v_head = torch.nn.Linear(self.config.n_embd, 1, bias=False)
+        self.v_head = torch.nn.Linear(self.config.n_embd, 1, bias=False).to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-j-6b")
         self.tokenizer.pad_token = self.tokenizer.eos_token
         self.PAD_ID = self.tokenizer(self.tokenizer.pad_token)["input_ids"][0]
@@ -91,7 +91,7 @@ class DahoasRewardModel( BaseRewardModel ):
 
         with torch.no_grad():
             combined_reward = reward_fn( prompt + completion )
-            independent_reward = reward_fn(completion )
+            independent_reward = reward_fn( completion )
             return float( (combined_reward - independent_reward).item() )
     
     def forward(
