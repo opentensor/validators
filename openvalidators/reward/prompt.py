@@ -17,6 +17,7 @@
 
 import time
 import torch
+import bittensor as bt
 from .reward import BaseRewardModel
 from openvalidators.prompts import ScoringPrompt, AnswerPrompt
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -69,5 +70,7 @@ class PromptRewardModel(BaseRewardModel):
 
             # Scale 0-10 score to 0-1 range.
             score /= 10.
+
+            bt.logging.debug(f"PromptRewardModel: {score_text}: {score} [{duration}]")
 
             return score
