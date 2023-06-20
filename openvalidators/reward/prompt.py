@@ -80,7 +80,7 @@ class PromptRewardModel(BaseRewardModel):
             print(f"PromptRewardModel (prompt): {prompt}")
             print(f"PromptRewardModel (completion): {completion}")
             print(f"PromptRewardModel (name): {name}")
-            # bt.logging.debug(f"PromptRewardModel (scoring prompt text): {scoring_prompt_text}")
+            # print(f"PromptRewardModel (scoring prompt text): {scoring_prompt_text}")
             print(f"Response: {score_text}: {score} [{duration}]")
 
             return score

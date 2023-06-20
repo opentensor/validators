@@ -59,9 +59,11 @@ class ScoringPrompt(BasePrompt):
     def extract_score(self, response: str) -> float:
         r"""Extract numeric score (range 0-10) from prompt response."""
         extraction = self.extract(response)
+        print(f'extract_score: {extraction}')
         if extraction is not None:
             try:
                 score = float(extraction)
+                print(f'score: {score}')
                 if 0 <= score <= 10:
                     return score
             except ValueError:
