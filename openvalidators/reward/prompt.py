@@ -19,7 +19,7 @@ import time
 import torch
 import bittensor as bt
 from .reward import BaseRewardModel
-from openvalidators.prompts import ScoringPrompt, AnswerPrompt
+from openvalidators.prompts import FollowupPrompt, AnswerPrompt
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 
@@ -43,8 +43,14 @@ class PromptRewardModel(BaseRewardModel):
         self.model = AutoModelForCausalLM.from_pretrained(PromptRewardModel.reward_model_name,
                                                           torch_dtype=torch.float16).to(self.device)
 
-    def reward(self, prompt: str, completion: str, scoring_prompt: ScoringPrompt = AnswerPrompt()) -> float:
+    def reward(self, prompt: str, completion: str, name: str) -> float:
         with torch.no_grad():
+            # Choose correct scoring prompt for request type.
+            if name == 'followup':
+                scoring_prompt = FollowupPrompt()
+            elif name == 'answer':
+                scoring_prompt = AnswerPrompt()
+
             # Format scoring prompt for this completion.
             scoring_prompt_text = scoring_prompt.text(prompt, completion)
 
