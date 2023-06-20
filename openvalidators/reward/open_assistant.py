@@ -35,4 +35,5 @@ class OpenAssistantRewardModel( BaseRewardModel ):
     def reward( self, prompt: str, completion: str ) -> float:
         with torch.no_grad():
             inputs = self.tokenizer(prompt, completion, return_tensors='pt').to(self.device)
-            return float( self.model( **inputs ).logits[0].cpu().detach() )
+            rewards = self.normalize(float( self.model( **inputs ).logits[0].cpu().detach() ))
+            return rewards

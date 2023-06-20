@@ -27,7 +27,11 @@ class BaseRewardModel:
     def name(self) -> str: ...
     def __str__(self) -> str: return str(self.name)
     def __repr__(self) -> str: return str(self.name)
-
+    def __init__( self ):
+        self.mean = 0
+        self.count = 0
+        self.variance = 0
+                 
     @abstractmethod
     def reward( self, prompt: str, completion: str ) -> float: ...
 
@@ -56,6 +60,23 @@ class BaseRewardModel:
 
         # Return the filled rewards.
         return filled_rewards 
+
+    def update(self, sample: torch.FloatTensor):
+        sample_mean = sample.mean()
+        sample_variance = sample.var()
+
+        w_distribution = self.count/ (self.count + len(sample))
+        w_sample = len(sample) / (self.count+len(sample))
+        self.mean = w_distribution*self.mean + w_sample* sample_mean
+        self.variance = (w_distribution)*(self.variance) + (w_sample)*(sample_variance) + (w_distribution*w_sample)*(self.mean-sample_mean)**2 
+
+    def normalize(self, sample: torch.FloatTensor):
+        if self.variance != 0:
+            rewards = sample-self.mean/self.variance
+        else:
+            rewards = sample
+        self.update(sample)
+        return rewards
 
 
 class MockRewardModel( BaseRewardModel ):
