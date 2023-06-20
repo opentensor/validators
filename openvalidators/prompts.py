@@ -35,11 +35,8 @@ class BasePrompt:
 
     def extract(self, response: str):
         r"""Search for the extract pattern in the text using regex."""
-        print('extract_pattern:', self.extract_pattern)
-        print('response:', response)
         result_pattern = re.compile(self.extract_pattern, re.DOTALL)
         result = re.findall(result_pattern, response)
-        print('result:', result)
         # If result found, return it.
         if result:
             return result[0]
@@ -55,17 +52,15 @@ class BasePrompt:
 
 class ScoringPrompt(BasePrompt):
     def __init__(self):
-        super(BasePrompt, self).__init__()
+        super().__init__()
         self.extract_pattern = r"<Score>(.*?)</Score>"
 
     def extract_score(self, response: str) -> float:
         r"""Extract numeric score (range 0-10) from prompt response."""
         extraction = self.extract(response)
-        print(f'extract_score: {extraction}')
         if extraction is not None:
             try:
                 score = float(extraction)
-                print(f'score: {score}')
                 if 0 <= score <= 10:
                     return score
             except ValueError:
@@ -81,21 +76,21 @@ class ScoringPrompt(BasePrompt):
 class FollowupPrompt(ScoringPrompt):
     r"""Scores a question on a scale from 0 to 10, given a context."""
     def __init__(self):
-        super(ScoringPrompt, self).__init__()
+        super().__init__()
         self.template = followup_scoring_template
 
 
 class AnswerPrompt(ScoringPrompt):
     r"""Scores an answer on a scale from 0 to 10, given a question."""
     def __init__(self):
-        super(ScoringPrompt, self).__init__()
+        super().__init__()
         self.template = answer_scoring_template
 
 
 class FirewallPrompt(BasePrompt):
     r"""Detects jailbreaks or prompt injections that influence prompt-based scoring in answers."""
     def __init__(self):
-        super(BasePrompt, self).__init__()
+        super().__init__()
         self.template = firewall_template
         self.extract_pattern = r"<Detected>(.*?)</Detected>"
 
