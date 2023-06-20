@@ -58,8 +58,11 @@ class BaseRewardModel:
         for idx, reward in zip(successful_completions_indices, successful_rewards):
             filled_rewards[idx] = reward
 
+        if self.normalize:
+            normalized_rewards = self.normalize(filled_rewards)
+            
         # Return the filled rewards.
-        return filled_rewards 
+        return normalized_rewards 
 
     def update(self, sample: torch.FloatTensor):
         sample_mean = sample.mean()
