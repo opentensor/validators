@@ -47,10 +47,7 @@ class BaseRewardModel:
 
         # Reward each completion.
         successful_rewards = torch.tensor( [ self.reward( prompt, completion ) for completion in successful_completions ], dtype = torch.float32 )
-
-        # Softmax rewards across samples.
-        successful_rewards = successful_rewards.softmax(0)
-
+        
         # Init zero rewards for all calls.
         filled_rewards = torch.zeros( len( responses ), dtype=torch.float32)
 
