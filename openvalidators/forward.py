@@ -73,7 +73,7 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str ):
     # Compute the rewards for the responses gien the prompt.
     rewards:torch.FloatTensor = torch.ones( len( responses ), dtype=torch.float32).to(self.device) 
     for reward_fn_i in self.reward_functions:
-        rewards *= reward_fn_i.apply( prompt, responses ).to( self.device )  
+        rewards *= reward_fn_i.apply( prompt, responses, name ).to( self.device )
         if self.config.neuron.log_rewards:     
             event[ reward_fn_i.name ] = rewards.tolist()
         bt.logging.trace( str(reward_fn_i.name), rewards.tolist() )
