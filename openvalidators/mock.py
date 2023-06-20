@@ -46,7 +46,7 @@ class MockGatingModel(BaseGatingModel):
 
 
 class MockRewardModel(torch.nn.Module):
-    def reward(
+    def apply(
         self,
         completions_with_prompt: List[str],
         completions_without_prompt: List[str],

@@ -60,7 +60,7 @@ class BaseRewardModel:
 
         if self.normalize:
             normalized_rewards = self.normalize(filled_rewards)
-            
+
         # Return the filled rewards.
         return normalized_rewards 
 
@@ -74,7 +74,7 @@ class BaseRewardModel:
         self.variance = (w_distribution)*(self.variance) + (w_sample)*(sample_variance) + (w_distribution*w_sample)*(self.mean-sample_mean)**2 
 
     def normalize(self, sample: torch.FloatTensor):
-        if self.variance != 0:
+        if self.variance > 0.001:
             rewards = sample-self.mean/self.variance
         else:
             rewards = sample
