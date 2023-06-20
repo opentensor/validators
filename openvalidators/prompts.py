@@ -35,9 +35,11 @@ class BasePrompt:
 
     def extract(self, response: str):
         r"""Search for the extract pattern in the text using regex."""
+        print('extract_pattern:', self.extract_pattern)
+        print('response:', response)
         result_pattern = re.compile(self.extract_pattern, re.DOTALL)
         result = re.findall(result_pattern, response)
-
+        print('result:', result)
         # If result found, return it.
         if result:
             return result[0]
