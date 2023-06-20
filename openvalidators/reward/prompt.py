@@ -77,6 +77,10 @@ class PromptRewardModel(BaseRewardModel):
             # Scale 0-10 score to 0-1 range.
             score /= 10.
 
-            bt.logging.debug(f"PromptRewardModel: {score_text}: {score} [{duration}]")
+            bt.logging.debug(f"PromptRewardModel (prompt): {prompt}")
+            bt.logging.debug(f"PromptRewardModel (completion): {completion}")
+            bt.logging.debug(f"PromptRewardModel (name): {name}")
+            bt.logging.debug(f"PromptRewardModel (scoring prompt text): {scoring_prompt_text}")
+            bt.logging.debug(f"Response: {score_text}: {score} [{duration}]")
 
             return score
