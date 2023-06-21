@@ -62,7 +62,7 @@ class BaseRewardModel:
         old_weight = self.old_count / (self.old_count + new_count)
 
         # Update the old mean with the new mean and weights.
-        self.old_mean = new_weight * new_count + old_weight * self.old_mean
+        self.old_mean = new_weight * new_mean + old_weight * self.old_mean
         # Update the old variance with the new variance and weights, and adjusting for the difference in means.
         self.old_var = (new_weight * new_var) + (old_weight * self.old_var) + (new_weight * old_weight) * (new_mean - self.old_mean) ** 2
         # Update the old count with the new count, but don't exceed the limit.
