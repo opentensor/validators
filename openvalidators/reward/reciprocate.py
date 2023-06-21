@@ -35,7 +35,7 @@ class ReciprocateRewardModel( BaseRewardModel ):
         self.tokenizer = AutoTokenizer.from_pretrained( ReciprocateRewardModel.reward_model_path, revision = ReciprocateRewardModel.revision )
         self.model = AutoModelForSequenceClassification.from_pretrained( ReciprocateRewardModel.reward_model_path, revision = ReciprocateRewardModel.revision).to(self.device)
 
-    def reward( self, prompt: str, completion: str ) -> float:
+    def reward( self, prompt: str, completion: str, name: str ) -> float:
         with torch.no_grad():
             message = f"<|prompter|>{prompt}</s><|assistant|>{completion}</s><|endoftext|>"
             inputs = self.tokenizer( message, return_tensors="pt" ).to(self.device)

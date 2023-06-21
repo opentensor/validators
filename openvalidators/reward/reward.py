@@ -29,10 +29,10 @@ class BaseRewardModel:
     def __repr__(self) -> str: return str(self.name)
 
     @abstractmethod
-    def reward( self, prompt: str, completion: str ) -> float: ...
+    def reward( self, prompt: str, completion: str, name: str ) -> float: ...
 
-    def apply( self, prompt: str, responses: List[ bt.DendriteCall ]) -> torch.FloatTensor:
-        """ Applies the reward model across each call. Non successful responses are zeroed.
+    def apply( self, prompt: str, responses: List[ bt.DendriteCall ], name: str) -> torch.FloatTensor:
+        """ Applies the reward model across each call. Unsuccessful responses are zeroed.
         """
 
         # Get indices of correctly responding calls.
@@ -42,7 +42,7 @@ class BaseRewardModel:
         successful_completions: List[str] = [ responses[idx].completion.strip() for idx in successful_completions_indices]
 
         # Reward each completion.
-        successful_rewards = torch.tensor( [ self.reward( prompt, completion ) for completion in successful_completions ], dtype = torch.float32 )
+        successful_rewards = torch.tensor( [ self.reward( prompt, completion, name ) for completion in successful_completions ], dtype = torch.float32 )
 
         # Softmax rewards across samples.
         successful_rewards = successful_rewards.softmax(0)
@@ -67,7 +67,7 @@ class MockRewardModel( BaseRewardModel ):
         super().__init__()
         self.mock_name = mock_name
 
-    def reward( self, prompt: str, completion: str ) -> float:
+    def reward( self, prompt: str, completion: str, name: str ) -> float:
         return 0.0
 
 

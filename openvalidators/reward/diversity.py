@@ -86,7 +86,7 @@ class DiversityRewardModel( BaseRewardModel ):
         batch_representation = torch.mean(sentence_embeddings, dim=0)
         return batch_representation
 
-    def apply( self, prompt: str, responses: List[ bt.DendriteCall ]) -> torch.FloatTensor:
+    def apply( self, prompt: str, responses: List[ bt.DendriteCall ], name: str) -> torch.FloatTensor:
 
         # Get indices of correctly responding calls.
         successful_completions_indices: List[int] = [ idx for idx, resp in enumerate(responses) if resp.is_success ]

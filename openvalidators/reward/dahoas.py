@@ -59,7 +59,7 @@ class DahoasRewardModel( BaseRewardModel ):
         self.PAD_ID = self.tokenizer(self.tokenizer.pad_token)["input_ids"][0]
 
 
-    def reward( self, prompt: str, completion: str ) -> float:
+    def reward( self, prompt: str, completion: str, name: str ) -> float:
 
         def reward_fn(samples):
             if samples is None:

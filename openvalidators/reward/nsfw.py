@@ -34,7 +34,7 @@ class NSFWRewardModel( BaseRewardModel ):
         self.tokenizer = AutoTokenizer.from_pretrained( NSFWRewardModel.nsfw_filter_model_path )
         self.model = AutoModelForSequenceClassification.from_pretrained( NSFWRewardModel.nsfw_filter_model_path ).to(self.device)
 
-    def reward( self, prompt: str, completion: str ) -> float:
+    def reward( self, prompt: str, completion: str, name: str ) -> float:
 
         boundary = 0.0
         with torch.no_grad():

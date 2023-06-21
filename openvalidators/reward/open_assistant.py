@@ -32,7 +32,7 @@ class OpenAssistantRewardModel( BaseRewardModel ):
         self.tokenizer = AutoTokenizer.from_pretrained( OpenAssistantRewardModel.reward_model_name )
         self.model = AutoModelForSequenceClassification.from_pretrained( OpenAssistantRewardModel.reward_model_name ) .to(self.device)
 
-    def reward( self, prompt: str, completion: str ) -> float:
+    def reward( self, prompt: str, completion: str, name: str ) -> float:
         with torch.no_grad():
             inputs = self.tokenizer(prompt, completion, return_tensors='pt').to(self.device)
             return float( self.model( **inputs ).logits[0].cpu().detach() )
