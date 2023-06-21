@@ -34,7 +34,7 @@ class ReciprocateRewardModel( BaseRewardModel ):
         super().__init__()
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained( ReciprocateRewardModel.reward_model_path, revision = ReciprocateRewardModel.revision )
-        self.model = AutoModelForSequenceClassification.from_pretrained( ReciprocateRewardModel.reward_model_path, revision = ReciprocateRewardModel.revision).to(self.device)
+        self.model = AutoModelForSequenceClassification.from_pretrained( ReciprocateRewardModel.reward_model_path, revision = ReciprocateRewardModel.revision, torch_dtype=torch.float16).to(self.device)
 
     def reward( self, prompt: str, completion: str, name: str ) -> float:
         with torch.no_grad():
