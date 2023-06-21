@@ -71,8 +71,11 @@ class BaseRewardModel:
         # Update the old count with the new count, but don't exceed the limit.
         self.old_count = min(self.count_limit, self.old_count + new_count)
 
+        print(self.old_mean, self.old_var)
         # Standardize the rewards using the updated mean and variance.
         rewards = (rewards - self.old_mean) / torch.sqrt(self.old_var)
+
+        print('Normalized rewards', rewards)
         # Scale the standardized rewards to the range [0, 1] using the error function as a cumulative distribution function (CDF).
         rewards = 0.5 * (1 + torch.erf(rewards / torch.sqrt(torch.tensor([2.0])).to(rewards.device)))
 
