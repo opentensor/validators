@@ -59,7 +59,6 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str, exclud
     event = {'name': name}
     start_time = time.time()
 
-
     # Get the list of uids to query for this step.
     uids = get_random_uids( self, k = k , exclude=exclude).to(self.device)
 
@@ -96,7 +95,7 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str, exclud
     alpha:float = self.config.neuron.moving_average_alpha
     self.moving_averaged_scores: torch.FloatTensor = alpha * scattered_rewards + (1 - alpha) * self.moving_averaged_scores.to(self.device)
 
-    # Log the step event..
+    # Log the step event.
     event.update({
         "block": ttl_get_block( self ),
         'step_length': time.time() - start_time,
@@ -117,13 +116,17 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str, exclud
     
 async def forward(self):
 
-    # Query the network for the best follow up
+    # Obtain a unique context from the dataset.
     data = next(self.dataset)["text"]
 
-    bootstrap_prompt = '.'.join(data.split('.',maxsplit=20)[:-1])
-    random_level = random.randint(0,4)
-    augment_prompt = f"{bootstrap_prompt}\n\n{augment_request_template} {school_levels[random_level]} level\n\n"
+    # Truncate context to a limited set of sentences.
+    bootstrap_prompt = '.'.join(data.split('.', maxsplit=20)[:-1])
 
+    # Form the augment prompt, requesting a summary at a random school level.
+    random_level = random.randint(0, 4)
+    augment_prompt = f"{bootstrap_prompt}\n\n{augment_request_template} {school_levels[random_level]} level.\n\n"
+
+    # Request a summary, given the original context.
     augment_event = await run_step( 
         self, 
         prompt = augment_prompt, 
@@ -132,7 +135,7 @@ async def forward(self):
         timeout = self.config.neuron.followup_timeout,
     )
 
-    # Get a follow up.
+    # Get a followup question, given the summarized context.
     prompt = f"{augment_event['best']}\n\n{followup_request_template}\n\n"
     followup_event = await run_step( 
         self, 
@@ -140,10 +143,10 @@ async def forward(self):
         name = 'followup',
         k = self.config.neuron.followup_sample_size,
         timeout = self.config.neuron.followup_timeout,
-        exclude  = augment_event['uids']
+        exclude = augment_event['uids']
     )
 
-    # Ask the follow up.
+    # Ask the followup question, given the original context.
     prompt = f"{bootstrap_prompt}\n\n{followup_event['best']}"
     answer_event = await run_step( 
         self, 
@@ -151,5 +154,5 @@ async def forward(self):
         name = 'answer',
         k = self.config.neuron.answer_sample_size,
         timeout = self.config.neuron.answer_timeout,
-        exclude  = augment_event['uids'] + followup_event['uids']
+        exclude = augment_event['uids'] + followup_event['uids']
     )
