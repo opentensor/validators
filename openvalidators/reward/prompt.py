@@ -78,7 +78,7 @@ class PromptRewardModel(BaseRewardModel):
 
             # Scale 0-10 score to 0-1 range.
             score /= 10.
-            print(f'PromptRewardModel: {score} [{duration}]: {generated_text}')
+            print(f'PromptRewardModel: {score} [{duration}]: {score_text}')
             return score
         
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
