@@ -87,7 +87,10 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str, exclud
     # Find the best completion given the rewards vector.
     completions: List[str] = [comp.completion for comp in responses ]
     best:str = completions[ rewards.argmax( dim = 0 )].strip()
-
+    
+    for ind, comp in enumerate(completions):
+        print('reward:',rewards[ind], comp)
+        
     # Compute forward pass rewards, assumes followup_uids and answer_uids are mutually exclusive.
     # shape: [ metagraph.n ]
     scattered_rewards: torch.FloatTensor = self.moving_averaged_scores.scatter( 0, uids, rewards ).to(self.device) 
