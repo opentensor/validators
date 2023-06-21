@@ -16,14 +16,15 @@
 # DEALINGS IN
 #  THE SOFTWARE.
 
-import time 
-import wandb
+import time
 import torch
 import random
 import bittensor as bt
 
 from loguru import logger
-from typing import List, Union, Dict
+from typing import List
+from dataclasses import asdict
+from openvalidators.event import EventSchema
 from openvalidators.misc import ttl_get_block
 from openvalidators.prompts import followup_request_template
 from openvalidators.utils import check_uid_availability
@@ -70,11 +71,11 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str ):
         timeout = timeout,
     )
 
-    # Compute the rewards for the responses gien the prompt.
+    # Compute the rewards for the responses given the prompt.
     rewards:torch.FloatTensor = torch.ones( len( responses ), dtype=torch.float32).to(self.device) 
     for reward_fn_i in self.reward_functions:
         rewards *= reward_fn_i.apply( prompt, responses ).to( self.device )  
-        if self.config.neuron.log_rewards:     
+        if self.config.neuron.log_rewards:
             event[ reward_fn_i.name ] = rewards.tolist()
         bt.logging.trace( str(reward_fn_i.name), rewards.tolist() )
 
@@ -107,8 +108,11 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str ):
         'best': best
     })
     bt.logging.debug( "event:", str(event) )
-    if not self.config.wandb.off: self.wandb.log( event )
     if not self.config.neuron.dont_save_events: logger.log("EVENTS", "events", **event)
+
+    # Log the event to wandb.
+    wandb_event = EventSchema.from_dict(event, self.config.neuron.log_rewards)
+    if not self.config.wandb.off: self.wandb.log(asdict(wandb_event))
 
     # Return the event.
     return event
