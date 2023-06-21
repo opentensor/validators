@@ -77,11 +77,14 @@ class PromptRewardModel(BaseRewardModel):
             score_text = generated_text[0][len(scoring_prompt_text):]
             score = scoring_prompt.extract_score(score_text)
 
+            bt.logging.trace(f"PromptRewardModel | {name} score: {score} ('{score_text}') | {repr(completion[:50])}")
+
             # Scale 0-10 score to 0-1 range.
             score /= 10.
 
             return score
         
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
-        bt.logging.debug(f"PromptRewardModel: Calculating {len(completions)} rewards (typically < 1 sec/reward).")
+        bt.logging.debug(f"PromptRewardModel | Calculating {len(completions)} rewards (typically < 1 sec/reward).")
+        bt.logging.trace(f"PromptRewardModel | prompt: {repr(prompt[:30])} ... {repr(prompt[-30:])}")
         return torch.tensor( [self.reward( prompt, completion, name ) for completion in completions], dtype=torch.float32).to(self.device)
