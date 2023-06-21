@@ -35,6 +35,7 @@ class BaseRewardModel:
         self.old_count = 0
         self.old_mean = 0.0
         self.old_var = 0.0
+        self.count_limit = 1000
 
     def normalize_rewards( self, rewards: torch.FloatTensor ) -> torch.FloatTensor:
         """
@@ -53,8 +54,8 @@ class BaseRewardModel:
         """
         # Calculate the mean, count, and standard deviation of the new rewards.
         new_mean = rewards.mean()
-        new_count = rewards.count()
-        new_var = rewards.std()
+        new_count = rewards.numel()
+        new_var = rewards.var()
 
         # Compute the weights for the new and old rewards.
         new_weight = new_count / (self.old_count + new_count)
