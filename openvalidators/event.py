@@ -16,7 +16,7 @@ class EventSchema:
 
     # Reward data
     rewards: List[float]  # Reward vector for given step
-    dahoas_reward_model: Optional[List[float]]
+    dahoas_reward_model: Optional[List[float]] # Output vector of the dahoas reward model
     blacklist_filter: Optional[List[float]]  # Output vector of the blacklist filter
     nsfw_filter: Optional[List[float]]  # Output vector of the nsfw filter
     reciprocate_reward_model: Optional[List[float]]  # Output vector of the reciprocate reward model
