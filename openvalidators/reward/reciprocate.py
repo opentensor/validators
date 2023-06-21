@@ -27,7 +27,7 @@ class ReciprocateRewardModel( BaseRewardModel ):
     revision: str = "501f895"
 
     @property
-    def name(self) -> str: return "reciprocate-reward-model"
+    def name(self) -> str: return "reciprocate_reward_model"
 
     def __init__( self, device: str ):
         super().__init__()

@@ -45,12 +45,9 @@ def mean_pooling( model_output, attention_mask ):
     )
     
 class DiversityRewardModel( BaseRewardModel ):
-
     relevance_model_path = "bert-base-uncased"
-
-
     @property
-    def name(self) -> str: return "diversity-reward-function"
+    def name(self) -> str: return "diversity_reward_model"
 
     def __init__( self, device: str ):
         super().__init__()

@@ -26,7 +26,7 @@ class NSFWRewardModel( BaseRewardModel ):
     nsfw_filter_model_path = "facebook/roberta-hate-speech-dynabench-r4-target"
 
     @property
-    def name(self) -> str: return "nsfw-filter"
+    def name(self) -> str: return "nsfw_filter"
    
     def __init__( self, device: str ):
         super().__init__()

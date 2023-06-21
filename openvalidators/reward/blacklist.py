@@ -24,7 +24,7 @@ blacklist = ["That is an excellent question."]
 class Blacklist( BaseRewardModel ):
 
     @property
-    def name(self) -> str: return "blacklist"
+    def name(self) -> str: return "blacklist_filter"
 
     def reward( self, prompt: str, completion: str ) -> float:
         if completion in blacklist: return 0.0
