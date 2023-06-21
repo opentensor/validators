@@ -29,7 +29,7 @@ class BaseRewardModel:
     def __repr__(self) -> str: return str(self.name)
 
     @abstractmethod
-    def reward( self, prompt: str, completion: str, name: str ) -> float: ...
+    def get_rewards( self, prompt: str, completion: List[str], name: str ) -> torch.FloatTensor: ...
 
     def __init__(self) -> None:
         self.old_count = 0
@@ -84,7 +84,7 @@ class BaseRewardModel:
         successful_completions: List[str] = [ responses[idx].completion.strip() for idx in successful_completions_indices]
 
         # Reward each completion.
-        successful_rewards = torch.tensor( [ self.reward( prompt, completion, name ) for completion in successful_completions ], dtype = torch.float32 )
+        successful_rewards = self.get_rewards( prompt, successful_completions, name )
 
         # Softmax rewards across samples.
         successful_rewards = self.normalize_rewards( successful_rewards )
@@ -109,8 +109,8 @@ class MockRewardModel( BaseRewardModel ):
         super().__init__()
         self.mock_name = mock_name
 
-    def reward( self, prompt: str, completion: str, name: str ) -> float:
-        return 0.0
+    def get_rewards( self, prompt: str, completion: List[str], name: str ) -> torch.FloatTensor: 
+        return torch.tensor( [0.5 for _ in completion], dtype=torch.float32 )
 
 
         

@@ -86,16 +86,10 @@ class DiversityRewardModel( BaseRewardModel ):
         batch_representation = torch.mean(sentence_embeddings, dim=0)
         return batch_representation
 
-    def apply( self, prompt: str, responses: List[ bt.DendriteCall ], name: str) -> torch.FloatTensor:
-
-        # Get indices of correctly responding calls.
-        successful_completions_indices: List[int] = [ idx for idx, resp in enumerate(responses) if resp.is_success ]
-
-        # Get all completions from responding calls.
-        successful_completions: List[str] = [ responses[idx].completion.strip() for idx in successful_completions_indices]
+    def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
 
         # Get embeddings for all completions.
-        embeddings = torch.stack( [ self.get_embedding( completion ) for completion in successful_completions ] )
+        embeddings = torch.stack( [ self.get_embedding( completion ) for completion in completions ] )
 
         # Calculate the pairwise cosine similarity.
         similarity = pairwise_cosine_similarity( embeddings, embeddings )
@@ -104,17 +98,7 @@ class DiversityRewardModel( BaseRewardModel ):
         mean_similarity = torch.mean( similarity, dim = 0 )
 
         # Divide each element by the mean.
-        successful_rewards = 1 - ( mean_similarity / torch.mean( mean_similarity ) )
-        
-        # Softmax rewards across samples.
-        successful_rewards = successful_rewards.softmax(0)
+        rewards = 1 - ( mean_similarity / torch.mean( mean_similarity ) )
 
-        # Init zero rewards for all calls.
-        filled_rewards = torch.zeros( len( responses ), dtype=torch.float32)
-
-        # Fill reward tensor.
-        for idx, reward in zip(successful_completions_indices, successful_rewards):
-            filled_rewards[idx] = reward
-
-        # Return the filled rewards.
-        return filled_rewards 
+        # Return all
+        return rewards

@@ -16,7 +16,9 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+import torch
 import math
+from typing import List
 from .reward import BaseRewardModel
 
 blacklist = ["That is an excellent question."]
@@ -29,3 +31,7 @@ class Blacklist( BaseRewardModel ):
     def reward( self, prompt: str, completion: str, name: str ) -> float:
         if completion in blacklist: return 0.0
         else: return 1
+
+    def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
+        return torch.tensor( [self.reward( prompt, completion, name ) for completion in completions], dtype=torch.float32).to(self.device)
+

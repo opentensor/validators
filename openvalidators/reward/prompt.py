@@ -17,6 +17,7 @@
 
 import time
 import torch
+from typing import List
 from .reward import BaseRewardModel
 from openvalidators.prompts import FollowupPrompt, AnswerPrompt
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -77,3 +78,7 @@ class PromptRewardModel(BaseRewardModel):
             score /= 10.
 
             return score
+        
+    def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
+        return torch.tensor( [self.reward( prompt, completion, name ) for completion in completions], dtype=torch.float32).to(self.device)
+        
