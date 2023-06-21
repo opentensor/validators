@@ -91,7 +91,7 @@ class BaseRewardModel:
         successful_rewards = self.get_rewards( prompt, successful_completions, name )
 
         # Softmax rewards across samples.
-        successful_rewards = self.normalize_rewards( successful_rewards )
+        # successful_rewards = self.normalize_rewards( successful_rewards )
 
         # Init zero rewards for all calls.
         filled_rewards = torch.zeros( len( responses ), dtype=torch.float32)
