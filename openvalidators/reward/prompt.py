@@ -77,7 +77,8 @@ class PromptRewardModel(BaseRewardModel):
             score_text = generated_text[0][len(scoring_prompt_text):]
             score = scoring_prompt.extract_score(score_text)
 
-            bt.logging.trace(f"PromptRewardModel | {name} score: {score} ('{score_text}') | {repr(completion[:70])}")
+            bt.logging.trace(f"PromptRewardModel | {name} score: {score} | '{score_text}' | "
+                             f"{duration:.2f}s | {repr(completion[:70])}")
 
             # Scale 0-10 score to 0-1 range.
             score /= 10.
