@@ -75,7 +75,7 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str, exclud
     for reward_fn_i in self.reward_functions:
         print(str(reward_fn_i.name))
         reward_i = reward_fn_i.apply( prompt, responses, name ).to( self.device )
-        rewards *= reward_i
+        rewards += reward_i
         if self.config.neuron.log_rewards:     
             event[ reward_fn_i.name ] = rewards.tolist()
         bt.logging.trace( str(reward_fn_i.name), reward_i.tolist() )
