@@ -114,7 +114,7 @@ class MockRewardModel( BaseRewardModel ):
         self.mock_name = mock_name
 
     def apply( self, prompt: str, completion: List[str], name: str ) -> torch.FloatTensor: 
-        return torch.tensor( [1 for _ in completion], dtype=torch.float32 )
+        return torch.tensor( [0 for _ in completion], dtype=torch.float32 )
 
 
         
