@@ -53,7 +53,7 @@ class BasePrompt:
 
 class ScoringPrompt(BasePrompt):
     def __init__(self):
-        super(BasePrompt, self).__init__()
+        super().__init__()
         self.extract_pattern = r"<Score>(.*?)</Score>"
 
     def extract_score(self, response: str) -> float:
@@ -77,21 +77,21 @@ class ScoringPrompt(BasePrompt):
 class FollowupPrompt(ScoringPrompt):
     r"""Scores a question on a scale from 0 to 10, given a context."""
     def __init__(self):
-        super(ScoringPrompt, self).__init__()
+        super().__init__()
         self.template = followup_scoring_template
 
 
 class AnswerPrompt(ScoringPrompt):
     r"""Scores an answer on a scale from 0 to 10, given a question."""
     def __init__(self):
-        super(ScoringPrompt, self).__init__()
+        super().__init__()
         self.template = answer_scoring_template
 
 
 class FirewallPrompt(BasePrompt):
     r"""Detects jailbreaks or prompt injections that influence prompt-based scoring in answers."""
     def __init__(self):
-        super(BasePrompt, self).__init__()
+        super().__init__()
         self.template = firewall_template
         self.extract_pattern = r"<Detected>(.*?)</Detected>"
 
@@ -115,6 +115,10 @@ def find_unique_tags(input_text: str):
     # Return a list of unique matches.
     return list(set(matches))
 
+
+# Request an augmentation given a preceding context.
+augment_request_template = "Summarize the preceding context at"
+school_levels = ['elementary school','middle school', 'highschool', 'university', 'graduate school']
 
 # Request a follow-up question given a preceding context.
 followup_request_template = "Ask one relevant and insightful question about the preceding context."

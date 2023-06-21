@@ -18,6 +18,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import torch
+from typing import List
 from .reward import BaseRewardModel
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
@@ -34,7 +35,7 @@ class NSFWRewardModel( BaseRewardModel ):
         self.tokenizer = AutoTokenizer.from_pretrained( NSFWRewardModel.nsfw_filter_model_path )
         self.model = AutoModelForSequenceClassification.from_pretrained( NSFWRewardModel.nsfw_filter_model_path ).to(self.device)
 
-    def reward( self, prompt: str, completion: str ) -> float:
+    def reward( self, prompt: str, completion: str, name: str ) -> float:
 
         boundary = 0.0
         with torch.no_grad():
@@ -55,4 +56,7 @@ class NSFWRewardModel( BaseRewardModel ):
                     max_score += max(hate_score_i, max_score)
                 return max_score
             
-            return 0 if sum_nsfw_scores( input_ids, chunk_size = 512 ) > boundary else 1.0
+            return 0.0 if sum_nsfw_scores( input_ids, chunk_size = 512 ) > boundary else 1.0
+        
+    def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
+        return torch.tensor( [self.reward( prompt, completion, name ) for completion in completions], dtype=torch.float32).to(self.device)

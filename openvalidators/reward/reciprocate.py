@@ -18,6 +18,7 @@
 
 import torch
 import bittensor as bt
+from typing import List
 from .reward import BaseRewardModel
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
@@ -35,9 +36,12 @@ class ReciprocateRewardModel( BaseRewardModel ):
         self.tokenizer = AutoTokenizer.from_pretrained( ReciprocateRewardModel.reward_model_path, revision = ReciprocateRewardModel.revision )
         self.model = AutoModelForSequenceClassification.from_pretrained( ReciprocateRewardModel.reward_model_path, revision = ReciprocateRewardModel.revision).to(self.device)
 
-    def reward( self, prompt: str, completion: str ) -> float:
+    def reward( self, prompt: str, completion: str, name: str ) -> float:
         with torch.no_grad():
             message = f"<|prompter|>{prompt}</s><|assistant|>{completion}</s><|endoftext|>"
             inputs = self.tokenizer( message, return_tensors="pt" ).to(self.device)
             return float( self.model( **inputs )[0].item() )
+        
+    def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
+        return torch.tensor( [self.reward( prompt, completion, name ) for completion in completions], dtype=torch.float32).to(self.device)
         

@@ -59,7 +59,7 @@ class DahoasRewardModel( BaseRewardModel ):
         self.PAD_ID = self.tokenizer(self.tokenizer.pad_token)["input_ids"][0]
 
 
-    def reward( self, prompt: str, completion: str ) -> float:
+    def reward( self, prompt: str, completion: str, name: str ) -> float:
 
         def reward_fn(samples):
             if samples is None:
@@ -93,7 +93,10 @@ class DahoasRewardModel( BaseRewardModel ):
             combined_reward = reward_fn( prompt + completion )
             independent_reward = reward_fn( completion )
             return float( (combined_reward - independent_reward).item() )
-    
+        
+    def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
+        return torch.tensor( [self.reward( prompt, completion, name ) for completion in completions], dtype=torch.float32).to(self.device)
+
     def forward(
         self,
         input_ids=None,
