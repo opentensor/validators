@@ -17,6 +17,7 @@
 
 import time
 import torch
+import bittensor as bt
 from typing import List
 from .reward import BaseRewardModel
 from openvalidators.prompts import FollowupPrompt, AnswerPrompt
@@ -82,5 +83,5 @@ class PromptRewardModel(BaseRewardModel):
             return score
         
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
+        bt.logging.debug(f"PromptRewardModel: Calculating {len(completions)} rewards (typically < 1 sec/reward).")
         return torch.tensor( [self.reward( prompt, completion, name ) for completion in completions], dtype=torch.float32).to(self.device)
-        
