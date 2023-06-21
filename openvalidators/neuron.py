@@ -22,6 +22,7 @@ import torch
 import asyncio
 import bittensor as bt
 from datasets import load_dataset
+import random
 
 from openvalidators.dendrite import AsyncDendritePool
 from openvalidators.gating import GatingModel, SentenceEmbedGatingModel
@@ -43,7 +44,7 @@ from openvalidators.reward import (
     MockRewardModel, 
     DahoasRewardModel,
     DiversityRewardModel,
-    PromptRewardModel,
+    PromptRewardModel
 )
 
 class neuron:
@@ -103,7 +104,8 @@ class neuron:
         if self.config.neuron.mock_dataset:
             self.dataset = MockDataset()
         else:
-            self.dataset = iter(load_dataset("squad_v2", split="train", streaming=True).shuffle(buffer_size=10000))
+            seed = random.randint(0,1000)
+            self.dataset = iter(load_dataset("openwebtext", split="train", streaming=True).shuffle(seed=seed, buffer_size=100000))
         bt.logging.debug(str(self.dataset))
 
         # Init the gating model which learns which miners to select for each query.
@@ -141,7 +143,7 @@ class neuron:
                 BertRelevanceRewardModel( device = self.device ) if not self.config.neuron.relevance_off else MockRewardModel('relevance'),
                 DahoasRewardModel( path = self.config.neuron.full_path, device = self.device ) if not self.config.neuron.dahoas_off else MockRewardModel('dahoas'),
                 DiversityRewardModel( device = self.device ) if not self.config.neuron.diversity_off else MockRewardModel('diversity'),
-                PromptRewardModel( device = self.device ) if not self.config.neuron.prompt_off else MockRewardModel('prompt')
+                PromptRewardModel( device = self.device ) if not self.config.neuron.prompt_based_off else MockRewardModel('prompt'),
             ]
             bt.logging.debug(str(self.reward_functions))
 

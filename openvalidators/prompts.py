@@ -119,6 +119,16 @@ def find_unique_tags(input_text: str):
 # Request a follow-up question given a preceding context.
 followup_request_template = "Ask one relevant and insightful question about the preceding context."
 
+# ==============================
+# === Augmentation request prompt ===
+# ==============================
+
+# Request an augmentation given a preceding context.
+
+augment_request_template = "Summarize the preceding context at"
+school_levels = ['elementary school','middle school', 'highschool', 'university', 'graduate school']
+
+
 # Scores a question on a scale from 0 to 10, given a context.
 followup_scoring_template = """Score the relevance and insightfulness of a question given a context. The context is within <Context></Context> tags, and the question is within <Question></Question> tags. Give a score between 0 and 10 in the <Score></Score> tags, where 0 means the question is irrelevant, and 10 means it's perfectly relevant and highly insightful. Include a brief explanation for your score based solely on the context-question relationship.
 

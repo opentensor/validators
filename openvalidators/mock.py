@@ -53,7 +53,7 @@ class MockRewardModel(torch.nn.Module):
         difference=False,
         shift=3,
     ) -> torch.FloatTensor:
-        return torch.randn(len(completions_with_prompt))
+        return torch.ones(len(completions_with_prompt))
 
 
 class MockDataset(Iterator):
