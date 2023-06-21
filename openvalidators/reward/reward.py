@@ -70,8 +70,8 @@ class BaseRewardModel:
         self.old_var = (new_weight * new_var) + (old_weight * self.old_var) + (new_weight * old_weight) * diff * diff
         # Update the old count with the new count, but don't exceed the limit.
         self.old_count = min(self.count_limit, self.old_count + new_count)
-
-        print(self.old_mean, self.old_var)
+        print('new mean and variance', new_weight, new_mean, new_var)
+        print('old mean and variance', self.old_mean, self.old_var)
         # Standardize the rewards using the updated mean and variance.
         rewards = (rewards - self.old_mean) / torch.sqrt(self.old_var)
 
@@ -117,7 +117,7 @@ class MockRewardModel( BaseRewardModel ):
         self.mock_name = mock_name
 
     def get_rewards( self, prompt: str, completion: List[str], name: str ) -> torch.FloatTensor: 
-        return torch.tensor( [0.5 for _ in completion], dtype=torch.float32 )
+        return torch.tensor( [1 for _ in completion], dtype=torch.float32 )
 
 
         
