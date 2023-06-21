@@ -54,7 +54,7 @@ class BasePrompt:
 class ScoringPrompt(BasePrompt):
     def __init__(self):
         super().__init__()
-        self.extract_pattern = r"(.*?)</Score>"
+        self.extract_pattern = r'\b([0-9]|10)\b'
 
     def extract_score(self, response: str) -> float:
         r"""Extract numeric score (range 0-10) from prompt response."""
