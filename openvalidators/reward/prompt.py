@@ -50,6 +50,8 @@ class PromptRewardModel(BaseRewardModel):
                 scoring_prompt = FollowupPrompt()
             elif name == 'answer':
                 scoring_prompt = AnswerPrompt()
+            else:
+                return 0
 
             # Format scoring prompt for this completion.
             scoring_prompt_text = scoring_prompt.text(prompt, completion)
