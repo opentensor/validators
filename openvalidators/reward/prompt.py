@@ -68,7 +68,7 @@ class PromptRewardModel(BaseRewardModel):
 
             # Prompt local reward model.
             start_time = time.time()
-            generated_tokens = self.model.generate(input_ids, max_new_tokens=50, max_time=3)
+            generated_tokens = self.model.generate(input_ids, max_new_tokens=10, max_time=3)
             duration = time.time() - start_time
             generated_text = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
 
@@ -78,7 +78,7 @@ class PromptRewardModel(BaseRewardModel):
 
             # Scale 0-10 score to 0-1 range.
             score /= 10.
-
+            print(f'PromptRewardModel: {score} [{duration}]: {generated_text}')
             return score
         
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
