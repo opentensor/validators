@@ -89,7 +89,9 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str, exclud
     best:str = completions[ rewards.argmax( dim = 0 )].strip()
     
     for ind, comp in enumerate(completions):
-        print('reward:',rewards[ind], comp)
+        print('********')
+        print('reward:',comp, rewards[ind])
+        print('********')
         
     # Compute forward pass rewards, assumes followup_uids and answer_uids are mutually exclusive.
     # shape: [ metagraph.n ]
