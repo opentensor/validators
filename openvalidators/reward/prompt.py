@@ -68,7 +68,7 @@ class PromptRewardModel(BaseRewardModel):
 
             # Prompt local reward model.
             start_time = time.time()
-            generated_tokens = self.model.generate(input_ids, max_new_tokens=1, max_time=1)
+            generated_tokens = self.model.generate(input_ids, max_new_tokens=2, max_time=1)
             duration = time.time() - start_time
             generated_text = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
 
