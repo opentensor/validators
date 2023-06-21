@@ -26,6 +26,6 @@ class Blacklist( BaseRewardModel ):
     @property
     def name(self) -> str: return "blacklist"
 
-    def reward( self, prompt: str, completion: str ) -> float:
+    def reward( self, prompt: str, completion: str, name: str ) -> float:
         if completion in blacklist: return 0.0
         else: return 1

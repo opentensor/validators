@@ -83,7 +83,7 @@ class BertRelevanceRewardModel( BaseRewardModel ):
         return batch_representation
     
 
-    def reward( self, prompt: str, completion: str ) -> float:
+    def reward( self, prompt: str, completion: str, name: str ) -> float:
 
         # Get the two bert embeddings.
         completion_embedding = self.get_embedding( completion)
