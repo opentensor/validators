@@ -31,6 +31,11 @@ class BaseRewardModel:
     @abstractmethod
     def reward( self, prompt: str, completion: str, name: str ) -> float: ...
 
+    def __init__(self) -> None:
+        self.old_count = 0
+        self.old_mean = 0.0
+        self.old_var = 0.0
+
     def normalize_rewards( self, rewards: torch.FloatTensor ) -> torch.FloatTensor:
         """
             This method normalizes the given rewards by updating the moving mean and variance statistics. The rewards are first standardized, and then scaled to the 0-1 range using a cumulative distribution function (CDF) to ensure they're in a comparable range across different environments.
