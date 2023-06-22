@@ -74,10 +74,18 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str, exclud
     # Compute the rewards for the responses given the prompt.
     rewards:torch.FloatTensor = torch.ones( len( responses ), dtype=torch.float32).to(self.device) 
     for reward_fn_i in self.reward_functions:
-        rewards += reward_fn_i.apply( prompt, responses, name ).to( self.device )
+        reward_i = reward_fn_i.apply( prompt, responses, name ).to( self.device )
+        rewards += reward_i
         if self.config.neuron.log_rewards:     
-            event[ reward_fn_i.name ] = rewards.tolist()
+            event[ reward_fn_i.name ] = reward_i.tolist()
         bt.logging.trace( str(reward_fn_i.name), rewards.tolist() )
+    
+    for masking_fn_i in self.masking_functions:
+        mask = masking_fn_i.apply( prompt, responses, name ).to( self.device )
+        rewards *= mask
+        if self.config.neuron.log_rewards:   
+            event[ masking_fn_i.name ] = mask.tolist()
+        bt.logging.trace( str(masking_fn_i.name), rewards.tolist() )
 
     # Train the gating model based on the predicted scores and the actual rewards.
     gating_scores: torch.FloatTensor = self.gating_model( prompt ).to(self.device)
