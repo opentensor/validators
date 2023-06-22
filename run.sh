@@ -209,8 +209,8 @@ echo "module.exports = {
     name   : '$proc_name',
     script : '$script',
     interpreter: 'python3',
-    min_uptime: '2m',
-    max_restarts: '3',
+    min_uptime: '5m',
+    max_restarts: '5',
     args: [$joined_args]
   }]
 }" > app.config.js
