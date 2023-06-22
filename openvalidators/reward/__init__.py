@@ -8,3 +8,4 @@ from .reward import MockRewardModel
 from .dahoas import DahoasRewardModel
 from .diversity import DiversityRewardModel
 from .prompt import PromptRewardModel
+from .config import RewardModelType, RewardFrameworkConfig

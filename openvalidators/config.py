@@ -20,7 +20,6 @@ import torch
 import argparse
 import bittensor as bt
 from loguru import logger
-
 from openvalidators.gating import BaseGatingModel
 
 
@@ -159,6 +158,13 @@ def add_args(cls, parser):
         type=int,
         help="The maximum number of TAO allowed to query a validator with a vpermit.",
         default=4096,
+    )
+
+    parser.add_argument(
+        "--neuron.reward_config",
+        type=str,
+        help="Config file defining reward framework to be used",
+        default="reward_config.yml"
     )
 
     parser.add_argument("--wandb.off", action="store_true", help="Turn off wandb.", default=False)

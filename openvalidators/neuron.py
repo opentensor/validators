@@ -36,16 +36,19 @@ from openvalidators.utils import init_wandb
 
 # Load gating models
 from openvalidators.reward import (
-    Blacklist, 
-    NSFWRewardModel, 
-    OpenAssistantRewardModel, 
-    ReciprocateRewardModel, 
-    BertRelevanceRewardModel, 
-    MockRewardModel, 
+    Blacklist,
+    NSFWRewardModel,
+    OpenAssistantRewardModel,
+    ReciprocateRewardModel,
+    BertRelevanceRewardModel,
+    MockRewardModel,
     DahoasRewardModel,
     DiversityRewardModel,
-    PromptRewardModel
+    PromptRewardModel,
+    RewardModelType,
+    RewardFrameworkConfig
 )
+
 
 class neuron:
     @classmethod
@@ -104,8 +107,9 @@ class neuron:
         if self.config.neuron.mock_dataset:
             self.dataset = MockDataset()
         else:
-            seed = random.randint(0,1000)
-            self.dataset = iter(load_dataset("openwebtext", split="train", streaming=True).shuffle(seed=seed, buffer_size=100000))
+            seed = random.randint(0, 1000)
+            self.dataset = iter(
+                load_dataset("openwebtext", split="train", streaming=True).shuffle(seed=seed, buffer_size=100000))
         bt.logging.debug(str(self.dataset))
 
         # Init the gating model which learns which miners to select for each query.
@@ -131,22 +135,31 @@ class neuron:
         if self.config.neuron.mock_reward_models:
             self.reward_functions = []
             self.masking_functions = [
-                MockRewardModel('blacklist_filter'), 
-                MockRewardModel('nsfw_filter') 
+                MockRewardModel(RewardModelType.blacklist.value),
+                MockRewardModel(RewardModelType.nsfw.value),
             ]
             bt.logging.debug(str(self.reward_functions))
         else:
-            self.reward_functions = [ 
-                OpenAssistantRewardModel( device = self.device ) if not self.config.neuron.openassistant_off else MockRewardModel('rlhf_reward_model'), 
-                ReciprocateRewardModel( device = self.device ) if not self.config.neuron.reciprocate_off else MockRewardModel('reciprocate_reward_model'),
-                DahoasRewardModel( path = self.config.neuron.full_path, device = self.device ) if not self.config.neuron.dahoas_off else MockRewardModel('dahoas_reward_model'),
-                DiversityRewardModel( device = self.device ) if not self.config.neuron.diversity_off else MockRewardModel('diversity_reward_model'),
-                PromptRewardModel( device = self.device ) if not self.config.neuron.prompt_based_off else MockRewardModel('prompt_reward_model'),
+            reward_config = RewardFrameworkConfig(config_file_path=self.config.neuron.reward_config_path)
+
+            self.reward_functions = [
+                OpenAssistantRewardModel(device=self.device, model_weight=reward_config.rlhf_model_weight)
+                    if not self.config.neuron.openassistant_off else MockRewardModel(RewardModelType.rlhf.value),
+                ReciprocateRewardModel(device=self.device, model_weight=reward_config.reciprocate_model_weight)
+                    if not self.config.neuron.reciprocate_off else MockRewardModel(RewardModelType.reciprocate.value),
+                DahoasRewardModel(path=self.config.neuron.full_path, device=self.device, model_weight=reward_config.dahoas_model_weight )
+                    if not self.config.neuron.dahoas_off else MockRewardModel(RewardModelType.dahoas.value),
+                DiversityRewardModel(device=self.device, model_weight=reward_config.diversity_model_weight)
+                    if not self.config.neuron.diversity_off else MockRewardModel(RewardModelType.diversity.value),
+                PromptRewardModel(device=self.device, model_weight=reward_config.prompt_model_weight)
+                    if not self.config.neuron.prompt_based_off else MockRewardModel(RewardModelType.prompt.value),
             ]
             self.masking_functions = [
-                Blacklist() if not self.config.neuron.blacklist_off else MockRewardModel('blacklist'), 
-                BertRelevanceRewardModel( device = self.device ) if not self.config.neuron.relevance_off else MockRewardModel('relevance'),
-                NSFWRewardModel( device = self.device ) if not self.config.neuron.nsfw_off else MockRewardModel('nsfw'),
+                Blacklist() if not self.config.neuron.blacklist_off else MockRewardModel(RewardModelType.blacklist.value),
+                BertRelevanceRewardModel(device=self.device)
+                    if not self.config.neuron.relevance_off else MockRewardModel(RewardModelType.relevance.value),
+                NSFWRewardModel(device=self.device)
+                    if not self.config.neuron.nsfw_off else MockRewardModel(RewardModelType.nsfw.value),
             ]
             bt.logging.debug(str(self.reward_functions))
 

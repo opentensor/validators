@@ -17,8 +17,8 @@
 # DEALINGS IN THE SOFTWARE.
 
 import torch
-import bittensor as bt
 from typing import List
+from . import RewardModelType
 from .reward import BaseRewardModel
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
@@ -28,11 +28,12 @@ class ReciprocateRewardModel( BaseRewardModel ):
     revision: str = "501f895"
 
     @property
-    def name(self) -> str: return "reciprocate_reward_model"
+    def name(self) -> str: return RewardModelType.reciprocate.value
 
-    def __init__( self, device: str ):
+    def __init__( self, device: str, model_weight: float = 0.0):
         super().__init__()
         self.device = device
+        self.model_weight = model_weight
         self.tokenizer = AutoTokenizer.from_pretrained( ReciprocateRewardModel.reward_model_path, revision = ReciprocateRewardModel.revision )
         self.model = AutoModelForSequenceClassification.from_pretrained( ReciprocateRewardModel.reward_model_path, revision = ReciprocateRewardModel.revision).to(self.device)
 

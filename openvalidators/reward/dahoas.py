@@ -17,10 +17,9 @@
 
 import os
 import torch
-import bittensor as bt
 from typing import List
+from . import RewardModelType
 from .reward import BaseRewardModel
-from transformers import AutoTokenizer
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 
 class DahoasRewardModel( BaseRewardModel ):
@@ -28,7 +27,7 @@ class DahoasRewardModel( BaseRewardModel ):
     model_name = "EleutherAI/gpt-j-6b"
 
     @property
-    def name(self) -> str: return "dahoas_reward_model"
+    def name(self) -> str: return RewardModelType.dahoas.value
 
     @staticmethod
     def load_weights( path: str ):
@@ -39,10 +38,11 @@ class DahoasRewardModel( BaseRewardModel ):
                 https://huggingface.co/Dahoas/gptj-rm-static/resolve/main/hf_ckpt.pt"
             )
 
-    def __init__(self, path: str, device: str ):
+    def __init__(self, path: str, device: str, model_weight: float = 0.0 ):
         super().__init__()
         DahoasRewardModel.load_weights( path = path )
         self.device = torch.device(device)
+        self.model_weight = model_weight
         config = AutoConfig.from_pretrained( DahoasRewardModel.model_name )
         self.model = AutoModelForCausalLM.from_config( config ).to(self.device)
         self.config = self.model.config

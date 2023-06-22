@@ -19,6 +19,7 @@ import time
 import torch
 import bittensor as bt
 from typing import List
+from . import RewardModelType
 from .reward import BaseRewardModel
 from openvalidators.prompts import AugmentPrompt, FollowupPrompt, AnswerPrompt
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -28,11 +29,12 @@ class PromptRewardModel(BaseRewardModel):
     reward_model_name: str = "VMware/open-llama-7b-open-instruct"
 
     @property
-    def name(self) -> str: return "prompt_reward_model"
+    def name(self) -> str: return RewardModelType.prompt.value
 
-    def __init__(self, device: str):
+    def __init__(self, device: str, model_weight: float = 0.0):
         super().__init__()
         self.device = device
+        self.model_weight = model_weight
 
         # https://huggingface.co/VMware/open-llama-7b-open-instruct
         # Fast tokenizer results in incorrect encoding, set the use_fast = False parameter.
