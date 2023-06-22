@@ -35,3 +35,5 @@ class Blacklist( BaseRewardModel ):
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
         return torch.tensor( [self.reward( prompt, completion, name ) for completion in completions], dtype=torch.float32)
 
+    def normalize_rewards( self, rewards: torch.FloatTensor ) -> torch.FloatTensor:
+        return rewards
