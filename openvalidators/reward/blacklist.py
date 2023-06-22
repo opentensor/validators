@@ -29,8 +29,13 @@ class Blacklist( BaseRewardModel ):
     def name(self) -> str: return "blacklist"
 
     def reward( self, prompt: str, completion: str, name: str ) -> float:
-        if completion in blacklist: return 0.0
-        else: return 1
+        if completion in blacklist: 
+            return 0.0
+        
+        if completion == prompt:
+            return 0.0
+        
+        return 1
 
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
         return torch.tensor( [self.reward( prompt, completion, name ) for completion in completions], dtype=torch.float32)
