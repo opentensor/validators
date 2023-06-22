@@ -32,9 +32,9 @@ class BaseRewardModel:
     def get_rewards( self, prompt: str, completion: List[str], name: str ) -> torch.FloatTensor: ...
 
     def __init__(self) -> None:
-        self.old_count = 0
-        self.old_mean = 0.0
-        self.old_var = 0.0
+        self.count = 0
+        self.mean = 0.0
+        self.var = 0.0
         self.count_limit = 1000
 
     def normalize_rewards( self, rewards: torch.FloatTensor ) -> torch.FloatTensor:
@@ -52,27 +52,33 @@ class BaseRewardModel:
             - It standardizes the reward values using the updated mean and variance.
             - It then scales the standardized values to the 0-1 range using the error function (erf) as a CDF.
         """
-        # Calculate the mean, count, and standard deviation of the new rewards.
-        new_mean = rewards.mean()
+        # Get the number of rewards (successful responses).
         new_count = rewards.numel()
-        new_var = rewards.var()
 
-        # Compute the weights for the new and old rewards.
-        new_weight = new_count / (self.old_count + new_count)
-        old_weight = self.old_count / (self.old_count + new_count)
+        # Update stats only if there are new rewards.
+        if 0 < new_count and 0 < self.count + new_count:
+            # Calculate the mean and standard deviation of the new rewards.
+            new_mean = rewards.mean()
+            new_var = rewards.var(dim=0)
 
-        # Save the difference in means before updating the old mean.
-        diff = new_mean - self.old_mean
+            # Compute the weights for the new and old rewards.
+            new_weight = new_count / (self.count + new_count)
+            old_weight = self.count / (self.count + new_count)
 
-        # Update the old mean with the new mean and weights.
-        self.old_mean = new_weight * new_mean + old_weight * self.old_mean
-        # Update the old variance with the new variance and weights, and adjusting for the difference in means.
-        self.old_var = (new_weight * new_var) + (old_weight * self.old_var) + (new_weight * old_weight) * diff * diff
-        # Update the old count with the new count, but don't exceed the limit.
-        self.old_count = min(self.count_limit, self.old_count + new_count)
+            # Save the difference in means before updating the old mean.
+            diff = new_mean - self.mean
+
+            # Update the old mean with the new mean and weights.
+            self.mean = new_weight * new_mean + old_weight * self.mean
+            # Update the old variance with the new variance and weights, and adjusting for the difference in means.
+            self.var = (new_weight * new_var) + (old_weight * self.var) + (new_weight * old_weight) * diff * diff
+            # Update the old count with the new count, but don't exceed the limit.
+            self.count = min(self.count_limit, self.count + new_count)
 
         # Standardize the rewards using the updated mean and variance.
-        rewards = (rewards - self.old_mean) / torch.sqrt(self.old_var)
+        rewards = rewards - self.mean
+        if self.var > 0:
+            rewards /= torch.sqrt(self.var)
         # Scale the standardized rewards to the range [0, 1] using the error function as a cumulative distribution function (CDF).
         rewards = 0.5 * (1 + torch.erf(rewards / torch.sqrt(torch.tensor([2.0])).to(rewards.device)))
 
