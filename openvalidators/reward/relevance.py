@@ -26,7 +26,7 @@ class BertRelevanceRewardModel( BaseRewardModel ):
     relevance_model_path = "bert-base-uncased"
 
     @property
-    def name(self) -> str: return "bert-embedding-relevance-scoring"
+    def name(self) -> str: return "relevance_scoring"
    
     def __init__( self, device: str ):
         super().__init__()

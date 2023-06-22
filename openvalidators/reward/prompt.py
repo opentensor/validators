@@ -28,7 +28,7 @@ class PromptRewardModel(BaseRewardModel):
     reward_model_name: str = "VMware/open-llama-7b-open-instruct"
 
     @property
-    def name(self) -> str: return "prompt-reward-model"
+    def name(self) -> str: return "prompt_reward_model"
 
     def __init__(self, device: str):
         super().__init__()

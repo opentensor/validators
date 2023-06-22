@@ -26,6 +26,7 @@ from . import reward
 from . import run
 from . import utils
 from . import weights
+from . import event
 
 __version__ = "1.0.6"
 version_split = __version__.split(".")

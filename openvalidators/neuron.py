@@ -131,17 +131,17 @@ class neuron:
         if self.config.neuron.mock_reward_models:
             self.reward_functions = []
             self.masking_functions = [
-                MockRewardModel('blacklist'), 
-                MockRewardModel('nsfw') 
+                MockRewardModel('blacklist_filter'), 
+                MockRewardModel('nsfw_filter') 
             ]
             bt.logging.debug(str(self.reward_functions))
         else:
             self.reward_functions = [ 
-                OpenAssistantRewardModel( device = self.device ) if not self.config.neuron.openassistant_off else MockRewardModel('openassistant'), 
-                ReciprocateRewardModel( device = self.device ) if not self.config.neuron.reciprocate_off else MockRewardModel('reciprocate'),
-                DahoasRewardModel( path = self.config.neuron.full_path, device = self.device ) if not self.config.neuron.dahoas_off else MockRewardModel('dahoas'),
-                DiversityRewardModel( device = self.device ) if not self.config.neuron.diversity_off else MockRewardModel('diversity'),
-                PromptRewardModel( device = self.device ) if not self.config.neuron.prompt_based_off else MockRewardModel('prompt'),
+                OpenAssistantRewardModel( device = self.device ) if not self.config.neuron.openassistant_off else MockRewardModel('rlhf_reward_model'), 
+                ReciprocateRewardModel( device = self.device ) if not self.config.neuron.reciprocate_off else MockRewardModel('reciprocate_reward_model'),
+                DahoasRewardModel( path = self.config.neuron.full_path, device = self.device ) if not self.config.neuron.dahoas_off else MockRewardModel('dahoas_reward_model'),
+                DiversityRewardModel( device = self.device ) if not self.config.neuron.diversity_off else MockRewardModel('diversity_reward_model'),
+                PromptRewardModel( device = self.device ) if not self.config.neuron.prompt_based_off else MockRewardModel('prompt_reward_model'),
             ]
             self.masking_functions = [
                 Blacklist() if not self.config.neuron.blacklist_off else MockRewardModel('blacklist'), 
