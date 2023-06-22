@@ -149,7 +149,7 @@ strip_quotes() {
 # Loop through all command line arguments
 while [[ $# -gt 0 ]]; do
   arg="$1"
-  
+
   # Check if the argument starts with a hyphen (flag)
   if [[ "$arg" == -* ]]; then
     # Check if the argument has a value
@@ -159,17 +159,18 @@ while [[ $# -gt 0 ]]; do
             shift 2
         else
             # Add '=' sign between flag and value
-            args+=("$arg=$2");
+            args+=("'$arg'");
+            args+=("'$2'");
             shift 2
         fi
     else
       # Add '=True' for flags with no value
-      args+=("$arg");
+      args+=("'$arg'");
       shift
     fi
   else
     # Argument is not a flag, add it as it is
-    args+=("$arg ");
+    args+=("'$arg '");
     shift
   fi
 done
@@ -194,15 +195,30 @@ if pm2 status | grep -q $proc_name; then
 fi
 
 # Run the Python script with the arguments using pm2
-echo "Running $script with the following arguments with pm2:"
-if [ ${#args[@]} -eq 0 ]; then
-    echo "pm2 start $script --name $proc_name --interpreter python3"
-    pm2 start "$script" --name $proc_name --interpreter python3
-else
-    echo "pm2 start $script --name $proc_name --interpreter python3 -- ${args[@]}"
-    pm2 start "$script" --name $proc_name --interpreter python3 -- "${args[@]}"
-fi
+echo "Running $script with the following pm2 config:"
 
+# Join the arguments with commas using printf
+joined_args=$(printf "%s," "${args[@]}")
+
+# Remove the trailing comma
+joined_args=${joined_args%,}
+
+# Create the pm2 config file
+echo "module.exports = {
+  apps : [{
+    name   : '$proc_name',
+    script : '$script',
+    interpreter: 'python3',
+    min_uptime: '2m',
+    max_restarts: '3',
+    args: [$joined_args]
+  }]
+}" > app.config.js
+
+# Print configuration to be used
+cat app.config.js
+
+pm2 start app.config.js
 
 # Check if packages are installed.
 check_package_installed "jq"
