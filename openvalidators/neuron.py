@@ -129,21 +129,24 @@ class neuron:
         # Init Reward model
         bt.logging.debug("loading", "reward_functions")
         if self.config.neuron.mock_reward_models:
-            self.reward_functions = [ 
+            self.reward_functions = []
+            self.masking_functions = [
                 MockRewardModel('blacklist'), 
                 MockRewardModel('nsfw') 
             ]
             bt.logging.debug(str(self.reward_functions))
         else:
             self.reward_functions = [ 
-                Blacklist() if not self.config.neuron.blacklist_off else MockRewardModel('blacklist'), 
-                NSFWRewardModel( device = self.device ) if not self.config.neuron.nsfw_off else MockRewardModel('nsfw'),
                 OpenAssistantRewardModel( device = self.device ) if not self.config.neuron.openassistant_off else MockRewardModel('openassistant'), 
                 ReciprocateRewardModel( device = self.device ) if not self.config.neuron.reciprocate_off else MockRewardModel('reciprocate'),
-                BertRelevanceRewardModel( device = self.device ) if not self.config.neuron.relevance_off else MockRewardModel('relevance'),
                 DahoasRewardModel( path = self.config.neuron.full_path, device = self.device ) if not self.config.neuron.dahoas_off else MockRewardModel('dahoas'),
                 DiversityRewardModel( device = self.device ) if not self.config.neuron.diversity_off else MockRewardModel('diversity'),
                 PromptRewardModel( device = self.device ) if not self.config.neuron.prompt_based_off else MockRewardModel('prompt'),
+            ]
+            self.masking_functions = [
+                Blacklist() if not self.config.neuron.blacklist_off else MockRewardModel('blacklist'), 
+                BertRelevanceRewardModel( device = self.device ) if not self.config.neuron.relevance_off else MockRewardModel('relevance'),
+                NSFWRewardModel( device = self.device ) if not self.config.neuron.nsfw_off else MockRewardModel('nsfw'),
             ]
             bt.logging.debug(str(self.reward_functions))
 

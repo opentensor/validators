@@ -83,7 +83,7 @@ class BertRelevanceRewardModel( BaseRewardModel ):
         batch_representation = torch.mean(sentence_embeddings, dim=0)
         return batch_representation
     
-    def reward( self, prompt: str, completion:str , name: str ) -> float:
+    def reward( self, prompt: str, completion:str , name: str, bound = -0.03 ) -> float:
         # Get the two bert embeddings.
         completion_embedding = self.get_embedding( completion)
         prompt_embedding = self.get_embedding( prompt)
@@ -92,7 +92,10 @@ class BertRelevanceRewardModel( BaseRewardModel ):
         diff = (( completion_embedding - prompt_embedding )**2).mean()**0.5
 
         # Return relevance scoring.
-        return float(-diff)
+        return 0.0 if float(-diff) < bound else 1.0
 
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
         return torch.tensor( [self.reward( prompt, completion, name ) for completion in completions], dtype=torch.float32).to(self.device)
+    
+    def normalize_rewards( self, rewards: torch.FloatTensor ) -> torch.FloatTensor:
+        return rewards
