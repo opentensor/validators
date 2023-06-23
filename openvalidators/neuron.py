@@ -137,7 +137,7 @@ class neuron:
         else:
             self.reward_weights = torch.tensor([self.config.neuron.openassistant, self.config.neuron.reciprocate,
                                                 self.config.neuron.dahoas, self.config.neuron.diversity,
-                                                self.config.neuron.prompt_based], dtype=torch.float)
+                                                self.config.neuron.prompt_based], dtype=torch.float32).to(self.device)
             # Ensure reward function weights sum to 1.
             if self.reward_weights.sum() != 1:
                 sys.exit('Reward function weights do not sum to 1.')
