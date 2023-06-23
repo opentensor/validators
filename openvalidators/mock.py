@@ -58,7 +58,7 @@ class MockRewardModel(torch.nn.Module):
 
 class MockDataset(Iterator):
     def __next__(self):
-        return {"context": "What is the capital of Texas?"}
+        return {"text": "What is the capital of Texas?"}
 
 
 class MockDendriteResponse:
