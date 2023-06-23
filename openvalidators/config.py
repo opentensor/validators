@@ -220,40 +220,40 @@ def add_args(cls, parser):
         default=False,
     )
     parser.add_argument(
-        "--neuron.reciprocate_off",
-        action="store_true",
-        help="Dont apply the reciprocate reward model",
-        default=False,
-    )
-    parser.add_argument(
         "--neuron.relevance_off",
         action="store_true",
         help="Dont apply the relevance reward model",
         default=False,
     )
     parser.add_argument(
-        "--neuron.openassistant_off",
-        action="store_true",
-        help="Dont apply the openassistant reward model",
-        default=False,
+        "--neuron.reciprocate",
+        type=float,
+        help="Weight for the reciprocate reward model",
+        default=0.3,
     )
     parser.add_argument(
-        "--neuron.diversity_off",
-        action="store_true",
-        help="Dont apply the diversity_off reward model",
-        default=False,
+        "--neuron.openassistant",
+        type=float,
+        help="Weight for the openassistant reward model",
+        default=0.4,
     )
     parser.add_argument(
-        "--neuron.dahoas_off",
-        action="store_true",
-        help="Dont apply the dahoas reward model",
-        default=False,
+        "--neuron.diversity",
+        type=float,
+        help="Weight for the diversity_off reward model",
+        default=0.3,
     )
     parser.add_argument(
-        "--neuron.prompt_based_off",
-        action="store_true",
-        help="Dont apply the prompt-based reward model",
-        default=False,
+        "--neuron.dahoas",
+        type=float,
+        help="Weight for the dahoas reward model",
+        default=0,
+    )
+    parser.add_argument(
+        "--neuron.prompt_based",
+        type=float,
+        help="Weight for the prompt-based reward model",
+        default=0,
     )
     parser.add_argument(
         "--neuron.mock_dendrite_pool",
