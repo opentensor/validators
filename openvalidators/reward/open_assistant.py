@@ -28,10 +28,9 @@ class OpenAssistantRewardModel( BaseRewardModel ):
     @property
     def name(self) -> str: return RewardModelType.rlhf.value
 
-    def __init__( self , device: str, model_weight: float = 0.0 ):
+    def __init__( self , device: str ):
         super().__init__()
         self.device = device
-        self.model_weight = model_weight
         self.tokenizer = AutoTokenizer.from_pretrained( OpenAssistantRewardModel.reward_model_name )
         self.model = AutoModelForSequenceClassification.from_pretrained( OpenAssistantRewardModel.reward_model_name ) .to(self.device)
 

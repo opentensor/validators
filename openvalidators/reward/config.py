@@ -1,5 +1,6 @@
 # The MIT License (MIT)
 # Copyright © 2021 Yuma Rao
+from dataclasses import dataclass
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -31,36 +32,13 @@ class RewardModelType(Enum):
     relevance = 'relevance_filter'
 
 
-class RewardFrameworkConfig:
-    def __init__(self, config_file_path: str):
-        self.rlhf_model_weight = 0
-        self.reciprocate_model_weight = 0
-        self.dahoas_model_weight = 0
-        self.diversity_model_weight = 0
-        self.prompt_model_weight = 0
-        self.config_file_path = config_file_path
-        self.load_from_config_file()
-
-    def load_from_config_file(self):
-        with open(self.config_file_path, 'r') as config_file:
-            try:
-                data = yaml.safe_load(config_file)
-
-                reward_model_weights = data['reward_models_weights']
-
-                self.rlhf_model_weight = reward_model_weights.get(RewardModelType.rlhf.value, 0)
-                self.reciprocate_model_weight = reward_model_weights.get(RewardModelType.reciprocate.value, 0)
-                self.dahoas_model_weight = reward_model_weights.get(RewardModelType.dahoas.value, 0)
-                self.diversity_model_weight = reward_model_weights.get(RewardModelType.diversity.value, 0)
-                self.prompt_model_weight = reward_model_weights.get(RewardModelType.prompt.value, 0)
-
-                reward_framework_weights = [self.rlhf_model_weight, self.reciprocate_model_weight,
-                                            self.dahoas_model_weight, self.diversity_model_weight,
-                                            self.prompt_model_weight]
-
-                if sum(reward_framework_weights) != 1:
-                    raise Exception("Sum of reward model weights must be 1")
-
-            except yaml.YAMLError as e:
-                bt.logging.error(f"Error while parsing YAML file: {e}")
-                raise e
+@dataclass(frozen=True)
+class DefaultRewardFrameworkConfig:
+    """Reward framework default configuration.
+    Note: All the weights should add up to 1.0.
+    """
+    rlhf_model_weight: float = 0.4
+    reciprocate_model_weight: float = 0.3
+    dahoas_model_weight: float = 0
+    diversity_model_weight: float = 0.3
+    prompt_model_weight: float = 0

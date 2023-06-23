@@ -30,10 +30,9 @@ class ReciprocateRewardModel( BaseRewardModel ):
     @property
     def name(self) -> str: return RewardModelType.reciprocate.value
 
-    def __init__( self, device: str, model_weight: float = 0.0):
+    def __init__( self, device: str ):
         super().__init__()
         self.device = device
-        self.model_weight = model_weight
         self.tokenizer = AutoTokenizer.from_pretrained( ReciprocateRewardModel.reward_model_path, revision = ReciprocateRewardModel.revision )
         self.model = AutoModelForSequenceClassification.from_pretrained( ReciprocateRewardModel.reward_model_path, revision = ReciprocateRewardModel.revision).to(self.device)
 

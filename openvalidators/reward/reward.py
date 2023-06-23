@@ -36,7 +36,6 @@ class BaseRewardModel:
         self.mean = 0.0
         self.var = 0.0
         self.count_limit = 1000
-        self.model_weight = 0.0
 
     def normalize_rewards( self, rewards: torch.FloatTensor ) -> torch.FloatTensor:
         """
@@ -105,7 +104,7 @@ class BaseRewardModel:
 
         # Fill reward tensor.
         for idx, reward in zip(successful_completions_indices, successful_rewards):
-            filled_rewards[idx] = reward * self.model_weight
+            filled_rewards[idx] = reward
 
         # Return the filled rewards.
         return filled_rewards 

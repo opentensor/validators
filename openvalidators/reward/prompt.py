@@ -31,10 +31,9 @@ class PromptRewardModel(BaseRewardModel):
     @property
     def name(self) -> str: return RewardModelType.prompt.value
 
-    def __init__(self, device: str, model_weight: float = 0.0):
+    def __init__(self, device: str ):
         super().__init__()
         self.device = device
-        self.model_weight = model_weight
 
         # https://huggingface.co/VMware/open-llama-7b-open-instruct
         # Fast tokenizer results in incorrect encoding, set the use_fast = False parameter.

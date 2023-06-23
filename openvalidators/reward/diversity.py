@@ -49,10 +49,9 @@ class DiversityRewardModel( BaseRewardModel ):
     @property
     def name(self) -> str: return RewardModelType.diversity.value
 
-    def __init__( self, device: str, model_weight: float = 0.0 ):
+    def __init__( self, device: str ):
         super().__init__()
         self.device = device
-        self.model_weight = model_weight
         self.tokenizer = AutoTokenizer.from_pretrained( DiversityRewardModel.relevance_model_path )
         self.model = AutoModel.from_pretrained( DiversityRewardModel.relevance_model_path ).to(self.device)
 

@@ -38,11 +38,10 @@ class DahoasRewardModel( BaseRewardModel ):
                 https://huggingface.co/Dahoas/gptj-rm-static/resolve/main/hf_ckpt.pt"
             )
 
-    def __init__(self, path: str, device: str, model_weight: float = 0.0 ):
+    def __init__(self, path: str, device: str ):
         super().__init__()
         DahoasRewardModel.load_weights( path = path )
         self.device = torch.device(device)
-        self.model_weight = model_weight
         config = AutoConfig.from_pretrained( DahoasRewardModel.model_name )
         self.model = AutoModelForCausalLM.from_config( config ).to(self.device)
         self.config = self.model.config
