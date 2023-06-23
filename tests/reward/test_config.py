@@ -6,13 +6,13 @@ from openvalidators.reward import RewardModelType, RewardFrameworkConfig
 class RewardFrameworkConfigTestCase(unittest.TestCase):
     """Test that class is loaded with expected config file, summing to 1"""
 
-    @patch('builtins.open', new_callable=mock_open, read_data="""
+    @patch('builtins.open', new_callable=mock_open, read_data=f"""
       reward_models_weights:
-          rlhf_reward_model: 0.2
-          reciprocate_reward_model: 0.3
-          dahoas_reward_model: 0.1
-          diversity_reward_model: 0.4
-          prompt_reward_model: 0.0
+          {RewardModelType.rlhf.value}: 0.2
+          {RewardModelType.reciprocate.value}: 0.3
+          {RewardModelType.dahoas.value}: 0.1
+          {RewardModelType.diversity.value}: 0.4
+          {RewardModelType.prompt.value}: 0.0
       """)
     def test_load_from_config_file(self, mock_file):
         # Arrange
