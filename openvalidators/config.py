@@ -235,13 +235,13 @@ def add_args(cls, parser):
     parser.add_argument(
         "--reward.rlhf_weight",
         type=float,
-        help="Weight for the openassistant reward model",
+        help="Weight for the rlhf reward model",
         default=DefaultRewardFrameworkConfig.rlhf_model_weight,
     )
     parser.add_argument(
         "--reward.diversity_weight",
         type=float,
-        help="Weight for the diversity_off reward model",
+        help="Weight for the diversity reward model",
         default=DefaultRewardFrameworkConfig.diversity_model_weight,
     )
     parser.add_argument(

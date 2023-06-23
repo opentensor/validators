@@ -105,8 +105,7 @@ class neuron:
             self.dataset = MockDataset()
         else:
             seed = random.randint(0, 1000)
-            self.dataset = iter(
-                load_dataset("openwebtext", split="train", streaming=True).shuffle(seed=seed, buffer_size=100000))
+            self.dataset = iter(load_dataset("openwebtext", split="train", streaming=True).shuffle(seed=seed, buffer_size=100000))
         bt.logging.debug(str(self.dataset))
 
         # Init the gating model which learns which miners to select for each query.
@@ -137,9 +136,10 @@ class neuron:
             ]
             bt.logging.debug(str(self.reward_functions))
         else:
-            self.reward_weights = torch.tensor([self.config.reward.rlhf_weight, self.config.reward.reciprocate_weight,
-                                                self.config.reward.dahoas_weight, self.config.reward.diversity_weight,
-                                                self.config.reward.prompt_based_weight], dtype=torch.float32).to(self.device)
+            self.reward_weights = torch.tensor([
+                self.config.reward.rlhf_weight, self.config.reward.reciprocate_weight, self.config.reward.dahoas_weight,
+                self.config.reward.diversity_weight, self.config.reward.prompt_based_weight
+            ], dtype=torch.float32).to(self.device)
 
             # Ensure reward function weights sum to 1.
             if self.reward_weights.sum() != 1:
@@ -169,11 +169,12 @@ class neuron:
                 raise Exception(message)
 
             self.masking_functions = [
-                Blacklist() if not self.config.neuron.blacklist_off else MockRewardModel(RewardModelType.blacklist.value),
-                BertRelevanceRewardModel(device=self.device)
-                    if not self.config.neuron.relevance_off else MockRewardModel(RewardModelType.relevance.value),
-                NSFWRewardModel(device=self.device)
-                    if not self.config.neuron.nsfw_off else MockRewardModel(RewardModelType.nsfw.value),
+                Blacklist() if not self.config.neuron.blacklist_off
+                    else MockRewardModel(RewardModelType.blacklist.value),
+                BertRelevanceRewardModel(device=self.device) if not self.config.neuron.relevance_off
+                    else MockRewardModel(RewardModelType.relevance.value),
+                NSFWRewardModel(device=self.device) if not self.config.neuron.nsfw_off
+                    else MockRewardModel(RewardModelType.nsfw.value),
             ]
             bt.logging.debug(str(self.reward_functions))
 
