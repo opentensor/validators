@@ -18,7 +18,7 @@
 
 import torch
 from typing import List
-from . import RewardModelType
+from .config import RewardModelType
 from .reward import BaseRewardModel
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 

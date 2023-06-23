@@ -19,7 +19,7 @@ import time
 import torch
 import bittensor as bt
 from typing import List
-from . import RewardModelType
+from .config import RewardModelType
 from .reward import BaseRewardModel
 from openvalidators.prompts import AugmentPrompt, FollowupPrompt, AnswerPrompt
 from transformers import AutoTokenizer, AutoModelForCausalLM

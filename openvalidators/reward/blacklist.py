@@ -17,8 +17,8 @@
 # DEALINGS IN THE SOFTWARE.
 
 import torch
-import math
 from typing import List
+from .config import RewardModelType
 from .reward import BaseRewardModel
 
 blacklist = ["That is an excellent question."]
@@ -26,7 +26,7 @@ blacklist = ["That is an excellent question."]
 class Blacklist( BaseRewardModel ):
 
     @property
-    def name(self) -> str: return "blacklist_filter"
+    def name(self) -> str: return RewardModelType.blacklist.value
 
     def reward( self, prompt: str, completion: str, name: str ) -> float:
         if completion in blacklist: 

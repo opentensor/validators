@@ -1,6 +1,25 @@
+# The MIT License (MIT)
+# Copyright © 2021 Yuma Rao
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+# documentation files (the “Software”), to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+# and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions of
+# the Software.
+
+# THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+# THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+
 import bittensor as bt
 from dataclasses import dataclass
 from typing import List, Optional
+
+from openvalidators.reward import RewardModelType
 
 
 @dataclass
@@ -23,7 +42,7 @@ class EventSchema:
     diversity_reward_model: Optional[List[float]]  # Output vector of the diversity reward model
     rlhf_reward_model: Optional[List[float]]  # Output vector of the rlhf reward model
     prompt_reward_model: Optional[List[float]]  # Output vector of the prompt reward model
-    relevance_scoring: Optional[List[float]]  # Output vector of the relevance scoring reward model
+    relevance_filter: Optional[List[float]]  # Output vector of the relevance scoring reward model
 
     # Weights data
     set_weights: Optional[List[List[float]]]
@@ -32,14 +51,14 @@ class EventSchema:
     def from_dict(event_dict: dict, should_log_rewards: bool) -> 'EventSchema':
         """Converts a dictionary to an EventSchema object."""
         rewards = {
-            'dahoas_reward_model': event_dict.get('dahoas_reward_model'),
-            'blacklist_filter': event_dict.get('blacklist_filter'),
-            'nsfw_filter': event_dict.get('nsfw_filter'),
-            'reciprocate_reward_model': event_dict.get('reciprocate_reward_model'),
-            'diversity_reward_model': event_dict.get('diversity_reward_model'),
-            'rlhf_reward_model': event_dict.get('rlhf_reward_model'),
-            'prompt_reward_model': event_dict.get('prompt_reward_model'),
-            'relevance_scoring': event_dict.get('relevance_scoring'),
+            'dahoas_reward_model': event_dict.get(RewardModelType.dahoas.value),
+            'blacklist_filter': event_dict.get(RewardModelType.blacklist.value),
+            'nsfw_filter': event_dict.get(RewardModelType.nsfw.value),
+            'relevance_filter': event_dict.get(RewardModelType.relevance.value),
+            'reciprocate_reward_model': event_dict.get(RewardModelType.reciprocate.value),
+            'diversity_reward_model': event_dict.get(RewardModelType.diversity.value),
+            'rlhf_reward_model': event_dict.get(RewardModelType.rlhf.value),
+            'prompt_reward_model': event_dict.get(RewardModelType.prompt.value),
         }
 
         # Logs warning that expected data was not set properly

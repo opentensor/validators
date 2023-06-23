@@ -18,6 +18,7 @@ import unittest
 from dataclasses import fields
 from unittest.mock import patch
 from openvalidators.event import EventSchema
+from openvalidators.reward import RewardModelType
 
 class EventTestCase(unittest.TestCase):
 
@@ -35,14 +36,14 @@ class EventTestCase(unittest.TestCase):
             'step_length': 1.0,
             'best': 'test-best',
             'rewards': [1.0],
-            'dahoas_reward_model': [1.0],
-            'blacklist_filter': [1.0],
-            'nsfw_filter': [1.0],
-            'reciprocate_reward_model': [1.0],
-            'diversity_reward_model': [1.0],
-            'rlhf_reward_model': [1.0],
-            'prompt_reward_model': [1.0],
-            'relevance_scoring': [1.0],
+            RewardModelType.dahoas.value: [1.0],
+            RewardModelType.blacklist.value: [1.0],
+            RewardModelType.nsfw.value: [1.0],
+            RewardModelType.reciprocate.value: [1.0],
+            RewardModelType.diversity.value: [1.0],
+            RewardModelType.rlhf.value: [1.0],
+            RewardModelType.prompt.value: [1.0],
+            RewardModelType.relevance.value: [1.0],
         }
 
         # Act
@@ -98,7 +99,7 @@ class EventTestCase(unittest.TestCase):
         assert event.diversity_reward_model is None
         assert event.rlhf_reward_model is None
         assert event.prompt_reward_model is None
-        assert event.relevance_scoring is None
+        assert event.relevance_filter is None
 
     def test_event_from_dict_forward_reward_logging_mismatch(self):
         """Test that all default columns logged on the forward pass are correctly converted and that
@@ -116,9 +117,7 @@ class EventTestCase(unittest.TestCase):
             'rewards': [1.0],
         }
 
-        not_logged_columns = ['dahoas', 'blacklist_filter', 'nsfw_filter', 'reciprocate_reward_model',
-                              'diversity_reward_model', 'rlhf_reward_model', 'prompt_reward_model',
-                              'relevance_scoring']
+        not_logged_columns = [field.value for field in RewardModelType]
 
         # Act
         with patch('bittensor.logging.warning') as mock_warning:
@@ -139,5 +138,5 @@ class EventTestCase(unittest.TestCase):
         assert event.diversity_reward_model is None
         assert event.rlhf_reward_model is None
         assert event.prompt_reward_model is None
-        assert event.relevance_scoring is None
+        assert event.relevance_filter is None
 

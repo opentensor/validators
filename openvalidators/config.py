@@ -161,10 +161,10 @@ def add_args(cls, parser):
     )
 
     parser.add_argument(
-        "--neuron.reward_config",
+        "--neuron.reward_config_path",
         type=str,
         help="Config file defining reward framework to be used",
-        default="reward_config.yml"
+        default="reward_config.yaml"
     )
 
     parser.add_argument("--wandb.off", action="store_true", help="Turn off wandb.", default=False)

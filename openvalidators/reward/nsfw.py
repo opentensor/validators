@@ -19,6 +19,7 @@
 
 import torch
 from typing import List
+from .config import RewardModelType
 from .reward import BaseRewardModel
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
@@ -27,7 +28,7 @@ class NSFWRewardModel( BaseRewardModel ):
     nsfw_filter_model_path = "facebook/roberta-hate-speech-dynabench-r4-target"
 
     @property
-    def name(self) -> str: return "nsfw_filter"
+    def name(self) -> str: return RewardModelType.nsfw.value
    
     def __init__( self, device: str ):
         super().__init__()

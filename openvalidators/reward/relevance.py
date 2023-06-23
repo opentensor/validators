@@ -18,6 +18,7 @@
 
 import torch
 from typing import List
+from .config import RewardModelType
 from .reward import BaseRewardModel
 from transformers import  AutoTokenizer, AutoModel
 
@@ -26,7 +27,7 @@ class BertRelevanceRewardModel( BaseRewardModel ):
     relevance_model_path = "bert-base-uncased"
 
     @property
-    def name(self) -> str: return "relevance_scoring"
+    def name(self) -> str: return RewardModelType.relevance.value
    
     def __init__( self, device: str ):
         super().__init__()

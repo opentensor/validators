@@ -1,10 +1,8 @@
-""" 
-The 'reward_models_weights' configuration sets the distribution of weights used in the reward framework.
-These weights determine the relative importance of each reward model.
-It is important to note that all the weights must sum up to one (1) to ensure a proper balance in the reward calculations.
-
-Note: Fields should match RewardModelType Enum in openvalidators/config.py
-"""
+# The 'reward_models_weights' configuration sets the distribution of weights used in the reward framework.
+# These weights determine the relative importance of each reward model.
+# It is important to note that all the weights must sum up to one (1) to ensure a proper balance in the reward calculations.
+#
+# Note: Fields should match RewardModelType Enum in openvalidators/config.py
 reward_models_weights:
    rlhf_reward_model: 0.2
    reciprocate_reward_model: 0.2
