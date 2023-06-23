@@ -28,7 +28,7 @@ class DahoasRewardModel( BaseRewardModel ):
     model_name = "EleutherAI/gpt-j-6b"
 
     @property
-    def name(self) -> str: return "dahoas-reward-model"
+    def name(self) -> str: return "dahoas_reward_model"
 
     @staticmethod
     def load_weights( path: str ):

@@ -26,7 +26,7 @@ class BertRelevanceRewardModel( BaseRewardModel ):
     relevance_model_path = "bert-base-uncased"
 
     @property
-    def name(self) -> str: return "bert-embedding-relevance-scoring"
+    def name(self) -> str: return "relevance_scoring"
    
     def __init__( self, device: str ):
         super().__init__()
@@ -83,7 +83,7 @@ class BertRelevanceRewardModel( BaseRewardModel ):
         batch_representation = torch.mean(sentence_embeddings, dim=0)
         return batch_representation
     
-    def reward( self, prompt: str, completion:str , name: str, bound = -0.03 ) -> float:
+    def reward( self, prompt: str, completion:str , name: str, bound = -0.0246 ) -> float:
         # Get the two bert embeddings.
         completion_embedding = self.get_embedding( completion)
         prompt_embedding = self.get_embedding( prompt)

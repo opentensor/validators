@@ -20,7 +20,7 @@ import torch
 import bittensor as bt
 from typing import List
 from .reward import BaseRewardModel
-from openvalidators.prompts import FollowupPrompt, AnswerPrompt
+from openvalidators.prompts import AugmentPrompt, FollowupPrompt, AnswerPrompt
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 
@@ -28,7 +28,7 @@ class PromptRewardModel(BaseRewardModel):
     reward_model_name: str = "VMware/open-llama-7b-open-instruct"
 
     @property
-    def name(self) -> str: return "prompt-reward-model"
+    def name(self) -> str: return "prompt_reward_model"
 
     def __init__(self, device: str):
         super().__init__()
@@ -47,7 +47,9 @@ class PromptRewardModel(BaseRewardModel):
     def reward(self, prompt: str, completion: str, name: str) -> float:
         with torch.no_grad():
             # Choose correct scoring prompt for request type.
-            if name == 'followup':
+            if name == 'augment':
+                scoring_prompt = AugmentPrompt()
+            elif name == 'followup':
                 scoring_prompt = FollowupPrompt()
             elif name == 'answer':
                 scoring_prompt = AnswerPrompt()

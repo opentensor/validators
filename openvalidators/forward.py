@@ -16,15 +16,16 @@
 # DEALINGS IN
 #  THE SOFTWARE.
 
-import time 
-import wandb
+import time
 import torch
 import random
 import bittensor as bt
 import random
 
 from loguru import logger
-from typing import List, Union, Dict
+from typing import List
+from dataclasses import asdict
+from openvalidators.event import EventSchema
 from openvalidators.misc import ttl_get_block
 from openvalidators.prompts import followup_request_template, augment_request_template, school_levels
 from openvalidators.utils import check_uid_availability
@@ -70,21 +71,21 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str, exclud
         timeout = timeout,
     )
 
-    # Compute the rewards for the responses gien the prompt.
+    # Compute the rewards for the responses given the prompt.
     rewards:torch.FloatTensor = torch.ones( len( responses ), dtype=torch.float32).to(self.device) 
     for reward_fn_i in self.reward_functions:
         reward_i = reward_fn_i.apply( prompt, responses, name ).to( self.device )
         rewards += reward_i
         if self.config.neuron.log_rewards:     
             event[ reward_fn_i.name ] = reward_i.tolist()
-        bt.logging.trace( str(reward_fn_i.name), rewards.tolist() )
+        bt.logging.trace( str(reward_fn_i.name), reward_i.tolist() )
     
     for masking_fn_i in self.masking_functions:
         mask_i = masking_fn_i.apply( prompt, responses, name ).to( self.device )
         rewards *= mask_i
         if self.config.neuron.log_rewards:   
             event[ masking_fn_i.name ] = mask_i.tolist()
-        bt.logging.trace( str(masking_fn_i.name), rewards.tolist() )
+        bt.logging.trace( str(masking_fn_i.name), mask_i.tolist() )
 
     # Train the gating model based on the predicted scores and the actual rewards.
     gating_scores: torch.FloatTensor = self.gating_model( prompt ).to(self.device)
@@ -121,8 +122,11 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str, exclud
         'best': best
     })
     bt.logging.debug( "event:", str(event) )
-    if not self.config.wandb.off: self.wandb.log( event )
     if not self.config.neuron.dont_save_events: logger.log("EVENTS", "events", **event)
+
+    # Log the event to wandb.
+    wandb_event = EventSchema.from_dict(event, self.config.neuron.log_rewards)
+    if not self.config.wandb.off: self.wandb.log(asdict(wandb_event))
 
     # Return the event.
     return event
