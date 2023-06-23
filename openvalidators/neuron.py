@@ -15,9 +15,8 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-import os
+import sys
 import copy
-import wandb
 import torch
 import asyncio
 import bittensor as bt
@@ -136,12 +135,19 @@ class neuron:
             ]
             bt.logging.debug(str(self.reward_functions))
         else:
+            self.reward_weights = torch.tensor([self.config.neuron.openassistant, self.config.neuron.reciprocate,
+                                                self.config.neuron.dahoas, self.config.neuron.diversity,
+                                                self.config.neuron.prompt_based], dtype=torch.float)
+            # Ensure reward function weights sum to 1.
+            if self.reward_weights.sum() != 1:
+                sys.exit('Reward function weights do not sum to 1.')
+
             self.reward_functions = [ 
-                OpenAssistantRewardModel( device = self.device ) if not self.config.neuron.openassistant_off else MockRewardModel('rlhf_reward_model'), 
-                ReciprocateRewardModel( device = self.device ) if not self.config.neuron.reciprocate_off else MockRewardModel('reciprocate_reward_model'),
-                DahoasRewardModel( path = self.config.neuron.full_path, device = self.device ) if not self.config.neuron.dahoas_off else MockRewardModel('dahoas_reward_model'),
-                DiversityRewardModel( device = self.device ) if not self.config.neuron.diversity_off else MockRewardModel('diversity_reward_model'),
-                PromptRewardModel( device = self.device ) if not self.config.neuron.prompt_based_off else MockRewardModel('prompt_reward_model'),
+                OpenAssistantRewardModel( device = self.device ) if self.config.neuron.openassistant > 0 else MockRewardModel('rlhf_reward_model'),
+                ReciprocateRewardModel( device = self.device ) if self.config.neuron.reciprocate > 0 else MockRewardModel('reciprocate_reward_model'),
+                DahoasRewardModel( path = self.config.neuron.full_path, device = self.device ) if self.config.neuron.dahoas > 0 else MockRewardModel('dahoas_reward_model'),
+                DiversityRewardModel( device = self.device ) if self.config.neuron.diversity > 0 else MockRewardModel('diversity_reward_model'),
+                PromptRewardModel( device = self.device ) if self.config.neuron.prompt_based > 0 else MockRewardModel('prompt_reward_model'),
             ]
             self.masking_functions = [
                 Blacklist() if not self.config.neuron.blacklist_off else MockRewardModel('blacklist'), 
