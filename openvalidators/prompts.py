@@ -350,7 +350,7 @@ topics_str = "Culture and Humanities, Classics, Critical theory, Cultural anthro
 topics = topics_str.split(", ")
 
 def followup_prompt( base_text:str ) -> str:
-    return f"{base_text}\n\nAsk one relevant and insightful question about how the preceeding context relates to the topic: {random.choice(topics)}\n\n"
+    return f"{base_text}\n\nAsk an insightful question about how the preceeding context relates to the topic: {random.choice(topics)}\n\n"
 
 
 def answer_prompt( base_text:str, followup:str ) -> str:
