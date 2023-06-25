@@ -27,7 +27,7 @@ from typing import List
 from dataclasses import asdict
 from openvalidators.event import EventSchema
 from openvalidators.misc import ttl_get_block
-from openvalidators.prompts import followup_request_template, augment_request_template, school_levels
+from openvalidators.prompts import followup_prompt, answer_prompt
 from openvalidators.utils import check_uid_availability
 
 def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor:
@@ -132,39 +132,34 @@ async def forward(self):
     data = next(self.dataset)["text"]
 
     # Truncate context to a limited set of sentences.
-    bootstrap_prompt = '.'.join(data.split('.', maxsplit=20)[:-1])
+    base_text = '.'.join(data.split('.', maxsplit=20)[:-1])
 
-    # Form the augment prompt, requesting a summary at a random school level.
-    random_level = random.randint(0, 4)
-    augment_prompt = f"{bootstrap_prompt}\n\n{augment_request_template} {school_levels[random_level]} level.\n\n"
+    exclude = []
+    for k in range( self.config.neuron.num_followup_steps ):
 
-    # Request a summary, given the original context.
-    augment_event = await run_step( 
-        self, 
-        prompt = augment_prompt, 
-        name = 'augment',
-        k = self.config.neuron.followup_sample_size,
-        timeout = self.config.neuron.followup_timeout,
-    )
+        # Get a followup question, given the summarized context.
+        prompt = followup_prompt( base_text )
+        followup_event = await run_step( 
+            self, 
+            prompt = prompt, 
+            name = 'followup' + str(k),
+            k = self.config.neuron.followup_sample_size,
+            timeout = self.config.neuron.followup_timeout,
+            exclude = exclude
+        )
+        exclude += followup_event['uids']
 
-    # Get a followup question, given the summarized context.
-    prompt = f"{augment_event['best']}\n\n{followup_request_template}\n\n"
-    followup_event = await run_step( 
-        self, 
-        prompt = prompt, 
-        name = 'followup',
-        k = self.config.neuron.followup_sample_size,
-        timeout = self.config.neuron.followup_timeout,
-        exclude = augment_event['uids']
-    )
+        # Ask the followup question, given the original context.
+        prompt = answer_prompt( base_text, followup_event['best'] )
+        answer_event = await run_step( 
+            self, 
+            prompt = prompt, 
+            name = 'answer' + str(k),
+            k = self.config.neuron.answer_sample_size,
+            timeout = self.config.neuron.answer_timeout,
+            exclude = exclude
+        )
+        exclude += answer_event['uids']
 
-    # Ask the followup question, given the original context.
-    prompt = f"{bootstrap_prompt}\n\n{followup_event['best']}"
-    answer_event = await run_step( 
-        self, 
-        prompt = prompt, 
-        name = 'answer',
-        k = self.config.neuron.answer_sample_size,
-        timeout = self.config.neuron.answer_timeout,
-        exclude = augment_event['uids'] + followup_event['uids']
-    )
+        # Extend the base text with the best answer.
+        base_text = base_text + ' ' + answer_event['best']

@@ -15,18 +15,16 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-import os
 import copy
 import wandb
 import torch
 import asyncio
 import bittensor as bt
-from datasets import load_dataset
-import random
 
+from openvalidators.dataset import Dataset, MockDataset
 from openvalidators.dendrite import AsyncDendritePool
 from openvalidators.gating import GatingModel, SentenceEmbedGatingModel
-from openvalidators.mock import MockDendritePool, MockDataset, MockRewardModel, MockGatingModel
+from openvalidators.mock import MockDendritePool, MockRewardModel, MockGatingModel
 
 # Load local forward function.
 from openvalidators.config import add_args, check_config, config
@@ -104,8 +102,7 @@ class neuron:
         if self.config.neuron.mock_dataset:
             self.dataset = MockDataset()
         else:
-            seed = random.randint(0,1000)
-            self.dataset = iter(load_dataset("openwebtext", split="train", streaming=True).shuffle(seed=seed, buffer_size=100000))
+            self.dataset = Dataset()
         bt.logging.debug(str(self.dataset))
 
         # Init the gating model which learns which miners to select for each query.
