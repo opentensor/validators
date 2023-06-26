@@ -30,7 +30,7 @@ def run(self):
     load_state(self)
     checkpoint(self)
     try:
-        while True:
+        while self.step < 1:
             bt.logging.info(f"step({self.step}) block({ttl_get_block( self )})")
 
             # Run multiple forwards.
