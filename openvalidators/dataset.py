@@ -29,8 +29,8 @@ class Dataset(Iterator):
     def __init__(self):
         super().__init__()
         seed = random.randint(0,1000)
-        self.openwebtext = iter( load_dataset("openwebtext", split="train", streaming=True).shuffle(seed=seed, buffer_size=100000) )
-        self.red_pajama = iter( load_dataset("togethercomputer/RedPajama-Data-1T", split='train', streaming=True).shuffle(seed=seed, buffer_size=100000) )
+        self.openwebtext = iter( load_dataset("openwebtext", split="train", streaming=True).shuffle(seed=seed, buffer_size=10000) )
+        self.red_pajama = iter( load_dataset("togethercomputer/RedPajama-Data-1T", split='train', streaming=True).shuffle(seed=seed, buffer_size=10000) )
 
     def __next__(self):
         if random.random() < 0.5:
