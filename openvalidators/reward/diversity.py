@@ -55,7 +55,8 @@ class DiversityRewardModel( BaseRewardModel ):
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained( DiversityRewardModel.diversity_model_path )
         self.model = AutoModel.from_pretrained( DiversityRewardModel.diversity_model_path ).to(self.device)
-
+        self.reward_quantile = torch.tensor(0.1).to(self.device)
+        
     def get_embeddings( self, sentences: List[str] ) -> "torch.FloatTensor":
         """Runs a forward pass through the model.
         Args:
@@ -93,7 +94,7 @@ class DiversityRewardModel( BaseRewardModel ):
         similarity = pairwise_cosine_similarity( embeddings, embeddings )
 
         # Reward to be at the 10% quantile of the 1 - similarity score.
-        rewards = (1 - similarity).quantile(torch.tensor(0.1).to(self.device), dim = 1 )
+        rewards = (1 - similarity).quantile(self.reward_quantile, dim = 1 )
 
         # Return all
         return rewards
