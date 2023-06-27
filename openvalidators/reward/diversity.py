@@ -88,7 +88,7 @@ class DiversityRewardModel( BaseRewardModel ):
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
 
         # Get embeddings for all completions.
-        embeddings = self.get_embedding( completions )
+        embeddings = self.get_embeddings( completions )
 
         # Calculate the pairwise cosine similarity.
         similarity = pairwise_cosine_similarity( embeddings, embeddings )
