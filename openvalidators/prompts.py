@@ -357,4 +357,4 @@ def followup_prompt( base_text:str, i:int = 0) -> str:
 
 
 def answer_prompt( base_text:str, followup:str ) -> str:
-    return f"{base_text}\n\n{followup}\n\n"
+    return f"{base_text}\n Question:{followup}\n Answer the question step by step and explain your thoughts"
