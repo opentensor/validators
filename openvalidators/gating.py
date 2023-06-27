@@ -174,9 +174,18 @@ class GatingModel(BaseGatingModel):
             scores (:obj:`torch.FloatTensor` of shape :obj:`(network_size)`):
                 Scores for each uids as output by the gating model.
         """
-        inputs = self.tokenizer(message, return_tensors="pt").to(self.device)
+        encoded_input = self.tokenizer(
+            message,
+            truncation=True,
+            return_overflowing_tokens=True,
+            return_tensors="pt",
+        ).to(self.device)
+
+        # Pop the overflow mapping from the input to maintain the expected { input_ids, mask } format of the model
+        _ = encoded_input.pop("overflow_to_sample_mapping")
+        
         with torch.no_grad():
-            hidden_states = self.model(**inputs).last_hidden_state[0, -1, :]
+            hidden_states = self.model(**encoded_input).last_hidden_state[0, -1, :]
         return self.linear(hidden_states)
 
     def resync(
