@@ -45,7 +45,7 @@ def mean_pooling( model_output, attention_mask ):
     
 class DiversityRewardModel( BaseRewardModel ):
     
-    relevance_model_path = "sentence-transformers/all-mpnet-base-v2"
+    diversity_model_path = "sentence-transformers/all-mpnet-base-v2"
     
     @property
     def name(self) -> str: return RewardModelType.diversity.value
@@ -53,13 +53,13 @@ class DiversityRewardModel( BaseRewardModel ):
     def __init__( self, device: str ):
         super().__init__()
         self.device = device
-        self.tokenizer = AutoTokenizer.from_pretrained( DiversityRewardModel.relevance_model_path )
-        self.model = AutoModel.from_pretrained( DiversityRewardModel.relevance_model_path ).to(self.device)
+        self.tokenizer = AutoTokenizer.from_pretrained( DiversityRewardModel.diversity_model_path )
+        self.model = AutoModel.from_pretrained( DiversityRewardModel.diversity_model_path ).to(self.device)
 
     def get_embeddings( self, sentences: List[str] ) -> "torch.FloatTensor":
         """Runs a forward pass through the model.
         Args:
-            message (:obj:`str`):
+            sentences (:obj:`List[str]`):
                 text message to be encoded.
         Returns:
             embedding (:obj:`torch.FloatTensor`):
