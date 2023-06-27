@@ -355,3 +355,9 @@ def followup_prompt( base_text:str ) -> str:
 
 def answer_prompt( base_text:str, followup:str ) -> str:
     return f"{base_text}\n\n{followup}\n\n"
+
+augment_request_template = "Summarize the preceding context at"
+
+def augment_prompt( base_text:str ) -> str:
+    random_level = random.randint(4, 8)
+    return f"{base_text}\n\n{augment_request_template} in {random_level} sentences.\n\n"
