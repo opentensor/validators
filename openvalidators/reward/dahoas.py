@@ -17,10 +17,9 @@
 
 import os
 import torch
-import bittensor as bt
 from typing import List
+from .config import RewardModelType
 from .reward import BaseRewardModel
-from transformers import AutoTokenizer
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 
 class DahoasRewardModel( BaseRewardModel ):
@@ -28,7 +27,7 @@ class DahoasRewardModel( BaseRewardModel ):
     model_name = "EleutherAI/gpt-j-6b"
 
     @property
-    def name(self) -> str: return "dahoas_reward_model"
+    def name(self) -> str: return RewardModelType.dahoas.value
 
     @staticmethod
     def load_weights( path: str ):

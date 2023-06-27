@@ -1,6 +1,6 @@
-
 # The MIT License (MIT)
 # Copyright © 2021 Yuma Rao
+from dataclasses import dataclass
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -16,29 +16,27 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-import torch
-from typing import List
-from .config import RewardModelType
-from .reward import BaseRewardModel
+from enum import Enum
 
-blacklist = ["That is an excellent question."]
 
-class Blacklist( BaseRewardModel ):
+class RewardModelType(Enum):
+    rlhf = 'rlhf_reward_model'
+    reciprocate = 'reciprocate_reward_model'
+    dahoas = 'dahoas_reward_model'
+    diversity = 'diversity_reward_model'
+    prompt = 'prompt_reward_model'
+    blacklist = 'blacklist_filter'
+    nsfw = 'nsfw_filter'
+    relevance = 'relevance_filter'
 
-    @property
-    def name(self) -> str: return RewardModelType.blacklist.value
 
-    def reward( self, prompt: str, completion: str, name: str ) -> float:
-        if completion in blacklist: 
-            return 0.0
-        
-        if completion == prompt:
-            return 0.0
-        
-        return 1
-
-    def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
-        return torch.tensor( [self.reward( prompt, completion, name ) for completion in completions], dtype=torch.float32)
-
-    def normalize_rewards( self, rewards: torch.FloatTensor ) -> torch.FloatTensor:
-        return rewards
+@dataclass(frozen=True)
+class DefaultRewardFrameworkConfig:
+    """Reward framework default configuration.
+    Note: All the weights should add up to 1.0.
+    """
+    rlhf_model_weight: float = 1.0
+    reciprocate_model_weight: float = 0
+    dahoas_model_weight: float = 0
+    diversity_model_weight: float = 0
+    prompt_model_weight: float = 0
