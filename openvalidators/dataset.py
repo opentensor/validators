@@ -36,11 +36,7 @@ class Dataset(Iterator):
         if random.random() < 0.5:
             return {"text": next(self.openwebtext)["text"]}
         elif random.random() > 0.5:
-            # Red Pajama is a bit too long, so we split it into chunks of 300 words.
-            next_text = next(self.red_pajama)["text"]
-            next_split = next_text.split(" ")
-            chunks = list(chunk(next_split, 300))
-            return {"text": random.choice(chunks)}
+            return {"text": next(self.red_pajama)["text"]}
 
 
 class MockDataset(Iterator):
