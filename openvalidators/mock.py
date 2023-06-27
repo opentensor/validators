@@ -53,12 +53,12 @@ class MockRewardModel(torch.nn.Module):
         difference=False,
         shift=3,
     ) -> torch.FloatTensor:
-        return torch.ones(len(completions_with_prompt))
+        return torch.zeros(len(completions_with_prompt))
 
 
 class MockDataset(Iterator):
     def __next__(self):
-        return {"context": "What is the capital of Texas?"}
+        return {"text": "What is the capital of Texas?"}
 
 
 class MockDendriteResponse:

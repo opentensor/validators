@@ -17,6 +17,7 @@
 
 import torch
 from typing import List
+from .config import RewardModelType
 from .reward import BaseRewardModel
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
@@ -25,7 +26,7 @@ class OpenAssistantRewardModel( BaseRewardModel ):
     reward_model_name: str = "OpenAssistant/reward-model-deberta-v3-large-v2"
 
     @property
-    def name(self) -> str: return "rlhf_reward_model"
+    def name(self) -> str: return RewardModelType.rlhf.value
 
     def __init__( self , device: str ):
         super().__init__()
