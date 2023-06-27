@@ -33,14 +33,10 @@ class Dataset(Iterator):
         self.red_pajama = iter( load_dataset("togethercomputer/RedPajama-Data-1T", split='train', streaming=True).shuffle(seed=seed, buffer_size=10000) )
 
     def __next__(self):
-        if random.random() < 0.5:
+        if random.random() < 0.01:
             return {"text": next(self.openwebtext)["text"]}
-        elif random.random() > 0.5:
-            # Red Pajama is a bit too long, so we split it into chunks of 300 words.
-            next_text = next(self.red_pajama)["text"]
-            next_split = next_text.split(" ")
-            chunks = list(chunk(next_split, 300))
-            return {"text": random.choice(chunks)}
+        elif random.random() > 0.01:
+            return {"text": next(self.red_pajama)["text"]}
 
 
 class MockDataset(Iterator):
