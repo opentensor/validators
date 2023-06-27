@@ -27,7 +27,7 @@ from typing import List
 from dataclasses import asdict
 from openvalidators.event import EventSchema
 from openvalidators.misc import ttl_get_block
-from openvalidators.prompts import followup_prompt, answer_prompt
+from openvalidators.prompts import followup_prompt, answer_prompt, augment_prompt
 from openvalidators.utils import check_uid_availability
 
 def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor:
@@ -140,7 +140,20 @@ async def forward(self):
     # Truncate context to a limited set of sentences.
     base_text = '.'.join(data.split('.', maxsplit=20)[:-1])
 
-    exclude = []
+    # Form the augment prompt, requesting a summary at a random school level.
+    augment_prompt = augment_prompt(base_text)
+
+    # Request a summary, given the original context.
+    augment_event = await run_step( 
+        self, 
+        prompt = augment_prompt, 
+        name = 'augment',
+        k = self.config.neuron.followup_sample_size,
+        timeout = self.config.neuron.followup_timeout,
+    )
+
+    base_text = augment_event['best']
+    exclude = augment_event['uids']
     for k in range( self.config.neuron.num_followup_steps ):
         print('STEP',k)
         # Get a followup question, given the summarized context.
