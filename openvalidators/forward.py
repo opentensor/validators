@@ -141,12 +141,12 @@ async def forward(self):
     base_text = '.'.join(data.split('.', maxsplit=20)[:-1])
 
     # Form the augment prompt, requesting a summary at a random school level.
-    augment_prompt = augment_prompt(base_text)
+    aug_prompt = augment_prompt(base_text)
 
     # Request a summary, given the original context.
     augment_event = await run_step( 
         self, 
-        prompt = augment_prompt, 
+        prompt = aug_prompt, 
         name = 'augment',
         k = self.config.neuron.followup_sample_size,
         timeout = self.config.neuron.followup_timeout,
