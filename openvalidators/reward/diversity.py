@@ -16,8 +16,8 @@
 # DEALINGS IN THE SOFTWARE.
 
 import torch
-import bittensor as bt
 from typing import List
+from .config import RewardModelType
 from .reward import BaseRewardModel
 from transformers import  AutoTokenizer, AutoModel
 
@@ -47,7 +47,7 @@ def mean_pooling( model_output, attention_mask ):
 class DiversityRewardModel( BaseRewardModel ):
     relevance_model_path = "bert-base-uncased"
     @property
-    def name(self) -> str: return "diversity_reward_model"
+    def name(self) -> str: return RewardModelType.diversity.value
 
     def __init__( self, device: str ):
         super().__init__()

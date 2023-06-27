@@ -20,8 +20,8 @@ import torch
 import argparse
 import bittensor as bt
 from loguru import logger
-
 from openvalidators.gating import BaseGatingModel
+from openvalidators.reward import DefaultRewardFrameworkConfig
 
 
 def check_config(cls, config: "bt.Config"):
@@ -226,41 +226,43 @@ def add_args(cls, parser):
         default=False,
     )
     parser.add_argument(
-        "--neuron.reciprocate_off",
-        action="store_true",
-        help="Dont apply the reciprocate reward model",
-        default=False,
-    )
-    parser.add_argument(
         "--neuron.relevance_off",
         action="store_true",
         help="Dont apply the relevance reward model",
         default=False,
     )
+
     parser.add_argument(
-        "--neuron.openassistant_off",
-        action="store_true",
-        help="Dont apply the openassistant reward model",
-        default=False,
+        "--reward.reciprocate_weight",
+        type=float,
+        help="Weight for the reciprocate reward model",
+        default=DefaultRewardFrameworkConfig.reciprocate_model_weight,
     )
     parser.add_argument(
-        "--neuron.diversity_off",
-        action="store_true",
-        help="Dont apply the diversity_off reward model",
-        default=False,
+        "--reward.rlhf_weight",
+        type=float,
+        help="Weight for the rlhf reward model",
+        default=DefaultRewardFrameworkConfig.rlhf_model_weight,
     )
     parser.add_argument(
-        "--neuron.dahoas_off",
-        action="store_true",
-        help="Dont apply the dahoas reward model",
-        default=False,
+        "--reward.diversity_weight",
+        type=float,
+        help="Weight for the diversity reward model",
+        default=DefaultRewardFrameworkConfig.diversity_model_weight,
     )
     parser.add_argument(
-        "--neuron.prompt_based_off",
-        action="store_true",
-        help="Dont apply the prompt-based reward model",
-        default=False,
+        "--reward.dahoas_weight",
+        type=float,
+        help="Weight for the dahoas reward model",
+        default=DefaultRewardFrameworkConfig.dahoas_model_weight,
     )
+    parser.add_argument(
+        "--reward.prompt_based_weight",
+        type=float,
+        help="Weight for the prompt-based reward model",
+        default=DefaultRewardFrameworkConfig.prompt_model_weight,
+    )
+
     parser.add_argument(
         "--neuron.mock_dendrite_pool",
         action="store_true",

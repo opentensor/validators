@@ -52,7 +52,7 @@ class MockRewardModel(torch.nn.Module):
         difference=False,
         shift=3,
     ) -> torch.FloatTensor:
-        return torch.ones(len(completions_with_prompt))
+        return torch.zeros(len(completions_with_prompt))
 
 
 class MockDendriteResponse:
