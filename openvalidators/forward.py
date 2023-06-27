@@ -144,7 +144,7 @@ async def forward(self):
     for k in range( self.config.neuron.num_followup_steps ):
         print('STEP',k)
         # Get a followup question, given the summarized context.
-        prompt = followup_prompt( base_text )
+        prompt = followup_prompt( base_text, i = k)
         followup_event = await run_step( 
             self, 
             prompt = prompt, 
@@ -167,5 +167,8 @@ async def forward(self):
         )
         exclude += answer_event['uids']
 
-        # Extend the base text with the best answer.
-        base_text = base_text + ' ' + answer_event['best']
+        if k == 0:
+            # Extend the base text with the best answer.
+            base_text = base_text + '\n Previous Question \n Question:' + followup_event['best'] + '\n Answer:' + answer_event['best']
+        else:
+            base_text = base_text + '\n Question:' + followup_event['best'] + '\n Answer:' + answer_event['best']
