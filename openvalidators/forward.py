@@ -136,6 +136,9 @@ async def forward(self):
     base_text = '.'.join(data.split('.', maxsplit=random_cutoff)[:-1])
     aug_prompt = augment_prompt(base_text)
 
+    # Reset Blacklist reward model 
+    self.blacklist.reset()
+
     # Request a summary, given the original context.
     augment_event = await run_step( 
         self, 
@@ -173,9 +176,12 @@ async def forward(self):
             exclude = exclude
         )
         exclude += answer_event['uids']
+        
+        self.blacklist.question_blacklist.append(followup_event['best'])
+        self.blacklist.answer_blacklist.append(answer_event['best'])
 
         if k == 0:
             # Extend the base text with the best answer.
-            base_text = base_text + '\n Previous Question \n Question:' + followup_event['best'] + '\n Answer:' + answer_event['best']
+            base_text = base_text + '\nPrevious Question \nQuestion:' + followup_event['best'] + '\nAnswer:' + answer_event['best']
         else:
-            base_text = base_text + '\n Question:' + followup_event['best'] + '\n Answer:' + answer_event['best']
+            base_text = base_text + '\nQuestion:' + followup_event['best'] + '\nAnswer:' + answer_event['best']

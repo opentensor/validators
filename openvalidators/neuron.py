@@ -166,10 +166,11 @@ class neuron:
 
                 bt.logging.error(message)
                 raise Exception(message)
+            
+            self.blacklist = Blacklist() if not self.config.neuron.blacklist_off else MockRewardModel(RewardModelType.blacklist.value)
 
             self.masking_functions = [
-                Blacklist() if not self.config.neuron.blacklist_off
-                    else MockRewardModel(RewardModelType.blacklist.value),
+                self.blacklist,
                 BertRelevanceRewardModel(device=self.device) if not self.config.neuron.relevance_off
                     else MockRewardModel(RewardModelType.relevance.value),
                 NSFWRewardModel(device=self.device) if not self.config.neuron.nsfw_off
