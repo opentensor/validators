@@ -43,7 +43,6 @@ class Blacklist( BaseRewardModel ):
         if completion in self.question_blacklist or completion in self.answer_blacklist:
             return 0.0 
         
-        print(self.question_blacklist, self.answer_blacklist)
         return 1
 
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:

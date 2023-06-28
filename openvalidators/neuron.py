@@ -166,6 +166,8 @@ class neuron:
 
                 bt.logging.error(message)
                 raise Exception(message)
+            
+            self.blacklist = Blacklist() if not self.config.neuron.blacklist_off else MockRewardModel(RewardModelType.blacklist.value)
 
             self.blacklist = Blacklist() if not self.config.neuron.blacklist_off else MockRewardModel(RewardModelType.blacklist.value)
             self.masking_functions = [
