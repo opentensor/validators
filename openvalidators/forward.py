@@ -137,10 +137,11 @@ async def forward(self):
     # Obtain a unique context from the dataset.
     data = next(self.dataset)["text"]
 
+    random_cutoff = random.randint(15, 30)
     # Truncate context to a limited set of sentences.
-    base_text = '.'.join(data.split('.', maxsplit=20)[:-1])
+    base_text = '.'.join(data.split('.', maxsplit=random_cutoff)[:-1])
 
-    # Form the augment prompt, requesting a summary at a random school level.
+    # Form the augment prompt, requesting a summary 
     aug_prompt = augment_prompt(base_text)
 
     # Request a summary, given the original context.
