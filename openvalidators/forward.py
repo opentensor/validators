@@ -131,8 +131,9 @@ async def forward(self):
     # Obtain a unique context from the dataset.
     data = next(self.dataset)["text"]
 
+    random_cutoff = random.randint(15, 30)
     # Truncate context to a limited set of sentences.
-    base_text = '.'.join(data.split('.', maxsplit=20)[:-1])
+    base_text = '.'.join(data.split('.', maxsplit=random_cutoff)[:-1])
     aug_prompt = augment_prompt(base_text)
 
     # Request a summary, given the original context.
@@ -150,7 +151,7 @@ async def forward(self):
     for k in range( self.config.neuron.num_followup_steps ):
 
         # Get a followup question, given the summarized context.
-        prompt = followup_prompt( base_text )
+        prompt = followup_prompt( base_text , i = k)
         followup_event = await run_step( 
             self, 
             prompt = prompt, 
@@ -173,5 +174,8 @@ async def forward(self):
         )
         exclude += answer_event['uids']
 
-        # Extend the base text with the best answer.
-        base_text = base_text + ' ' + answer_event['best']
+        if k == 0:
+            # Extend the base text with the best answer.
+            base_text = base_text + '\n Previous Question \n Question:' + followup_event['best'] + '\n Answer:' + answer_event['best']
+        else:
+            base_text = base_text + '\n Question:' + followup_event['best'] + '\n Answer:' + answer_event['best']
