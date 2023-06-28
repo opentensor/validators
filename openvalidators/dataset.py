@@ -34,9 +34,9 @@ class Dataset(Iterator):
 
     def __next__(self):
         if random.random() < 0.01:
-            return {"text": next(self.openwebtext)["text"]}
+            return next(self.openwebtext)["text"]
         elif random.random() > 0.01:
-            return {"text": next(self.red_pajama)["text"]}
+            return next(self.red_pajama)["text"]
 
 
 class MockDataset(Iterator):
