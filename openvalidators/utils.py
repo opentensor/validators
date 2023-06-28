@@ -81,7 +81,7 @@ def checkpoint(self):
     save_state(self)
 
 
-def resync_metagraph(self):
+def resync_metagraph(self: 'openvalidators.neuron.neuron'):
     """Resyncs the metagraph and updates the hotkeys and moving averages based on the new metagraph."""
     bt.logging.info("resync_metagraph()")
 

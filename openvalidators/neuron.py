@@ -62,6 +62,10 @@ class neuron:
     def run(self):
         run(self)
 
+    subtensor: "bt.subtensor"
+    wallet: "bt.wallet"
+    metagraph: "bt.metagraph"
+
     def __init__(self):
         self.config = neuron.config()
         self.check_config(self.config)
