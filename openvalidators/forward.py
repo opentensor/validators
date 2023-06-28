@@ -142,7 +142,6 @@ async def forward(self):
     # Request a summary, given the original context.
     augment_event = await run_step( 
         self, 
-        prompt = augment_prompt, 
         prompt = aug_prompt, 
         name = 'augment',
         k = self.config.neuron.followup_sample_size,
