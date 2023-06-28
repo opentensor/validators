@@ -348,15 +348,15 @@ Please pay special attention to the delimiters used in the upcoming sections. Th
 
 def followup_prompt( base_text:str, i:int = 0) -> str:
     if i == 0:
-        return f"{base_text}\n\nAsk an insightful followup question about the preceeding context \n"
+        return f"{base_text}\n\n{followup_request_template}\n"
     else:
-        return f"{base_text}\n\nAsk an insightful followup question about the preceeding context and previous questions\n"
+        return f"{base_text}\n\n{followup_request_template} and previous questions\n"
 
 
 def answer_prompt( base_text:str, followup:str ) -> str:
     return f"{base_text}\n Question:{followup}\n Answer the question step by step and explain your thoughts"
 
-augment_request_template = "Summarize the preceding context at"
+augment_request_template = "Summarize the preceding context"
 
 def augment_prompt( base_text:str ) -> str:
     random_level = random.randint(4, 8)

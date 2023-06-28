@@ -35,7 +35,7 @@ class Dataset(Iterator):
     def __next__(self):
         if random.random() < 0.5:
             return {"text": next(self.openwebtext)["text"]}
-        elif random.random() > 0.5:
+        else:
             return {"text": next(self.red_pajama)["text"]}
 
 
