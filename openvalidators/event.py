@@ -25,6 +25,7 @@ from openvalidators.reward import RewardModelType
 @dataclass
 class EventSchema:
     completions: List[str]  # List of completions received for a given prompt
+    completion_times: List[float]  # List of completion times for a given prompt
     name: str  # Prompt type, e.g. 'followup', 'answer'
     block: float  # Current block at given step
     gating_loss: float  # Gating model loss for given step
@@ -69,6 +70,7 @@ class EventSchema:
 
         return EventSchema(
             completions=event_dict['completions'],
+            completion_times=event_dict['completion_times'],
             name=event_dict['name'],
             block=event_dict['block'],
             gating_loss=event_dict['gating_loss'],
