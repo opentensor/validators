@@ -132,7 +132,7 @@ def add_args(cls, parser):
         "--neuron.num_followup_steps",
         type = int,
         help = "How many followup steps to take.",
-        default = 5,
+        default = 4,
     )
 
     parser.add_argument(
