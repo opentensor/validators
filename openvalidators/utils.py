@@ -22,6 +22,7 @@ import copy
 import bittensor as bt
 import openvalidators
 from openvalidators.misc import ttl_get_block
+from openvalidators.reward import MockRewardModel
 
 
 def should_reinit_wandb(self):
@@ -36,10 +37,9 @@ def init_wandb(self, reinit=False):
         tags.append("mock")
     if self.config.neuron.use_custom_gating_model:
         tags.append("custom_gating_model")
-    if self.config.neuron.nsfw_filter:
-        tags.append("nsfw_filter")
-    if self.config.neuron.outsource_scoring:
-        tags.append("outsource_scoring")
+    for fn in self.reward_functions:
+        if not isinstance(fn, MockRewardModel):
+            tags.append(str(fn.name))
     if self.config.neuron.disable_set_weights:
         tags.append("disable_set_weights")
 
@@ -208,7 +208,9 @@ def load_state(self):
     bt.logging.info("load_state()")
     try:
         state_dict = torch.load(f"{self.config.neuron.full_path}/model.torch")
-        self.moving_averaged_scores = state_dict["neuron_weights"].clone().detach()
+        # Check for nans in saved state dict
+        if not torch.isnan(state_dict["neuron_weights"]).any():        
+            self.moving_averaged_scores = state_dict["neuron_weights"].clone().detach()
         self.hotkeys = state_dict["neuron_hotkeys"]
         bt.logging.success(
             prefix="Reloaded model",

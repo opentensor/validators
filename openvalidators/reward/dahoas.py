@@ -15,50 +15,50 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-#### NOTE(carro): This code is modified from trlX
+import os
 import torch
-import bittensor as bt
 from typing import List
+from .config import RewardModelType
+from .reward import BaseRewardModel
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 
+class DahoasRewardModel( BaseRewardModel ):
 
-class RewardModel(torch.nn.Module):
-    def __init__(self, model_path: str, device: str, config: "bt.config" = None):
+    model_name = "EleutherAI/gpt-j-6b"
+
+    @property
+    def name(self) -> str: return RewardModelType.dahoas.value
+
+    @staticmethod
+    def load_weights( path: str ):
+        if not os.path.exists( path + "/hf_ckpt.pt"):
+            os.makedirs( path, exist_ok=True)
+            os.system(
+                f"wget -O { path + '/hf_ckpt.pt'} \
+                https://huggingface.co/Dahoas/gptj-rm-static/resolve/main/hf_ckpt.pt"
+            )
+
+    def __init__(self, path: str, device: str ):
         super().__init__()
-        config = AutoConfig.from_pretrained(model_path)
-        self.model = AutoModelForCausalLM.from_config(config)
+        DahoasRewardModel.load_weights( path = path )
+        self.device = torch.device(device)
+        config = AutoConfig.from_pretrained( DahoasRewardModel.model_name )
+        self.model = AutoModelForCausalLM.from_config( config ).to(self.device)
         self.config = self.model.config
+
         # `gpt-neo(x)` models use `hidden_size` attribute names instead of `n_embd``
         if config is None:
-            config = RewardModel.config()
+            config = DahoasRewardModel.config()
 
         self.config.n_embd = self.config.hidden_size if hasattr(self.config, "hidden_size") else self.config.n_embd
-        self.device = torch.device(device)
         self.transformer = self.model.transformer
-        self.v_head = torch.nn.Linear(self.config.n_embd, 1, bias=False)
+        self.v_head = torch.nn.Linear(self.config.n_embd, 1, bias=False).to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-j-6b")
         self.tokenizer.pad_token = self.tokenizer.eos_token
         self.PAD_ID = self.tokenizer(self.tokenizer.pad_token)["input_ids"][0]
 
-    def reward(
-        self,
-        completions_with_prompt: List[str],
-        completions_without_prompt: List[str],
-        difference=False,
-        shift=3,
-    ) -> torch.FloatTensor:
-        """Computes the reward for each completion based on the difference in scores between the completion with prompt and the completion without prompt.
 
-        Args:
-            completions_with_prompt (List[str]):
-                List of completions with prompt.
-            completions_without_prompt (List[str]):
-                List of completions without prompt.
-            difference (bool):
-                Whether to return the difference in scores between the completion with prompt and the completion without prompt.
-            shift (int):
-                Shift to apply to the scores before taking the softmax.
-        """
+    def reward( self, prompt: str, completion: str, name: str ) -> float:
 
         def reward_fn(samples):
             if samples is None:
@@ -81,22 +81,20 @@ class RewardModel(torch.nn.Module):
                 attn_masks = attn_masks.repeat(2, 1)
                 with torch.no_grad():
                     sub_scores = self.forward(
-                        input_ids=input_ids.to(self.device),
-                        attention_mask=attn_masks.to(self.device),
+                        input_ids = input_ids.to(self.device),
+                        attention_mask = attn_masks.to(self.device),
                     )
                 scores_list.append(sub_scores["chosen_end_scores"])
             scores = torch.cat(scores_list, dim=0).mean().item()
             return scores
 
         with torch.no_grad():
-            full_rewards = [reward_fn([completion]) for completion in completions_with_prompt]
-            if difference:
-                comp_rewards = [reward_fn([completion]) for completion in completions_without_prompt]
-                return torch.nn.functional.relu(
-                    torch.tensor(full_rewards, dtype=torch.float32) + shift
-                ) - torch.nn.functional.relu(torch.tensor(comp_rewards, dtype=torch.float32) + shift)
-            else:
-                return torch.tensor(full_rewards, dtype=torch.float32)
+            combined_reward = reward_fn( prompt + completion )
+            independent_reward = reward_fn( completion )
+            return float( (combined_reward - independent_reward).item() )
+        
+    def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
+        return torch.tensor( [self.reward( prompt, completion, name ) for completion in completions], dtype=torch.float32).to(self.device)
 
     def forward(
         self,
@@ -115,8 +113,8 @@ class RewardModel(torch.nn.Module):
     ):
         loss = None
         transformer_outputs = self.transformer(
-            input_ids,
-            attention_mask=attention_mask,
+            input_ids.to(self.device),
+            attention_mask = attention_mask.to(self.device),
         )
 
         hidden_states = transformer_outputs[0]

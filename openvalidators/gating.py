@@ -142,6 +142,7 @@ class GatingModel(BaseGatingModel):
         self.num_uids = config.gating.num_uids
         self.device = torch.device(self.config.neuron.device)
         self.tokenizer = AutoTokenizer.from_pretrained(self.config.gating.model_name)
+        self.tokenizer.pad_token = self.tokenizer.eos_token
         self.model = AutoModel.from_pretrained(self.config.gating.model_name)
         self.linear = torch.nn.Linear(self.model.config.hidden_size, config.gating.num_uids)
         self.optimizer = torch.optim.SGD(
@@ -174,9 +175,19 @@ class GatingModel(BaseGatingModel):
             scores (:obj:`torch.FloatTensor` of shape :obj:`(network_size)`):
                 Scores for each uids as output by the gating model.
         """
-        inputs = self.tokenizer(message, return_tensors="pt").to(self.device)
+        encoded_input = self.tokenizer(
+            message,
+            truncation=True,
+            padding=True,
+            return_overflowing_tokens=True,
+            return_tensors="pt",
+        ).to(self.device)
+
+        # Pop the overflow mapping from the input to maintain the expected { input_ids, mask } format of the model
+        _ = encoded_input.pop("overflow_to_sample_mapping")
+        
         with torch.no_grad():
-            hidden_states = self.model(**inputs).last_hidden_state[0, -1, :]
+            hidden_states = self.model(**encoded_input).last_hidden_state[0, -1, :]
         return self.linear(hidden_states)
 
     def resync(

@@ -15,25 +15,35 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-import os
 import copy
-import wandb
 import torch
 import asyncio
 import bittensor as bt
-from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
+from openvalidators.dataset import Dataset, MockDataset
 from openvalidators.dendrite import AsyncDendritePool
-from openvalidators.reward import RewardModel
 from openvalidators.gating import GatingModel, SentenceEmbedGatingModel
-from openvalidators.mock import MockDendritePool, MockDataset, MockRewardModel, MockGatingModel
+from openvalidators.mock import MockDendritePool, MockRewardModel, MockGatingModel
 
 # Load local forward function.
 from openvalidators.config import add_args, check_config, config
 from openvalidators.run import run
 from openvalidators.misc import ttl_get_block
 from openvalidators.utils import init_wandb
+
+# Load gating models
+from openvalidators.reward import (
+    Blacklist,
+    NSFWRewardModel,
+    OpenAssistantRewardModel,
+    ReciprocateRewardModel,
+    BertRelevanceRewardModel,
+    MockRewardModel,
+    DahoasRewardModel,
+    DiversityRewardModel,
+    PromptRewardModel,
+    RewardModelType
+)
 
 
 class neuron:
@@ -93,7 +103,7 @@ class neuron:
         if self.config.neuron.mock_dataset:
             self.dataset = MockDataset()
         else:
-            self.dataset = iter(load_dataset("squad_v2", split="train", streaming=True).shuffle(buffer_size=10000))
+            self.dataset = Dataset()
         bt.logging.debug(str(self.dataset))
 
         # Init the gating model which learns which miners to select for each query.
@@ -114,6 +124,60 @@ class neuron:
             self.dendrite_pool = AsyncDendritePool(keypair=self.wallet.hotkey, metagraph=self.metagraph)
         bt.logging.debug(str(self.dendrite_pool))
 
+        # Init Reward model
+        bt.logging.debug("loading", "reward_functions")
+        if self.config.neuron.mock_reward_models:
+            self.reward_functions = []
+            self.reward_weights = []
+            self.masking_functions = [
+                MockRewardModel(RewardModelType.blacklist.value),
+                MockRewardModel(RewardModelType.nsfw.value),
+            ]
+            bt.logging.debug(str(self.reward_functions))
+        else:
+            self.reward_weights = torch.tensor([
+                self.config.reward.rlhf_weight, self.config.reward.reciprocate_weight, self.config.reward.dahoas_weight,
+                self.config.reward.diversity_weight, self.config.reward.prompt_based_weight
+            ], dtype=torch.float32).to(self.device)
+
+            # Ensure reward function weights sum to 1.
+            if self.reward_weights.sum() != 1:
+                message = f"Reward function weights do not sum to 1 (Current sum: {self.reward_weights.sum()}.)" \
+                          f"Check your reward config file at `reward/config.py` or ensure that all your cli reward flags sum to 1."
+                bt.logging.error(message)
+                raise Exception(message)
+
+            self.reward_functions = [
+                OpenAssistantRewardModel(device=self.device) if self.config.reward.rlhf_weight > 0
+                    else MockRewardModel(RewardModelType.rlhf.value),
+                ReciprocateRewardModel(device=self.device) if self.config.reward.reciprocate_weight > 0
+                    else MockRewardModel(RewardModelType.reciprocate.value),
+                DahoasRewardModel(path=self.config.neuron.full_path, device=self.device) if self.config.reward.dahoas_weight > 0
+                    else MockRewardModel(RewardModelType.dahoas.value),
+                DiversityRewardModel(device=self.device) if self.config.reward.diversity_weight > 0
+                    else MockRewardModel(RewardModelType.diversity.value),
+                PromptRewardModel(device=self.device) if self.config.reward.prompt_based_weight > 0
+                    else MockRewardModel(RewardModelType.prompt.value),
+            ]
+
+            if len(self.reward_functions) != len(self.reward_weights):
+                message = f"Length of reward function weights and reward functions do not match. " \
+                          f"Reward functions: {len(self.reward_functions)}, Reward weights: {len(self.reward_weights)}"
+
+                bt.logging.error(message)
+                raise Exception(message)
+            
+            self.blacklist = Blacklist() if not self.config.neuron.blacklist_off else MockRewardModel(RewardModelType.blacklist.value)
+
+            self.masking_functions = [
+                self.blacklist,
+                BertRelevanceRewardModel(device=self.device) if not self.config.neuron.relevance_off
+                    else MockRewardModel(RewardModelType.relevance.value),
+                NSFWRewardModel(device=self.device) if not self.config.neuron.nsfw_off
+                    else MockRewardModel(RewardModelType.nsfw.value),
+            ]
+            bt.logging.debug(str(self.reward_functions))
+
         # Init the event loop.
         self.loop = asyncio.get_event_loop()
 
@@ -122,40 +186,10 @@ class neuron:
             bt.logging.debug("loading", "wandb")
             init_wandb(self)
 
-        # Init Reward model
-        bt.logging.debug("loading", "reward_model")
-        if self.config.neuron.mock_reward_model:
-            self.reward_model = MockRewardModel()
-            bt.logging.debug(str(self.reward_model))
-
-        else:
-            bt.logging.info("Loading reward model")
-            self.reward_model = RewardModel(model_path="EleutherAI/gpt-j-6b", device=self.config.neuron.device)
-            for fpath in os.listdir(self.config.neuron.reward_path):
-                if fpath.endswith(".pt") or fpath.endswith(".bin"):
-                    checkpoint = os.path.join(self.config.neuron.reward_path, fpath)
-                    break
-            ckpt_state = torch.load(checkpoint)
-            self.reward_model.load_state_dict(ckpt_state)
-            self.reward_model.eval()
-            self.reward_model.half()
-            self.reward_model.requires_grad_(False)
-            self.reward_model.to(self.device)
-            bt.logging.debug(str(self.reward_model))
-
-        # Init Filter model
-        if self.config.neuron.nsfw_filter:
-            filter_model_path = "facebook/roberta-hate-speech-dynabench-r4-target"
-            self.filter_model = AutoModelForSequenceClassification.from_pretrained(filter_model_path).to(self.device)
-            self.filter_tokenizer = AutoTokenizer.from_pretrained(filter_model_path)
-            self.filter_tokenizer.pad_token = self.filter_tokenizer.eos_token
-
         if self.config.neuron.epoch_length_override:
             self.config.neuron.epoch_length = self.config.neuron.epoch_length_override
         else:
             self.config.neuron.epoch_length = self.subtensor.validator_epoch_length(self.config.netuid)
-
-        self.prev_block = ttl_get_block(self)
 
         self.prev_block = ttl_get_block(self)
         self.step = 0
