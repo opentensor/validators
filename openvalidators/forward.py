@@ -179,6 +179,9 @@ async def forward(self):
         )
         exclude += answer_event['uids']
         
+        if answer_event['rewards'].max() <= 0: 
+            break
+        
         self.blacklist.question_blacklist.append(followup_event['best'])
         self.blacklist.answer_blacklist.append(answer_event['best'])
 
@@ -187,6 +190,3 @@ async def forward(self):
             base_text = base_text + '\nPrevious Question \nQuestion:' + followup_event['best'] + '\nAnswer:' + answer_event['best']
         else:
             base_text = base_text + '\nQuestion:' + followup_event['best'] + '\nAnswer:' + answer_event['best']
-
-        if answer_event['rewards'].max() <= 0: 
-            break
