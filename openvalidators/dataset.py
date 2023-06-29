@@ -20,11 +20,6 @@ import bittensor as bt
 from datasets import load_dataset
 from collections.abc import Iterator
 
-def chunk(lst, n):
-    """Yield successive n-sized chunks from lst."""
-    for i in range(0, len(lst), n):
-        yield lst[i:i + n]
-
 class Dataset(Iterator):
     def __init__(self):
         super().__init__()

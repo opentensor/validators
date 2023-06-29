@@ -28,6 +28,7 @@ class EventTestCase(unittest.TestCase):
         # Arrange: Create a dictionary with all columns
         event_dict = {
             'completions': ['test'],
+            'completion_times': [0.123],
             'name': 'test-name',
             'block': 1.0,
             'gating_loss': 1.0,
@@ -71,6 +72,7 @@ class EventTestCase(unittest.TestCase):
         # Assert: create a dictionary with all non-related reward columns
         event_dict = {
             'completions': ['test'],
+            'completion_times': [0.123],            
             'name': 'test-name',
             'block': 1.0,
             'gating_loss': 1.0,
@@ -107,6 +109,7 @@ class EventTestCase(unittest.TestCase):
         # Assert: create a dictionary with all non-related reward columns
         event_dict = {
             'completions': ['test'],
+            'completion_times': [0.123],                        
             'name': 'test-name',
             'block': 1.0,
             'gating_loss': 1.0,

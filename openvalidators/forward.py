@@ -100,6 +100,8 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str, exclud
         print('********')
         print('reward:',comp, rewards[ind])
         print('********')
+    # Get completion times
+    completion_times: List[float] = [comp.elapsed_time for comp in responses ]
 
     # Compute forward pass rewards, assumes followup_uids and answer_uids are mutually exclusive.
     # shape: [ metagraph.n ]
@@ -117,6 +119,7 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str, exclud
         'prompt': prompt,
         'uids': uids.tolist(),
         'completions': completions,
+        'completion_times': completion_times,
         'rewards': rewards.tolist(),
         'gating_loss': gating_loss.item(),
         'best': best
