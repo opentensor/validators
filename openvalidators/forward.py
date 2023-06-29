@@ -164,6 +164,9 @@ async def forward(self):
         )
         exclude += followup_event['uids']
 
+        if max(followup_event['rewards']) <= 0: 
+            break
+        
         # Ask the followup question, given the original context.
         prompt = answer_prompt( base_text, followup_event['best'] )
         answer_event = await run_step( 
@@ -175,6 +178,9 @@ async def forward(self):
             exclude = exclude
         )
         exclude += answer_event['uids']
+        
+        if max(answer_event['rewards']) <= 0: 
+            break
         
         self.blacklist.question_blacklist.append(followup_event['best'])
         self.blacklist.answer_blacklist.append(answer_event['best'])
