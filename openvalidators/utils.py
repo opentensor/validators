@@ -209,6 +209,10 @@ def load_state(self):
     try:
         state_dict = torch.load(f"{self.config.neuron.full_path}/model.torch")
         self.moving_averaged_scores = state_dict["neuron_weights"].clone().detach()
+        print('****')
+        print('loading')
+        print(self.moving_averaged_scores )
+        print('****')
         self.hotkeys = state_dict["neuron_hotkeys"]
         bt.logging.success(
             prefix="Reloaded model",
