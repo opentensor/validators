@@ -164,6 +164,9 @@ async def forward(self):
         )
         exclude += followup_event['uids']
 
+        if followup_event['rewards'].max() <= 0: 
+            break
+        
         # Ask the followup question, given the original context.
         prompt = answer_prompt( base_text, followup_event['best'] )
         answer_event = await run_step( 
@@ -184,3 +187,6 @@ async def forward(self):
             base_text = base_text + '\nPrevious Question \nQuestion:' + followup_event['best'] + '\nAnswer:' + answer_event['best']
         else:
             base_text = base_text + '\nQuestion:' + followup_event['best'] + '\nAnswer:' + answer_event['best']
+
+        if answer_event['rewards'].max() <= 0: 
+            break
