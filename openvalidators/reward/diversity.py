@@ -16,6 +16,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import torch
+import torch.nn.functional as F
 from typing import List
 from .config import RewardModelType
 from .reward import BaseRewardModel
@@ -37,65 +38,63 @@ def mean_pooling( model_output, attention_mask ):
             and dividing it by the sum of input_mask_expanded after clamping its values to a minimum of 1e-9.
     """
     token_embeddings = model_output[0]
-    input_mask_expanded = (
-        attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-    )
+    input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
     return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(
         input_mask_expanded.sum(1), min=1e-9
     )
     
 class DiversityRewardModel( BaseRewardModel ):
-    relevance_model_path = "bert-base-uncased"
+    
+    diversity_model_path = "sentence-transformers/all-mpnet-base-v2"
+    
     @property
     def name(self) -> str: return RewardModelType.diversity.value
 
     def __init__( self, device: str ):
         super().__init__()
         self.device = device
-        self.tokenizer = AutoTokenizer.from_pretrained( DiversityRewardModel.relevance_model_path )
-        self.model = AutoModel.from_pretrained( DiversityRewardModel.relevance_model_path ).to(self.device)
-
-    def get_embedding( self, message: str ) -> "torch.FloatTensor":
+        self.tokenizer = AutoTokenizer.from_pretrained( DiversityRewardModel.diversity_model_path )
+        self.model = AutoModel.from_pretrained( DiversityRewardModel.diversity_model_path ).to(self.device)
+        self.reward_quantile = torch.tensor(0.1).to(self.device)
+        
+    def get_embeddings( self, sentences: List[str] ) -> "torch.FloatTensor":
         """Runs a forward pass through the model.
         Args:
-            message (:obj:`str`):
+            sentences (:obj:`List[str]`):
                 text message to be encoded.
         Returns:
             embedding (:obj:`torch.FloatTensor`):
                 Embedding for the message.
         """
+        # Tokenizing sentences
         encoded_input = self.tokenizer(
-            message,
+            sentences,
             padding=True,
             truncation=True,
-            return_overflowing_tokens=True,
             return_tensors="pt",
         ).to(self.device)
 
-        # Pop the overflow mapping from the input to maintain the expected { input_ids, mask } format of the model
-        _ = encoded_input.pop("overflow_to_sample_mapping")
-
+        # Compute token embedding
         with torch.no_grad():
             embeddings = self.model(**encoded_input)
 
+        # Pooling
         sentence_embeddings = mean_pooling(embeddings, encoded_input["attention_mask"])
-        sentence_embeddings = torch.nn.functional.normalize(sentence_embeddings, p=2, dim=1)
-        batch_representation = torch.mean(sentence_embeddings, dim=0)
-        return batch_representation
+        
+        # Normalizing
+        sentence_embeddings = F.normalize(sentence_embeddings, p=2, dim=1)
+        return sentence_embeddings
 
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
 
         # Get embeddings for all completions.
-        embeddings = torch.stack( [ self.get_embedding( completion ) for completion in completions ] )
+        embeddings = self.get_embeddings( completions )
 
         # Calculate the pairwise cosine similarity.
         similarity = pairwise_cosine_similarity( embeddings, embeddings )
 
-        # Calculate the columnwise mean.
-        mean_similarity = torch.mean( similarity, dim = 0 )
-
-        # Divide each element by the mean.
-        rewards = 1 - ( mean_similarity / torch.mean( mean_similarity ) )
+        # Reward to be at the 10% quantile of the 1 - similarity score.
+        rewards = (1 - similarity).quantile(self.reward_quantile, dim = 1 )
 
         # Return all
         return rewards
