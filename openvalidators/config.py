@@ -213,6 +213,12 @@ def add_args(cls, parser):
         help="Notes to add to the wandb run.",
         default="",
     )
+    parser.add_argument(
+        "--wandb.track_gating_model",
+        action="store_true",
+        help="Track the model weights of the gating model in wandb.",
+        default=False,
+    )
 
     # Mocks
     parser.add_argument("--mock", action="store_true", help="Mock all items.", default=False)

@@ -193,7 +193,7 @@ def save_state(self):
         gating_model_file_path = f"{self.config.neuron.full_path}/{gating_model_name}_gating_linear_layer.pth"
         torch.save(gating_model_linear_layer_dict, gating_model_file_path)
 
-        if not self.config.wandb.off:
+        if not self.config.wandb.off and self.config.wandb.track_gating_model:
             model_artifact = wandb.Artifact(f"{gating_model_name}_gating_linear_layer", type="model")
             model_artifact.add_file(gating_model_file_path)
             self.wandb.log_artifact(model_artifact)
