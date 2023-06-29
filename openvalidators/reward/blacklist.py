@@ -28,12 +28,20 @@ class Blacklist( BaseRewardModel ):
     @property
     def name(self) -> str: return RewardModelType.blacklist.value
 
+    def __init__(self):
+        super().__init__()
+        self.question_blacklist = []
+        self.answer_blacklist = []
+
     def reward( self, prompt: str, completion: str, name: str ) -> float:
         if completion in blacklist: 
             return 0.0
         
         if completion == prompt:
             return 0.0
+        
+        if completion in self.question_blacklist or completion in self.answer_blacklist:
+            return 0.0 
         
         return 1
 
@@ -42,3 +50,7 @@ class Blacklist( BaseRewardModel ):
 
     def normalize_rewards( self, rewards: torch.FloatTensor ) -> torch.FloatTensor:
         return rewards
+
+    def reset(self):
+        self.question_blacklist = []
+        self.answer_blacklist = []

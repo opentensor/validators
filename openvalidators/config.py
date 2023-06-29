@@ -128,6 +128,12 @@ def add_args(cls, parser):
         help="How many miners to query for the answer.",
         default=50,
     )
+    parser.add_argument(
+        "--neuron.num_followup_steps",
+        type = int,
+        help = "How many followup steps to take.",
+        default = 4,
+    )
 
     parser.add_argument(
         "--neuron.epoch_length_override",
