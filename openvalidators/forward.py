@@ -164,7 +164,7 @@ async def forward(self):
         )
         exclude += followup_event['uids']
 
-        if followup_event['rewards'].max() <= 0: 
+        if max(followup_event['rewards']) <= 0: 
             break
         
         # Ask the followup question, given the original context.
@@ -179,7 +179,7 @@ async def forward(self):
         )
         exclude += answer_event['uids']
         
-        if answer_event['rewards'].max() <= 0: 
+        if max(answer_event['rewards']) <= 0: 
             break
         
         self.blacklist.question_blacklist.append(followup_event['best'])
