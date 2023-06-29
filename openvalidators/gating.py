@@ -142,6 +142,7 @@ class GatingModel(BaseGatingModel):
         self.num_uids = config.gating.num_uids
         self.device = torch.device(self.config.neuron.device)
         self.tokenizer = AutoTokenizer.from_pretrained(self.config.gating.model_name)
+        self.tokenizer.pad_token = self.tokenizer.eos_token
         self.model = AutoModel.from_pretrained(self.config.gating.model_name)
         self.linear = torch.nn.Linear(self.model.config.hidden_size, config.gating.num_uids)
         self.optimizer = torch.optim.SGD(
@@ -177,6 +178,7 @@ class GatingModel(BaseGatingModel):
         encoded_input = self.tokenizer(
             message,
             truncation=True,
+            padding=True,
             return_overflowing_tokens=True,
             return_tensors="pt",
         ).to(self.device)
