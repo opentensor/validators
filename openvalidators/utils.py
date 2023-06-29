@@ -208,7 +208,9 @@ def load_state(self):
     bt.logging.info("load_state()")
     try:
         state_dict = torch.load(f"{self.config.neuron.full_path}/model.torch")
-        self.moving_averaged_scores = state_dict["neuron_weights"].clone().detach()
+        # Check for nans in saved state dict
+        if not torch.isnan(state_dict["neuron_weights"]).any():        
+            self.moving_averaged_scores = state_dict["neuron_weights"].clone().detach()
         self.hotkeys = state_dict["neuron_hotkeys"]
         bt.logging.success(
             prefix="Reloaded model",
