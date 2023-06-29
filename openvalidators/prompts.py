@@ -124,7 +124,7 @@ def find_unique_tags(input_text: str):
 
 
 # Request a follow-up question given a preceding context.
-followup_request_template = "Ask one relevant and insightful question about the preceding context."
+followup_request_template = "Ask one relevant and insightful question about the preceding context"
 
 # Scores a summary on a scale from 0 to 10, given a context.
 augment_scoring_template = """Score the relevance, succinctness, and quality of a summary given a context. The context is within <Context></Context> tags, and the question is within <Summary></Summary> tags. Give a score between 0 and 10 in the <Score></Score> tags, where 0 means the summary is irrelevant, and 10 means it's perfectly relevant and a good summary. Include a brief explanation for your score based solely on the context-summary relationship.
