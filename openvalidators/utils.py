@@ -208,7 +208,10 @@ def load_state(self):
     bt.logging.info("load_state()")
     try:
         state_dict = torch.load(f"{self.config.neuron.full_path}/model.torch")
-        self.moving_averaged_scores = state_dict["neuron_weights"].clone().detach()
+        if not torch.isnan(state_dict["neuron_weights"]).any():
+            
+            self.moving_averaged_scores = state_dict["neuron_weights"].clone().detach()
+        print(not torch.isnan(state_dict["neuron_weights"]).any())
         print('****')
         print('loading')
         print(self.moving_averaged_scores )
