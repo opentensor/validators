@@ -95,6 +95,9 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str, exclud
     completions: List[str] = [comp.completion for comp in responses ]
     best:str = completions[ rewards.argmax( dim = 0 )].strip()
 
+    # Get completion times
+    completion_times: List[float] = [comp.elapsed_time for comp in responses ]
+
     # Compute forward pass rewards, assumes followup_uids and answer_uids are mutually exclusive.
     # shape: [ metagraph.n ]
     scattered_rewards: torch.FloatTensor = self.moving_averaged_scores.scatter( 0, uids, rewards ).to(self.device) 
@@ -111,6 +114,7 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str, exclud
         'prompt': prompt,
         'uids': uids.tolist(),
         'completions': completions,
+        'completion_times': completion_times,
         'rewards': rewards.tolist(),
         'gating_loss': gating_loss.item(),
         'best': best
