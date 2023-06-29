@@ -1,6 +1,5 @@
 # The MIT License (MIT)
 # Copyright © 2021 Yuma Rao
-from dataclasses import dataclass
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -16,27 +15,28 @@ from dataclasses import dataclass
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-from enum import Enum
+import random
+import bittensor as bt
+from datasets import load_dataset
+from collections.abc import Iterator
+
+class Dataset(Iterator):
+    def __init__(self):
+        super().__init__()
+        seed = random.randint(0,1000)
+        self.openwebtext = iter( load_dataset("openwebtext", split="train", streaming=True).shuffle(seed=seed, buffer_size=10000) )
+        self.red_pajama = iter( load_dataset("togethercomputer/RedPajama-Data-1T", split='train', streaming=True).shuffle(seed=seed, buffer_size=10000) )
+
+    def __next__(self):
+        if random.random() < 0.5:
+            return {"text": next(self.openwebtext)["text"]}
+        else:
+            return {"text": next(self.red_pajama)["text"]}
 
 
-class RewardModelType(Enum):
-    rlhf = 'rlhf_reward_model'
-    reciprocate = 'reciprocate_reward_model'
-    dahoas = 'dahoas_reward_model'
-    diversity = 'diversity_reward_model'
-    prompt = 'prompt_reward_model'
-    blacklist = 'blacklist_filter'
-    nsfw = 'nsfw_filter'
-    relevance = 'relevance_filter'
+class MockDataset(Iterator):
+    def __next__(self):
+        return {"text": "What is the capital of Texas?"}
 
 
-@dataclass(frozen=True)
-class DefaultRewardFrameworkConfig:
-    """Reward framework default configuration.
-    Note: All the weights should add up to 1.0.
-    """
-    rlhf_model_weight: float = 0.5
-    reciprocate_model_weight: float = 0.3
-    dahoas_model_weight: float = 0
-    diversity_model_weight: float = 0.2
-    prompt_model_weight: float = 0
+   

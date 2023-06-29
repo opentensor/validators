@@ -19,7 +19,8 @@ import copy
 import asyncio
 import sys
 from openvalidators.neuron import neuron as Neuron
-from openvalidators.forward import forward
+from openvalidators.forward import run_step
+from unittest.mock import MagicMock
 
 CLI_ARGS_STR = "validators/openvalidators/neuron.py --mock --wallet._mock --wandb.off --neuron.followup_sample_size 10 --neuron.answer_sample_size 10"
 
@@ -31,10 +32,22 @@ def test_uid_weights_unchanged_unless_queried(n_steps=10, n_concurrent=1):
 
     sys.argv = CLI_ARGS_STR.split(" ")
     neuron = Neuron()
+    neuron.blacklist = MagicMock(return_value =True)
 
     for _ in range(n_steps):
 
         prev_scores = copy.deepcopy(neuron.moving_averaged_scores)
+
+        async def forward(neuron):
+            # Request a run step
+            event = await run_step( 
+                neuron, 
+                prompt = '', 
+                name = 'augment',
+                k = 10,
+                timeout = 10,
+            )
+            return event
 
         # run concurrent forward passes
         async def run_forward():
@@ -48,7 +61,7 @@ def test_uid_weights_unchanged_unless_queried(n_steps=10, n_concurrent=1):
             # get current scores
             next_scores = copy.deepcopy(neuron.moving_averaged_scores)
 
-            queried_uids = sorted(set(event["followup_uids"] + event["answer_uids"]))
+            queried_uids = sorted(set(event["uids"]))
             ignored_uids = [uid for uid in torch.arange(neuron.metagraph.n.item()) if uid not in queried_uids]
 
             # ther is a floating point difference (~1e-10) between the scores, so we can't use exact equality

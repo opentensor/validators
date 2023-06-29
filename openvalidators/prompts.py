@@ -123,12 +123,8 @@ def find_unique_tags(input_text: str):
     return list(set(matches))
 
 
-# Request an augmentation given a preceding context.
-augment_request_template = "Summarize the preceding context at"
-school_levels = ['elementary school','middle school', 'highschool', 'university', 'graduate school']
-
 # Request a follow-up question given a preceding context.
-followup_request_template = "Ask one relevant and insightful question about the preceding context."
+followup_request_template = "Ask one relevant and insightful question about the preceding context"
 
 # Scores a summary on a scale from 0 to 10, given a context.
 augment_scoring_template = """Score the relevance, succinctness, and quality of a summary given a context. The context is within <Context></Context> tags, and the question is within <Summary></Summary> tags. Give a score between 0 and 10 in the <Score></Score> tags, where 0 means the summary is irrelevant, and 10 means it's perfectly relevant and a good summary. Include a brief explanation for your score based solely on the context-summary relationship.
@@ -349,3 +345,19 @@ Please pay special attention to the delimiters used in the upcoming sections. Th
 </Answer>
 
 """
+
+def followup_prompt( base_text:str, i:int = 0) -> str:
+    if i == 0:
+        return f"{base_text}\n\n{followup_request_template}\n"
+    else:
+        return f"{base_text}\n\n{followup_request_template} and previous questions\n"
+
+
+def answer_prompt( base_text:str, followup:str ) -> str:
+    return f"{base_text}\n Question:{followup}\n Answer the question step by step and explain your thoughts"
+
+augment_request_template = "Summarize the preceding context"
+
+def augment_prompt( base_text:str ) -> str:
+    random_level = random.randint(4, 8)
+    return f"{base_text}\n\n{augment_request_template} in {random_level} sentences.\n\n"

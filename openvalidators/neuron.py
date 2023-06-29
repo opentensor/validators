@@ -19,12 +19,11 @@ import copy
 import torch
 import asyncio
 import bittensor as bt
-from datasets import load_dataset
-import random
 
+from openvalidators.dataset import Dataset, MockDataset
 from openvalidators.dendrite import AsyncDendritePool
 from openvalidators.gating import GatingModel, SentenceEmbedGatingModel
-from openvalidators.mock import MockDendritePool, MockDataset, MockRewardModel, MockGatingModel
+from openvalidators.mock import MockDendritePool, MockRewardModel, MockGatingModel
 
 # Load local forward function.
 from openvalidators.config import add_args, check_config, config
@@ -104,8 +103,7 @@ class neuron:
         if self.config.neuron.mock_dataset:
             self.dataset = MockDataset()
         else:
-            seed = random.randint(0, 1000)
-            self.dataset = iter(load_dataset("openwebtext", split="train", streaming=True).shuffle(seed=seed, buffer_size=100000))
+            self.dataset = Dataset()
         bt.logging.debug(str(self.dataset))
 
         # Init the gating model which learns which miners to select for each query.
@@ -168,10 +166,11 @@ class neuron:
 
                 bt.logging.error(message)
                 raise Exception(message)
+            
+            self.blacklist = Blacklist() if not self.config.neuron.blacklist_off else MockRewardModel(RewardModelType.blacklist.value)
 
             self.masking_functions = [
-                Blacklist() if not self.config.neuron.blacklist_off
-                    else MockRewardModel(RewardModelType.blacklist.value),
+                self.blacklist,
                 BertRelevanceRewardModel(device=self.device) if not self.config.neuron.relevance_off
                     else MockRewardModel(RewardModelType.relevance.value),
                 NSFWRewardModel(device=self.device) if not self.config.neuron.nsfw_off

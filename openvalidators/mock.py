@@ -21,7 +21,6 @@ import bittensor as bt
 from openvalidators.prompts import FirewallPrompt, FollowupPrompt, AnswerPrompt
 from openvalidators.gating import BaseGatingModel
 from typing import List
-from collections.abc import Iterator
 
 
 class MockGatingModel(BaseGatingModel):
@@ -54,11 +53,6 @@ class MockRewardModel(torch.nn.Module):
         shift=3,
     ) -> torch.FloatTensor:
         return torch.zeros(len(completions_with_prompt))
-
-
-class MockDataset(Iterator):
-    def __next__(self):
-        return {"text": "What is the capital of Texas?"}
 
 
 class MockDendriteResponse:

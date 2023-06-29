@@ -34,12 +34,17 @@ class ReciprocateRewardModel( BaseRewardModel ):
         super().__init__()
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained( ReciprocateRewardModel.reward_model_path, revision = ReciprocateRewardModel.revision )
-        self.model = AutoModelForSequenceClassification.from_pretrained( ReciprocateRewardModel.reward_model_path, revision = ReciprocateRewardModel.revision).to(self.device)
+        self.model = AutoModelForSequenceClassification.from_pretrained( ReciprocateRewardModel.reward_model_path,
+                                                                         revision = ReciprocateRewardModel.revision,
+                                                                         torch_dtype=torch.float16).to(self.device)
 
     def reward( self, prompt: str, completion: str, name: str ) -> float:
         with torch.no_grad():
             message = f"<|prompter|>{prompt}</s><|assistant|>{completion}</s><|endoftext|>"
-            inputs = self.tokenizer( message, return_tensors="pt" ).to(self.device)
+            inputs = self.tokenizer( message,
+                                     return_tensors="pt" ,
+                                     truncation=True,
+                                     ).to(self.device)
             return float( self.model( **inputs )[0].item() )
         
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
