@@ -130,7 +130,7 @@ async def run_step(self, prompt: str, k: int, timeout: float, name: str, exclude
         logger.log("EVENTS", "events", **event)
 
     # Log the event to wandb.
-    wandb_event = EventSchema.from_dict(event, self.config.neuron.log_rewards)
+    wandb_event = EventSchema.from_dict(event, self.config.neuron.disable_log_rewards)
     if not self.config.wandb.off:
         self.wandb.log(asdict(wandb_event))
 

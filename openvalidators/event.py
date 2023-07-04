@@ -49,7 +49,7 @@ class EventSchema:
     set_weights: Optional[List[List[float]]]
 
     @staticmethod
-    def from_dict(event_dict: dict, should_log_rewards: bool) -> 'EventSchema':
+    def from_dict(event_dict: dict, disable_log_rewards: bool) -> 'EventSchema':
         """Converts a dictionary to an EventSchema object."""
         rewards = {
             'dahoas_reward_model': event_dict.get(RewardModelType.dahoas.value),
@@ -63,7 +63,7 @@ class EventSchema:
         }
 
         # Logs warning that expected data was not set properly
-        if should_log_rewards and any(value is None for value in rewards.values()):
+        if not disable_log_rewards and any(value is None for value in rewards.values()):
             for key, value in rewards.items():
                 if value is None:
                     bt.logging.warning(f'EventSchema.from_dict: {key} is None, data will not be logged')
