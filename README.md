@@ -140,6 +140,18 @@ We are working on a new and improved gating model, based on sentence embeddings,
 
 ```--neuron.use_custom_gating_model --gating.model_name sentence-transformers/all-distilroberta-v1```
 
+## CUDA device placement
+If you desire to place your validator on a specific GPU, it is recommended to prepend the command you are using to start and run your validator with `CUDA_VISIBLE_DEVICES`.
+
+For running with pm2:
+```bash
+$ CUDA_VISIBLE_DEVICES=<device id> pm2 start run.sh --name openvalidators_autoupdate -- --wallet.name <your-wallet-name> --wallet.hotkey <your-wallet-hot-key>
+```
+
+For runing `neuron.py` directly:
+```bash
+$ CUDA_VISIBLE_DEVICES=<device id> python3 validators/openvalidators/neuron.py --wallet.name <your-wallet-name> --wallet.hotkey <your-wallet-hot-key>
+```
 # License
 
 The MIT License (MIT) Copyright © 2023 Yuma Rao
