@@ -288,6 +288,13 @@ def add_args(cls, parser):
         default=False,
     )
     parser.add_argument(
+        "--neuron.redpajama_dataset_type",
+        type=str,
+        help="The dataset type to use for redpajama.",
+        choices=['default', 'arxiv', 'book', 'c4', 'common_crawl', 'github', 'stackexchange', 'wikipedia'],
+        default='default',
+    )
+    parser.add_argument(
         "--neuron.use_custom_gating_model",
         action="store_true",
         help="Use a custom gating model.",

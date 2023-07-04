@@ -103,7 +103,7 @@ class neuron:
         if self.config.neuron.mock_dataset:
             self.dataset = MockDataset()
         else:
-            self.dataset = Dataset()
+            self.dataset = Dataset(redpajama_dataset_type=self.config.neuron.redpajama_dataset_type)
         bt.logging.debug(str(self.dataset))
 
         # Init the gating model which learns which miners to select for each query.

@@ -21,11 +21,11 @@ from datasets import load_dataset
 from collections.abc import Iterator
 
 class Dataset(Iterator):
-    def __init__(self):
+    def __init__(self, redpajama_dataset_type):
         super().__init__()
         seed = random.randint(0,1000)
         self.openwebtext = iter( load_dataset("openwebtext", split="train", streaming=True).shuffle(seed=seed, buffer_size=10000) )
-        self.red_pajama = iter( load_dataset("togethercomputer/RedPajama-Data-1T", split='train', streaming=True).shuffle(seed=seed, buffer_size=10000) )
+        self.red_pajama = iter( load_dataset("togethercomputer/RedPajama-Data-1T", redpajama_dataset_type, split='train', streaming=True).shuffle(seed=seed, buffer_size=10000) )
 
     def __next__(self):
         if random.random() < 0.5:
