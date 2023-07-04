@@ -236,6 +236,12 @@ def add_args(cls, parser):
         help="Dont apply the relevance reward model",
         default=False,
     )
+    parser.add_argument(
+        "--neuron.diversity_off",
+        action="store_true",
+        help="Dont apply the diversity reward model",
+        default=False,
+    )    
 
     parser.add_argument(
         "--reward.reciprocate_weight",
@@ -248,12 +254,6 @@ def add_args(cls, parser):
         type=float,
         help="Weight for the rlhf reward model",
         default=DefaultRewardFrameworkConfig.rlhf_model_weight,
-    )
-    parser.add_argument(
-        "--reward.diversity_weight",
-        type=float,
-        help="Weight for the diversity reward model",
-        default=DefaultRewardFrameworkConfig.diversity_model_weight,
     )
     parser.add_argument(
         "--reward.dahoas_weight",
