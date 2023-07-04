@@ -49,7 +49,7 @@ class EventTestCase(unittest.TestCase):
 
         # Act
         with patch('bittensor.logging.warning') as mock_warning:
-            event = EventSchema.from_dict(event_dict, should_log_rewards=True)
+            event = EventSchema.from_dict(event_dict, disable_log_rewards=False)
             mock_warning.assert_not_called()
 
         # Assert
@@ -85,7 +85,7 @@ class EventTestCase(unittest.TestCase):
 
         # Act
         with patch('bittensor.logging.warning') as mock_warning:
-            event = EventSchema.from_dict(event_dict, should_log_rewards=False)
+            event = EventSchema.from_dict(event_dict, disable_log_rewards=True)
             mock_warning.assert_not_called()
 
         # Assert: Check that all columns that were logged are correctly converted
@@ -124,7 +124,7 @@ class EventTestCase(unittest.TestCase):
 
         # Act
         with patch('bittensor.logging.warning') as mock_warning:
-            event = EventSchema.from_dict(event_dict, should_log_rewards=True)
+            event = EventSchema.from_dict(event_dict, disable_log_rewards=False)
             # Assert: Check that all columns that are not logged in the dict are logged as warnings
             self.assertEqual(mock_warning.call_count, len(not_logged_columns))
 

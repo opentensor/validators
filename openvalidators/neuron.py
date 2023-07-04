@@ -42,7 +42,7 @@ from openvalidators.reward import (
     DahoasRewardModel,
     DiversityRewardModel,
     PromptRewardModel,
-    RewardModelType
+    RewardModelType,
 )
 
 
@@ -135,46 +135,64 @@ class neuron:
             ]
             bt.logging.debug(str(self.reward_functions))
         else:
-            self.reward_weights = torch.tensor([
-                self.config.reward.rlhf_weight, self.config.reward.reciprocate_weight, self.config.reward.dahoas_weight,
-                self.config.reward.diversity_weight, self.config.reward.prompt_based_weight
-            ], dtype=torch.float32).to(self.device)
+            self.reward_weights = torch.tensor(
+                [
+                    self.config.reward.rlhf_weight,
+                    self.config.reward.reciprocate_weight,
+                    self.config.reward.dahoas_weight,
+                    self.config.reward.prompt_based_weight,
+                ],
+                dtype=torch.float32,
+            ).to(self.device)
 
             # Ensure reward function weights sum to 1.
             if self.reward_weights.sum() != 1:
-                message = f"Reward function weights do not sum to 1 (Current sum: {self.reward_weights.sum()}.)" \
-                          f"Check your reward config file at `reward/config.py` or ensure that all your cli reward flags sum to 1."
+                message = (
+                    f"Reward function weights do not sum to 1 (Current sum: {self.reward_weights.sum()}.)"
+                    f"Check your reward config file at `reward/config.py` or ensure that all your cli reward flags sum to 1."
+                )
                 bt.logging.error(message)
                 raise Exception(message)
 
             self.reward_functions = [
-                OpenAssistantRewardModel(device=self.device) if self.config.reward.rlhf_weight > 0
-                    else MockRewardModel(RewardModelType.rlhf.value),
-                ReciprocateRewardModel(device=self.device) if self.config.reward.reciprocate_weight > 0
-                    else MockRewardModel(RewardModelType.reciprocate.value),
-                DahoasRewardModel(path=self.config.neuron.full_path, device=self.device) if self.config.reward.dahoas_weight > 0
-                    else MockRewardModel(RewardModelType.dahoas.value),
-                DiversityRewardModel(device=self.device) if self.config.reward.diversity_weight > 0
-                    else MockRewardModel(RewardModelType.diversity.value),
-                PromptRewardModel(device=self.device) if self.config.reward.prompt_based_weight > 0
-                    else MockRewardModel(RewardModelType.prompt.value),
+                OpenAssistantRewardModel(device=self.device)
+                if self.config.reward.rlhf_weight > 0
+                else MockRewardModel(RewardModelType.rlhf.value),
+                ReciprocateRewardModel(device=self.device)
+                if self.config.reward.reciprocate_weight > 0
+                else MockRewardModel(RewardModelType.reciprocate.value),
+                DahoasRewardModel(path=self.config.neuron.full_path, device=self.device)
+                if self.config.reward.dahoas_weight > 0
+                else MockRewardModel(RewardModelType.dahoas.value),
+                PromptRewardModel(device=self.device)
+                if self.config.reward.prompt_based_weight > 0
+                else MockRewardModel(RewardModelType.prompt.value),
             ]
 
             if len(self.reward_functions) != len(self.reward_weights):
-                message = f"Length of reward function weights and reward functions do not match. " \
-                          f"Reward functions: {len(self.reward_functions)}, Reward weights: {len(self.reward_weights)}"
+                message = (
+                    f"Length of reward function weights and reward functions do not match. "
+                    f"Reward functions: {len(self.reward_functions)}, Reward weights: {len(self.reward_weights)}"
+                )
 
                 bt.logging.error(message)
                 raise Exception(message)
-            
-            self.blacklist = Blacklist() if not self.config.neuron.blacklist_off else MockRewardModel(RewardModelType.blacklist.value)
+
+            self.blacklist = (
+                Blacklist() if not self.config.neuron.blacklist_off else MockRewardModel(RewardModelType.blacklist.value)
+            )
 
             self.masking_functions = [
                 self.blacklist,
-                BertRelevanceRewardModel(device=self.device) if not self.config.neuron.relevance_off
-                    else MockRewardModel(RewardModelType.relevance.value),
-                NSFWRewardModel(device=self.device) if not self.config.neuron.nsfw_off
-                    else MockRewardModel(RewardModelType.nsfw.value),
+                BertRelevanceRewardModel(device=self.device)
+                if not self.config.neuron.relevance_off
+                else MockRewardModel(RewardModelType.relevance.value),
+                DiversityRewardModel(device=self.device)
+                if not self.config.neuron.diversity_off
+                else MockRewardModel(RewardModelType.diversity.value),
+                NSFWRewardModel(device=self.device)
+                if not self.config.neuron.nsfw_off
+                else MockRewardModel(RewardModelType.nsfw.value),
             ]
             bt.logging.debug(str(self.reward_functions))
 

@@ -30,6 +30,7 @@ from openvalidators.misc import ttl_get_block
 from openvalidators.prompts import followup_prompt, answer_prompt, augment_prompt
 from openvalidators.utils import check_uid_availability
 
+
 def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor:
     """Returns k available random uids from the metagraph.
     Args:
@@ -53,22 +54,23 @@ def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor
     uids = torch.tensor(random.sample(available_uids.tolist(), k), dtype=torch.int64)
     return uids
 
-async def run_step( self, prompt: str, k: int, timeout: float, name: str, exclude: list = []):
-    bt.logging.debug( "run_step", name )
+
+async def run_step(self, prompt: str, k: int, timeout: float, name: str, exclude: list = []):
+    bt.logging.debug("run_step", name)
 
     # Record event start time.
-    event = {'name': name}
+    event = {"name": name}
     start_time = time.time()
 
     # Get the list of uids to query for this step.
-    uids = get_random_uids( self, k = k , exclude=exclude).to(self.device)
+    uids = get_random_uids(self, k=k, exclude=exclude).to(self.device)
 
     # Make calls to the network with the prompt.
-    responses: List[ bt.DendriteCall ] = await self.dendrite_pool.async_forward( 
-        uids = uids,
-        roles = [ "user" ],
-        messages = [ prompt ],
-        timeout = timeout,
+    responses: List[bt.DendriteCall] = await self.dendrite_pool.async_forward(
+        uids=uids,
+        roles=["user"],
+        messages=[prompt],
+        timeout=timeout,
     )
 
     # Compute the rewards for the responses given the prompt.
@@ -76,60 +78,66 @@ async def run_step( self, prompt: str, k: int, timeout: float, name: str, exclud
     for weight_i, reward_fn_i in zip(self.reward_weights, self.reward_functions):
         reward_i = reward_fn_i.apply(prompt, responses, name).to(self.device)
         rewards += weight_i * reward_i
-        if self.config.neuron.log_rewards:     
-            event[ reward_fn_i.name ] = reward_i.tolist()
-        bt.logging.trace( str(reward_fn_i.name), reward_i.tolist() )
-    
+        if not self.config.neuron.disable_log_rewards:
+            event[reward_fn_i.name] = reward_i.tolist()
+        bt.logging.trace(str(reward_fn_i.name), reward_i.tolist())
+
     for masking_fn_i in self.masking_functions:
-        mask_i = masking_fn_i.apply( prompt, responses, name ).to( self.device )
-        rewards *= mask_i
-        if self.config.neuron.log_rewards:   
-            event[ masking_fn_i.name ] = mask_i.tolist()
-        bt.logging.trace( str(masking_fn_i.name), mask_i.tolist() )
+        mask_i = masking_fn_i.apply(prompt, responses, name).to(self.device)
+        rewards *= mask_i  # includes diversity
+        if not self.config.neuron.disable_log_rewards:
+            event[masking_fn_i.name] = mask_i.tolist()
+        bt.logging.trace(str(masking_fn_i.name), mask_i.tolist())
 
     # Train the gating model based on the predicted scores and the actual rewards.
-    gating_scores: torch.FloatTensor = self.gating_model( prompt ).to(self.device)
-    gating_loss: torch.FloatTensor = self.gating_model.backward( scores = gating_scores[uids], rewards = rewards )
+    gating_scores: torch.FloatTensor = self.gating_model(prompt).to(self.device)
+    gating_loss: torch.FloatTensor = self.gating_model.backward(scores=gating_scores[uids], rewards=rewards)
 
     # Find the best completion given the rewards vector.
-    completions: List[str] = [comp.completion for comp in responses ]
-    best:str = completions[ rewards.argmax( dim = 0 )].strip()
+    completions: List[str] = [comp.completion for comp in responses]
+    best: str = completions[rewards.argmax(dim=0)].strip()
 
     # Get completion times
-    completion_times: List[float] = [comp.elapsed_time for comp in responses ]
+    completion_times: List[float] = [comp.elapsed_time for comp in responses]
 
     # Compute forward pass rewards, assumes followup_uids and answer_uids are mutually exclusive.
     # shape: [ metagraph.n ]
-    scattered_rewards: torch.FloatTensor = self.moving_averaged_scores.scatter( 0, uids, rewards ).to(self.device) 
+    scattered_rewards: torch.FloatTensor = self.moving_averaged_scores.scatter(0, uids, rewards).to(self.device)
 
     # Update moving_averaged_scores with rewards produced by this step.
     # shape: [ metagraph.n ]
-    alpha:float = self.config.neuron.moving_average_alpha
-    self.moving_averaged_scores: torch.FloatTensor = alpha * scattered_rewards + (1 - alpha) * self.moving_averaged_scores.to(self.device)
+    alpha: float = self.config.neuron.moving_average_alpha
+    self.moving_averaged_scores: torch.FloatTensor = alpha * scattered_rewards + (1 - alpha) * self.moving_averaged_scores.to(
+        self.device
+    )
 
     # Log the step event.
-    event.update({
-        "block": ttl_get_block( self ),
-        'step_length': time.time() - start_time,
-        'prompt': prompt,
-        'uids': uids.tolist(),
-        'completions': completions,
-        'completion_times': completion_times,
-        'rewards': rewards.tolist(),
-        'gating_loss': gating_loss.item(),
-        'best': best
-    })
-    bt.logging.debug( "event:", str(event) )
-    if not self.config.neuron.dont_save_events: logger.log("EVENTS", "events", **event)
+    event.update(
+        {
+            "block": ttl_get_block(self),
+            "step_length": time.time() - start_time,
+            "prompt": prompt,
+            "uids": uids.tolist(),
+            "completions": completions,
+            "completion_times": completion_times,
+            "rewards": rewards.tolist(),
+            "gating_loss": gating_loss.item(),
+            "best": best,
+        }
+    )
+    bt.logging.debug("event:", str(event))
+    if not self.config.neuron.dont_save_events:
+        logger.log("EVENTS", "events", **event)
 
     # Log the event to wandb.
-    wandb_event = EventSchema.from_dict(event, self.config.neuron.log_rewards)
-    if not self.config.wandb.off: self.wandb.log(asdict(wandb_event))
+    wandb_event = EventSchema.from_dict(event, self.config.neuron.disable_log_rewards)
+    if not self.config.wandb.off:
+        self.wandb.log(asdict(wandb_event))
 
     # Return the event.
     return event
 
-    
+
 async def forward(self):
 
     # Obtain a unique context from the dataset.
@@ -137,54 +145,56 @@ async def forward(self):
 
     random_cutoff = random.randint(15, 30)
     # Truncate context to a limited set of sentences.
-    base_text = '.'.join(data.split('.', maxsplit=random_cutoff)[:-1])
+    base_text = ".".join(data.split(".", maxsplit=random_cutoff)[:-1])
     aug_prompt = augment_prompt(base_text)
 
-    # Reset Blacklist reward model 
+    # Reset Blacklist reward model
     self.blacklist.reset()
 
     # Request a summary, given the original context.
-    augment_event = await run_step( 
-        self, 
-        prompt = aug_prompt, 
-        name = 'augment',
-        k = self.config.neuron.followup_sample_size,
-        timeout = self.config.neuron.followup_timeout,
+    augment_event = await run_step(
+        self,
+        prompt=aug_prompt,
+        name="augment",
+        k=self.config.neuron.followup_sample_size,
+        timeout=self.config.neuron.followup_timeout,
     )
-    
-    base_text = augment_event['best']
-    exclude = augment_event['uids']
-    for k in range( self.config.neuron.num_followup_steps ):
+
+    base_text = augment_event["best"]
+    exclude = augment_event["uids"]
+    for k in range(self.config.neuron.num_followup_steps):
 
         # Get a followup question, given the summarized context.
-        prompt = followup_prompt( base_text , i = k)
-        followup_event = await run_step( 
-            self, 
-            prompt = prompt, 
-            name = 'followup' + str(k),
-            k = self.config.neuron.followup_sample_size,
-            timeout = self.config.neuron.followup_timeout,
-            exclude = exclude
+        prompt = followup_prompt(base_text, i=k)
+        followup_event = await run_step(
+            self,
+            prompt=prompt,
+            name="followup" + str(k),
+            k=self.config.neuron.followup_sample_size,
+            timeout=self.config.neuron.followup_timeout,
+            exclude=exclude,
         )
-        exclude += followup_event['uids']
+        exclude += followup_event["uids"]
 
         # Ask the followup question, given the original context.
-        prompt = answer_prompt( base_text, followup_event['best'] )
-        answer_event = await run_step( 
-            self, 
-            prompt = prompt, 
-            name = 'answer' + str(k),
-            k = self.config.neuron.answer_sample_size,
-            timeout = self.config.neuron.answer_timeout,
-            exclude = exclude
+        prompt = answer_prompt(base_text, followup_event["best"])
+        answer_event = await run_step(
+            self,
+            prompt=prompt,
+            name="answer" + str(k),
+            k=self.config.neuron.answer_sample_size,
+            timeout=self.config.neuron.answer_timeout,
+            exclude=exclude,
         )
-        exclude += answer_event['uids']
-        
-        self.blacklist.question_blacklist.append(followup_event['best'])
-        self.blacklist.answer_blacklist.append(answer_event['best'])
+        exclude += answer_event["uids"]
+
+        self.blacklist.question_blacklist.append(followup_event["best"])
+        self.blacklist.answer_blacklist.append(answer_event["best"])
 
         if k == 0:
             # Extend the base text with the best answer.
-            base_text = base_text + '\nPrevious Question \nQuestion:' + followup_event['best'] + '\nAnswer:' + answer_event['best']
+            base_text = (
+                base_text + "\nPrevious Question \nQuestion:" + followup_event["best"] + "\nAnswer:" + answer_event["best"]
+            )
         else:
-            base_text = base_text + '\nQuestion:' + followup_event['best'] + '\nAnswer:' + answer_event['best']
+            base_text = base_text + "\nQuestion:" + followup_event["best"] + "\nAnswer:" + answer_event["best"]

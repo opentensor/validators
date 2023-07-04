@@ -35,8 +35,7 @@ class DefaultRewardFrameworkConfig:
     """Reward framework default configuration.
     Note: All the weights should add up to 1.0.
     """
-    rlhf_model_weight: float = 0.5
-    reciprocate_model_weight: float = 0.3
+    rlhf_model_weight: float = 0.6
+    reciprocate_model_weight: float = 0.4
     dahoas_model_weight: float = 0
-    diversity_model_weight: float = 0.2
     prompt_model_weight: float = 0

@@ -51,9 +51,6 @@ def set_weights(self):
     bt.logging.trace("processed_weights", processed_weights)
     bt.logging.trace("processed_weight_uids", processed_weight_uids)
 
-    if not self.config.wandb.off:
-        wandb.log({"set_weights": list(zip(processed_weight_uids.tolist(), processed_weights.tolist()))})
-
     # Set the weights on chain via our subtensor connection.
     self.subtensor.set_weights(
         wallet=self.wallet,
