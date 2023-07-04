@@ -140,7 +140,6 @@ class neuron:
                     self.config.reward.rlhf_weight,
                     self.config.reward.reciprocate_weight,
                     self.config.reward.dahoas_weight,
-                    self.config.reward.diversity_weight,
                     self.config.reward.prompt_based_weight,
                 ],
                 dtype=torch.float32,
