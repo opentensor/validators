@@ -49,7 +49,7 @@ class EventTestCase(unittest.TestCase):
 
         # Act
         with patch('bittensor.logging.warning') as mock_warning:
-            event = EventSchema.from_dict(event_dict, disable_log_rewards=True)
+            event = EventSchema.from_dict(event_dict, disable_log_rewards=False)
             mock_warning.assert_not_called()
 
         # Assert
