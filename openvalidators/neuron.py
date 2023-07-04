@@ -188,7 +188,7 @@ class neuron:
                 if not self.config.neuron.relevance_off
                 else MockRewardModel(RewardModelType.relevance.value),
                 DiversityRewardModel(device=self.device)
-                if not self.config.reward.diversity_off
+                if not self.config.neuron.diversity_off
                 else MockRewardModel(RewardModelType.diversity.value),
                 NSFWRewardModel(device=self.device)
                 if not self.config.neuron.nsfw_off
