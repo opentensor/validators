@@ -118,6 +118,8 @@ def resync_metagraph(self):
 
         # Update the hotkeys.
         self.hotkeys = copy.deepcopy(self.metagraph.hotkeys)
+    
+    
 
 
 def resync_linear_layer(
@@ -193,6 +195,12 @@ def save_state(self):
         gating_model_file_path = f"{self.config.neuron.full_path}/{gating_model_name}_gating_linear_layer.pth"
         torch.save(gating_model_linear_layer_dict, gating_model_file_path)
 
+        if not self.config.wandb.off:
+            wandb.log({
+                "step": self.step,
+                "block": ttl_get_block(self),
+                **neuron_state_dict                
+            })                
         if not self.config.wandb.off and self.config.wandb.track_gating_model:
             model_artifact = wandb.Artifact(f"{gating_model_name}_gating_linear_layer", type="model")
             model_artifact.add_file(gating_model_file_path)
