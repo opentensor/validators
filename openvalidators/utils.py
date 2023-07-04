@@ -42,6 +42,8 @@ def init_wandb(self, reinit=False):
             tags.append(str(fn.name))
     if self.config.neuron.disable_set_weights:
         tags.append("disable_set_weights")
+    if self.config.neuron.disable_log_rewards:
+        tags.append("disable_log_rewards")
 
     self.wandb = wandb.init(
         anonymous="allow",
