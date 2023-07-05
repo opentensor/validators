@@ -84,7 +84,11 @@ class neuron:
         self.wallet = bt.wallet(config=self.config)
         self.wallet.create_if_non_existent()
         if not self.config.wallet._mock:
-            self.wallet.reregister(subtensor=self.subtensor, netuid=self.config.netuid)
+            bt.utils.reregister(
+                wallet = self.wallet,
+                subtensor=self.subtensor,
+                netuid=self.config.netuid
+            )
         bt.logging.debug(str(self.wallet))
 
         # Init metagraph.
