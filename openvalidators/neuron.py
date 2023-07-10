@@ -108,6 +108,8 @@ class neuron:
 
         # Init the gating model which learns which miners to select for each query.
         bt.logging.debug("loading", "gating_model")
+        if not self.config.gating.num_uids:
+            self.config.gating.num_uids = self.subtensor.query_subtensor("MaxAllowedUids", params=[self.config.netuid])        
         if self.config.neuron.mock_gating_model:
             self.gating_model = MockGatingModel(self.metagraph.n.item())
         elif self.config.neuron.use_custom_gating_model:
