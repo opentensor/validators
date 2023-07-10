@@ -87,6 +87,8 @@ class DiversityRewardModel( BaseRewardModel ):
         return sentence_embeddings
 
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
+
+        # Check if completions are empty, return 0 if so
         if len(completions) == 0:
             return torch.tensor([])
         
