@@ -110,14 +110,15 @@ async def run_step(self, prompt: str, k: int, timeout: float, name: str, exclude
     self.moving_averaged_scores: torch.FloatTensor = alpha * scattered_rewards + (1 - alpha) * self.moving_averaged_scores.to(
         self.device
     )
-
+    import pdb
+    pdb.set_trace()
     # Log the step event.
     event.update(
         {
             "block": ttl_get_block(self),
             "step_length": time.time() - start_time,
             "prompt": prompt,
-            "uids": uids.cpu().tolist(),
+            "uids": uids.tolist(),
             "completions": completions,
             "completion_times": completion_times,
             "rewards": rewards.tolist(),
