@@ -67,6 +67,7 @@ class DiversityRewardModel( BaseRewardModel ):
                 Embedding for the message.
         """
         # Tokenizing sentences
+
         encoded_input = self.tokenizer(
             sentences,
             padding=True,
@@ -87,6 +88,10 @@ class DiversityRewardModel( BaseRewardModel ):
 
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
 
+        # Check if completions are empty, return 0 if so
+        if len(completions) == 0:
+            return torch.tensor([])
+        
         # Get embeddings for all completions.
         embeddings = self.get_embeddings( completions )
 
