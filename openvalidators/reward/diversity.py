@@ -90,7 +90,7 @@ class DiversityRewardModel( BaseRewardModel ):
         import pdb
         pdb.set_trace()
         if len(completions) == 0:
-            return None
+            return torch.tensor([])
         
         # Get embeddings for all completions.
         embeddings = self.get_embeddings( completions )
