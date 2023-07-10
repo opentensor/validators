@@ -52,6 +52,8 @@ class BaseRewardModel:
             - It standardizes the reward values using the updated mean and variance.
             - It then scales the standardized values to the 0-1 range using the error function (erf) as a CDF.
         """
+        rewards = rewards.detach().cpu()
+        
         # Get the number of rewards (successful responses).
         new_count = rewards.numel()
 
@@ -76,7 +78,7 @@ class BaseRewardModel:
             self.count = min(self.count_limit, self.count + new_count)
 
         # Standardize the rewards using the updated mean and variance.
-        rewards = rewards - self.mean.to(self.device)
+        rewards = rewards - self.mean
         if self.var > 0:
             rewards /= torch.sqrt(self.var)
         # Scale the standardized rewards to the range [0, 1] using the error function as a cumulative distribution function (CDF).
