@@ -111,7 +111,7 @@ def add_args(cls, parser):
         "--neuron.followup_timeout",
         type=float,
         help="Follow up query timeout.",
-        default=10,
+        default=-1,
     )
     parser.add_argument(
         "--neuron.followup_sample_size",
@@ -120,7 +120,7 @@ def add_args(cls, parser):
         default=50,
     )
 
-    parser.add_argument("--neuron.answer_timeout", type=float, help="Answer query timeout.", default=10)
+    parser.add_argument("--neuron.answer_timeout", type=float, help="Answer query timeout.", default=-1)
     parser.add_argument(
         "--neuron.answer_sample_size",
         type=int,

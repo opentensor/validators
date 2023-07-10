@@ -209,6 +209,11 @@ class neuron:
         else:
             self.config.neuron.epoch_length = self.subtensor.validator_epoch_length(self.config.netuid)
 
+        if self.config.neuron.followup_timeout == -1:
+            self.config.neuron.followup_timeout = self.subtensor.validator_timeout(netuid=self.config.netuid)
+        if self.config.neuron.answer_timeout == -1:
+            self.config.neuron.answer_timeout = self.subtensor.validator_timeout(netuid=self.config.netuid)
+
         self.prev_block = ttl_get_block(self)
         self.step = 0
 
