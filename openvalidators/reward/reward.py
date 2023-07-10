@@ -76,7 +76,7 @@ class BaseRewardModel:
             self.count = min(self.count_limit, self.count + new_count)
 
         # Standardize the rewards using the updated mean and variance.
-        rewards = rewards - self.mean
+        rewards = rewards - self.mean.to(self.device)
         if self.var > 0:
             rewards /= torch.sqrt(self.var)
         # Scale the standardized rewards to the range [0, 1] using the error function as a cumulative distribution function (CDF).
