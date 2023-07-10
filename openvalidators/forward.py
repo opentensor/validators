@@ -117,7 +117,7 @@ async def run_step(self, prompt: str, k: int, timeout: float, name: str, exclude
             "block": ttl_get_block(self),
             "step_length": time.time() - start_time,
             "prompt": prompt,
-            "uids": uids.tolist(),
+            "uids": uids.cpu().tolist(),
             "completions": completions,
             "completion_times": completion_times,
             "rewards": rewards.tolist(),
