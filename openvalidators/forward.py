@@ -110,8 +110,7 @@ async def run_step(self, prompt: str, k: int, timeout: float, name: str, exclude
     self.moving_averaged_scores: torch.FloatTensor = alpha * scattered_rewards + (1 - alpha) * self.moving_averaged_scores.to(
         self.device
     )
-    import pdb
-    pdb.set_trace()
+
     # Log the step event.
     event.update(
         {
