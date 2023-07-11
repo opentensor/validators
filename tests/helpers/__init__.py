@@ -17,9 +17,15 @@
 
 from bittensor_wallet.mock import MockWallet as _MockWallet, utils as _mock_wallet_utils
 
+_get_mock_coldkey = _mock_wallet_utils.get_mock_coldkey
+_get_mock_hotkey = _mock_wallet_utils.get_mock_hotkey
+_get_mock_keypair = _mock_wallet_utils.get_mock_keypair
+_get_mock_wallet = _mock_wallet_utils.get_mock_wallet
+
+
 def __mock_wallet_factory__(*args, **kwargs) -> _MockWallet:
     """Returns a mock wallet object."""
 
-    mock_wallet = _mock_wallet_utils.get_mock_wallet()
+    mock_wallet = _get_mock_wallet()
 
     return mock_wallet
