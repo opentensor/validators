@@ -41,3 +41,7 @@ class OpenAssistantRewardModel( BaseRewardModel ):
         
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
         return torch.tensor( [self.reward_single( prompt, completion, name ) for completion in completions], dtype=torch.float32).to(self.device)
+
+    def normalize_rewards( self, rewards: torch.FloatTensor ) -> torch.FloatTensor:
+        # softmax rewards (logits) from reward model.
+        return rewards.softmax(dim=0)
