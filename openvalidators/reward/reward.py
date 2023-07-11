@@ -51,9 +51,7 @@ class BaseRewardModel:
             - This function uses Welford's online algorithm to update the mean and variance.
             - It standardizes the reward values using the updated mean and variance.
             - It then scales the standardized values to the 0-1 range using the error function (erf) as a CDF.
-        """
-        rewards = rewards.detach().cpu()
-        
+        """        
         # Get the number of rewards (successful responses).
         new_count = rewards.numel()
 
