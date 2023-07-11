@@ -42,15 +42,24 @@ def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor
         If `k` is larger than the number of available `uids`, set `k` to the number of available `uids`.
     """
     candidate_uids = []
+    avail_uids = []
 
     for uid in range(self.metagraph.n.item()):
         uid_is_available = check_uid_availability(self.metagraph, uid, self.config.neuron.vpermit_tao_limit)
         uid_is_not_excluded = exclude is None or uid not in exclude
 
-        if uid_is_available and uid_is_not_excluded:
-            candidate_uids.append(uid)
+        if uid_is_available:
+            avail_uids.append(uid)
+            if uid_is_not_excluded:
+                candidate_uids.append(uid)
 
-    available_uids = torch.tensor(candidate_uids, dtype=torch.int64).to(self.device)
+    # Check if candidate_uids contain enough for querying, if not grab all avaliable uids
+    if len(candidate_uids) > k:
+        available_uids = torch.tensor(candidate_uids, dtype=torch.int64).to(self.device)
+    else:
+        available_uids = torch.tensor(avail_uids, dtype=torch.int64).to(self.device)
+
+
     uids = torch.tensor(random.sample(available_uids.tolist(), k), dtype=torch.int64)
     return uids
 
