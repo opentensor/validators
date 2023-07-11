@@ -52,6 +52,8 @@ class BaseRewardModel:
             - It standardizes the reward values using the updated mean and variance.
             - It then scales the standardized values to the 0-1 range using the error function (erf) as a CDF.
         """        
+        rewards = rewards.detach().cpu()
+
         # Get the number of rewards (successful responses).
         new_count = rewards.numel()
 
@@ -88,6 +90,7 @@ class BaseRewardModel:
         """ Applies the reward model across each call. Unsuccessful responses are zeroed.
         """
         # Get indices of correctly responding calls.
+        
         successful_completions_indices: List[int] = [ idx for idx, resp in enumerate(responses) if resp.is_success ]
 
         # Get all completions from responding calls.
