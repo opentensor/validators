@@ -52,8 +52,7 @@ class BaseGatingModel(torch.nn.Module, ABC):
         parser.add_argument(
             "--gating.num_uids",
             type=int,
-            default=1024,
-            help="Number of uids to gate on",
+            help="Number of uids to gate on. Default is pulled from subtensor directly",
         )
         parser.add_argument(
             "--gating.learning_rate",
