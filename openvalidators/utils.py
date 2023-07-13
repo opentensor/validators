@@ -32,7 +32,11 @@ def should_reinit_wandb(self):
 
 def init_wandb(self, reinit=False):
     """Starts a new wandb run."""
-    tags = [self.wallet.hotkey.ss58_address, openvalidators.__version__, str(openvalidators.__spec_version__)]
+    tags = [self.wallet.hotkey.ss58_address,
+            openvalidators.__version__,
+            str(openvalidators.__spec_version__),
+            f'netuid_{self.metagraph.netuid}']
+
     if self.config.mock:
         tags.append("mock")
     if self.config.neuron.use_custom_gating_model:
