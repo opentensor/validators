@@ -111,7 +111,7 @@ class neuron:
         bt.logging.debug("loading", "gating_model")
         if not self.config.gating.num_uids:
             print('GRABBING subnet n')
-            self.config.gating.num_uids = self.subtensor.subnetwork_n(self.config.netuid)
+            self.config.gating.num_uids = self.subtensor.max_n(self.config.netuid)
             print(self.config.gating.num_uids)
 
         if self.config.neuron.mock_gating_model:
