@@ -209,6 +209,10 @@ def save_state(self):
             self.wandb.log_artifact(model_artifact)
 
         bt.logging.success(prefix="Saved gating model", sufix=f"<blue>{gating_model_file_path}</blue>")
+
+        #empty cache
+        torch.cuda.empty_cache()
+        
     except Exception as e:
         bt.logging.warning(f"Failed to save model with error: {e}")
 
