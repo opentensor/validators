@@ -228,7 +228,7 @@ class SentenceEmbedGatingModel(BaseGatingModel):
             config = SentenceEmbedGatingModel.config()
         if model_name is not None:
             config.gating.model_name = model_name
-        config.gating.num_uids = num_uids if num_uids is not None else metagraph.n
+        config.gating.num_uids = num_uids if num_uids is not None else config.gating.num_uids
         self.config = config
         self.num_uids = config.gating.num_uids
         self.device = torch.device(self.config.neuron.device)
