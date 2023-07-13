@@ -37,7 +37,7 @@ class BaseRewardModel:
         self.var = 0.0
         self.count_limit = 1000
 
-    def normalize_rewards( self, rewards: torch.FloatTensor ) -> torch.FloatTensor:
+    def normalize_rewards( self, rewards: torch.FloatTensor, test) -> torch.FloatTensor:
         """
             This method normalizes the given rewards by updating the moving mean and variance statistics. The rewards are first standardized, and then scaled to the 0-1 range using a cumulative distribution function (CDF) to ensure they're in a comparable range across different environments.
 
@@ -67,13 +67,14 @@ class BaseRewardModel:
 
             # Save the difference in means before updating the old mean.
             diff = new_mean - self.mean
-
-            # Update the old mean with the new mean and weights.
-            self.mean = new_weight * new_mean + old_weight * self.mean
-            # Update the old variance with the new variance and weights, and adjusting for the difference in means.
-            self.var = (new_weight * new_var) + (old_weight * self.var) + (new_weight * old_weight) * diff * diff
-            # Update the old count with the new count, but don't exceed the limit.
-            self.count = min(self.count_limit, self.count + new_count)
+            
+            if not test:
+                # Update the old mean with the new mean and weights.
+                self.mean = new_weight * new_mean + old_weight * self.mean
+                # Update the old variance with the new variance and weights, and adjusting for the difference in means.
+                self.var = (new_weight * new_var) + (old_weight * self.var) + (new_weight * old_weight) * diff * diff
+                # Update the old count with the new count, but don't exceed the limit.
+                self.count = min(self.count_limit, self.count + new_count)
 
         # Standardize the rewards using the updated mean and variance.
         rewards = rewards - self.mean
@@ -84,7 +85,7 @@ class BaseRewardModel:
 
         return rewards
 
-    def apply( self, prompt: str, responses: List[ bt.DendriteCall ], name: str) -> torch.FloatTensor:
+    def apply( self, prompt: str, responses: List[ bt.DendriteCall ], name: str, test=False) -> torch.FloatTensor:
         """ Applies the reward model across each call. Unsuccessful responses are zeroed.
         """
         # Get indices of correctly responding calls.
@@ -98,7 +99,7 @@ class BaseRewardModel:
         successful_rewards = self.get_rewards( prompt, successful_completions, name )
 
         # Softmax rewards across samples.
-        successful_rewards = self.normalize_rewards( successful_rewards )
+        successful_rewards = self.normalize_rewards( successful_rewards, test)
 
         # Init zero rewards for all calls.
         filled_rewards = torch.zeros( len( responses ), dtype=torch.float32)

@@ -98,5 +98,5 @@ class BertRelevanceRewardModel( BaseRewardModel ):
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
         return torch.tensor( [self.reward( prompt, completion, name ) for completion in completions], dtype=torch.float32).to(self.device)
     
-    def normalize_rewards( self, rewards: torch.FloatTensor ) -> torch.FloatTensor:
+    def normalize_rewards( self, rewards: torch.FloatTensor, test ) -> torch.FloatTensor:
         return rewards
