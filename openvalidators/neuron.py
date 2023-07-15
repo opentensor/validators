@@ -62,6 +62,10 @@ class neuron:
     def run(self):
         run(self)
 
+    subtensor: "bt.subtensor"
+    wallet: "bt.wallet"
+    metagraph: "bt.metagraph"
+
     def __init__(self):
         self.config = neuron.config()
         self.check_config(self.config)
@@ -89,7 +93,8 @@ class neuron:
 
         # Init metagraph.
         bt.logging.debug("loading", "metagraph")
-        self.metagraph = bt.metagraph(netuid=self.config.netuid, network=self.subtensor.network)
+        self.metagraph = bt.metagraph(netuid=self.config.netuid, network=self.subtensor.network, sync=False) # Make sure not to sync without passing subtensor
+        self.metagraph.sync(subtensor=self.subtensor) # Sync metagraph with subtensor.
         self.hotkeys = copy.deepcopy(self.metagraph.hotkeys)
         bt.logging.debug(str(self.metagraph))
 

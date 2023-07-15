@@ -87,7 +87,7 @@ def checkpoint(self):
     save_state(self)
 
 
-def resync_metagraph(self):
+def resync_metagraph(self: 'openvalidators.neuron.neuron'):
     """Resyncs the metagraph and updates the hotkeys and moving averages based on the new metagraph."""
     bt.logging.info("resync_metagraph()")
 
@@ -95,7 +95,7 @@ def resync_metagraph(self):
     previous_metagraph = copy.deepcopy(self.metagraph)
 
     # Sync the metagraph.
-    self.metagraph.sync()
+    self.metagraph.sync(subtensor=self.subtensor)
 
     # Check if the metagraph axon info has changed.
     metagraph_axon_info_updated = previous_metagraph.axons != self.metagraph.axons
