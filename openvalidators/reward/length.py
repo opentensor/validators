@@ -65,7 +65,6 @@ class LengthAwareRewardModel(BaseRewardModel):
             # Tokenize the message
             inputs = self.tokenizer(completion,
                                     return_tensors="pt",
-                                    truncation=True,
                                     ).to(self.device)
             # Multiply the reward by the length of the completion
             return len(inputs)
