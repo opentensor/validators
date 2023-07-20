@@ -63,7 +63,7 @@ class DirectPreferenceRewardModel(BaseRewardModel):
 
             # Forward pass to calculate logit predictions for each sequence position.
             logits = self.model(combined.unsqueeze(0)).logits  # [batch_size=1, seq_len, vocab_len]
-            # Predict only where labels are available
+            # Predict only where labels are available.
             logits = logits[:, :-1, :]  # [batch_size=1, seq_len-1, vocab_len]
             # Rescale via log(softmax(logits)).
             logits = logits.log_softmax(-1)
