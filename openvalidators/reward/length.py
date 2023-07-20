@@ -67,8 +67,7 @@ class LengthAwareRewardModel(BaseRewardModel):
                                     return_tensors="pt",
                                     ).to(self.device)
             # Multiply the reward by the length of the completion
-            print(inputs.size())
-            return inputs.size()[1]
+            return inputs['input_ids'].size()[1]
 
     def get_rewards(self, prompt: str, completions: List[str], name: str) -> torch.FloatTensor:
         """
