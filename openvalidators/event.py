@@ -44,6 +44,8 @@ class EventSchema:
     rlhf_reward_model: Optional[List[float]]  # Output vector of the rlhf reward model
     prompt_reward_model: Optional[List[float]]  # Output vector of the prompt reward model
     relevance_filter: Optional[List[float]]  # Output vector of the relevance scoring reward model
+    time_aware_reward_model: Optional[List[float]]  # Output vector of the time scoring reward model
+    length_aware_reward_model: Optional[List[float]]  # Output vector of the length scoring reward model
 
     # Weights data
     set_weights: Optional[List[List[float]]]
@@ -60,6 +62,8 @@ class EventSchema:
             'diversity_reward_model': event_dict.get(RewardModelType.diversity.value),
             'rlhf_reward_model': event_dict.get(RewardModelType.rlhf.value),
             'prompt_reward_model': event_dict.get(RewardModelType.prompt.value),
+            'time_aware_reward_model' : event_dict.get(RewardModelType.time_aware.value),
+            'length_aware_reward_model' : event_dict.get(RewardModelType.length_aware.value),
         }
 
         # Logs warning that expected data was not set properly
