@@ -43,6 +43,8 @@ from openvalidators.reward import (
     DiversityRewardModel,
     PromptRewardModel,
     RewardModelType,
+    LengthAwareRewardModel,
+    TimeAwareRewardModel,
 )
 
 
@@ -196,6 +198,12 @@ class neuron:
                 NSFWRewardModel(device=self.device)
                 if not self.config.neuron.nsfw_off
                 else MockRewardModel(RewardModelType.nsfw.value),
+                LengthAwareRewardModel(device=self.device)
+                if not self.config.neuron.length_off
+                else MockRewardModel(RewardModelType.length.value),
+                TimeAwareRewardModel(device=self.device)
+                if not self.config.neuron.time_off
+                else MockRewardModel(RewardModelType.time.value),
             ]
             bt.logging.debug(str(self.reward_functions))
 

@@ -9,3 +9,5 @@ from .dahoas import DahoasRewardModel
 from .diversity import DiversityRewardModel
 from .prompt import PromptRewardModel
 from .config import RewardModelType, DefaultRewardFrameworkConfig
+from .length import LengthAwareRewardModel
+from .timing import TimeAwareRewardModel

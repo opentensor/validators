@@ -231,6 +231,18 @@ def add_args(cls, parser):
         default=False,
     )
     parser.add_argument(
+        "--neuron.length_off",
+        action="store_true",
+        help="Dont apply the length reward model",
+        default=False,
+    )
+    parser.add_argument(
+        "--neuron.time_off",
+        action="store_true",
+        help="Dont apply the time reward model",
+        default=False,
+    )
+    parser.add_argument(
         "--neuron.relevance_off",
         action="store_true",
         help="Dont apply the relevance reward model",
