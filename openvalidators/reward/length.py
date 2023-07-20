@@ -30,7 +30,8 @@ class LengthAwareRewardModel(BaseRewardModel):
         reward_model_path (str): The path to the pretrained reward model.
         revision (str): The revision version of the pretrained model.
     """
-    
+    reward_model_path: str = "EleutherAI/gpt-j-6b"
+
     @property
     def name(self) -> str: 
         """The name of the reward model."""
@@ -46,8 +47,7 @@ class LengthAwareRewardModel(BaseRewardModel):
         super().__init__()
         self.device = device
         # Load the tokenizer from the pretrained model
-        self.tokenizer = AutoTokenizer.from_pretrained(LengthAwareRewardModel.reward_model_path, 
-                                                       revision = LengthAwareRewardModel.revision)
+        self.tokenizer = AutoTokenizer.from_pretrained(LengthAwareRewardModel.reward_model_path)
 
     def reward(self, prompt: str, completion: str, name: str) -> float:
         """
