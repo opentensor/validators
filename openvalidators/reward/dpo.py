@@ -46,14 +46,12 @@ class DirectPreferenceRewardModel(BaseRewardModel):
             combined = self.tokenizer(prompt + completion, return_tensors="pt").input_ids[0].to(self.device)  # [seq_len]
             # Tokenize only the prompt, to help determine prompt token length.
             prompt_part = self.tokenizer(prompt, return_tensors="pt").input_ids[0].to(self.device)  # [prompt_len]
-            # Ensure that the prompt_part tokens align with the combined tokens.
-            assert (prompt_part == combined[:len(prompt_part)]).all()
 
             labels = combined.clone()  # [seq_len]
+            # Ignore prompt part for calculating reward.
+            labels[:len(prompt_part)] = -100
             # Label only each next token prediction ground-truth.
             labels = labels[1:]  # [seq_len-1]
-            # Ignore prompt part for calculating reward.
-            labels[1:len(prompt_part)] = -100
             loss_mask = (labels != -100)  # [seq_len-1]
 
             # Dummy token to allow for indexing, but loss will be ignored.
