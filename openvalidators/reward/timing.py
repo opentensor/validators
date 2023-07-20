@@ -83,7 +83,7 @@ class TimeAwareRewardModel(BaseRewardModel):
         successful_rewards = self.get_rewards(prompt, successful_completions, name, successful_timings)
 
         # Apply softmax normalization to the rewards
-        successful_rewards = self.normalize_rewards(successful_rewards, test)
+        successful_rewards = self.normalize_rewards(successful_rewards)
 
         # Initialize a tensor of zeros to hold the rewards for all responses
         filled_rewards = torch.zeros(len(responses), dtype=torch.float32)
