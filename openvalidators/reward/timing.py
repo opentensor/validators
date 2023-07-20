@@ -21,6 +21,7 @@ from typing import List
 from .config import RewardModelType
 from .reward import BaseRewardModel
 from transformers import  AutoTokenizer, AutoModel
+import bittensor as bt
 
 class TimeAwareRewardModel(BaseRewardModel):
     """
