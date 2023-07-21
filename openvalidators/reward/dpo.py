@@ -16,6 +16,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import torch
+import bittensor as bt
 from typing import List
 from .config import RewardModelType
 from .reward import BaseRewardModel
@@ -53,7 +54,8 @@ class DirectPreferenceRewardModel(BaseRewardModel):
             # Label only each next token prediction ground-truth.
             labels = labels[1:]  # [seq_len-1]
             loss_mask = (labels != -100)  # [seq_len-1]
-
+            bt.logging.trace(f"DirectPreferenceRewardModel | len(combined)={len(combined)}, "
+                             f"len(prompt)={len(prompt_part)}")
             # Dummy token to allow for indexing, but loss will be ignored.
             labels[labels == -100] = 0
             # Reshape for gather operation.
@@ -63,6 +65,8 @@ class DirectPreferenceRewardModel(BaseRewardModel):
             logits = self.model(combined.unsqueeze(0)).logits  # [batch_size=1, seq_len, vocab_len]
             # Predict only where labels are available.
             logits = logits[:, :-1, :]  # [batch_size=1, seq_len-1, vocab_len]
+            bt.logging.trace(f"DirectPreferenceRewardModel | logits: {logits}")
+
             # Rescale via log(softmax(logits)).
             logits = logits.log_softmax(-1)
             # Calculate the model's log-probability for each actual completion token.
@@ -70,6 +74,8 @@ class DirectPreferenceRewardModel(BaseRewardModel):
             # Average log-probability over completion sequence.
             reward = (per_token_logps * loss_mask).sum(-1) / loss_mask.sum(-1)  # [batch_size=1]
             reward = reward[0].cpu().detach()
+
+            bt.logging.trace(f"DirectPreferenceRewardModel | reward: {reward}")
 
             return reward
         
