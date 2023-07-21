@@ -54,8 +54,6 @@ class DirectPreferenceRewardModel(BaseRewardModel):
             # Label only each next token prediction ground-truth.
             labels = labels[1:]  # [seq_len-1]
             loss_mask = (labels != -100)  # [seq_len-1]
-            bt.logging.trace(f"DirectPreferenceRewardModel | len(combined)={len(combined)}, "
-                             f"len(prompt)={len(prompt_part)}")
             # Dummy token to allow for indexing, but loss will be ignored.
             labels[labels == -100] = 0
             # Reshape for gather operation.
@@ -65,7 +63,6 @@ class DirectPreferenceRewardModel(BaseRewardModel):
             logits = self.model(combined.unsqueeze(0)).logits  # [batch_size=1, seq_len, vocab_len]
             # Predict only where labels are available.
             logits = logits[:, :-1, :]  # [batch_size=1, seq_len-1, vocab_len]
-            bt.logging.trace(f"DirectPreferenceRewardModel | logits: {logits}")
 
             # Rescale via log(softmax(logits)).
             logits = logits.log_softmax(-1)
@@ -75,10 +72,13 @@ class DirectPreferenceRewardModel(BaseRewardModel):
             reward = (per_token_logps * loss_mask).sum(-1) / loss_mask.sum(-1)  # [batch_size=1]
             reward = reward[0].cpu().detach()
 
-            bt.logging.trace(f"DirectPreferenceRewardModel | reward: {reward}")
-
-            return reward
+            # NaNs can possibly arise through log(0)=-inf, replace with suitably small logits.
+            if torch.isnan(reward) or torch.isinf(reward):
+                return -11.  # exp(-11)=1.67e-5 < 2e-5=1/50257 (typical vocab size)
+            return reward.item()
         
     def get_rewards(self, prompt: str, completions: List[str], name: str) -> torch.FloatTensor:
-        return torch.tensor([self.reward_single(prompt, completion, name) for completion in completions],
-                            dtype=torch.float32).to(self.device)
+        rewards = torch.tensor([self.reward_single(prompt, completion, name) for completion in completions],
+                               dtype=torch.float32).to(self.device)
+        bt.logging.trace(f"DirectPreferenceRewardModel | rewards: {rewards.tolist()}")
+        return rewards
