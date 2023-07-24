@@ -45,6 +45,8 @@ class EventTestCase(unittest.TestCase):
             RewardModelType.rlhf.value: [1.0],
             RewardModelType.prompt.value: [1.0],
             RewardModelType.relevance.value: [1.0],
+            RewardModelType.time_aware.value: [1.0],
+            RewardModelType.length_aware.value: [1.0],
         }
 
         # Act

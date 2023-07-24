@@ -28,8 +28,8 @@ class RewardModelType(Enum):
     blacklist = 'blacklist_filter'
     nsfw = 'nsfw_filter'
     relevance = 'relevance_filter'
-    time_aware = 'time_aware'
-    length_aware = 'length_aware'
+    time_aware = 'time_aware_reward_model'
+    length_aware = 'length_aware_reward_model'
 
 @dataclass(frozen=True)
 class DefaultRewardFrameworkConfig:
