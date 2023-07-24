@@ -49,7 +49,10 @@ class LengthAwareRewardModel(BaseRewardModel):
         # Load the tokenizer from the pretrained model
         self.tokenizer = AutoTokenizer.from_pretrained(LengthAwareRewardModel.reward_model_path)
         self.cutoff = 300
-
+        self.count = {}
+        self.mean = {}
+        self.var = {}
+        
     def reward(self, prompt: str, completion: str, name: str) -> float:
         """
         Calculate the reward for a single prompt and completion. The length of the completion is used as an additional factor.

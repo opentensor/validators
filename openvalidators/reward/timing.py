@@ -42,6 +42,9 @@ class TimeAwareRewardModel(BaseRewardModel):
         super().__init__()
         self.device = device
         self.cutoff = 1
+        self.count = {}
+        self.mean = {}
+        self.var = {}
 
     def get_rewards(self, prompt: str, completions: List[str], name: str, timing: List[int]) -> torch.FloatTensor:
         """
