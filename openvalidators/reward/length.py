@@ -21,6 +21,7 @@ from typing import List
 from .config import RewardModelType
 from .reward import BaseRewardModel
 from transformers import  AutoTokenizer, AutoModel
+import bittensor as bt
 
 class LengthAwareRewardModel(BaseRewardModel):
     """
@@ -52,7 +53,7 @@ class LengthAwareRewardModel(BaseRewardModel):
         self.count = {}
         self.mean = {}
         self.var = {}
-        
+
     def reward(self, prompt: str, completion: str, name: str) -> float:
         """
         Calculate the reward for a single prompt and completion. The length of the completion is used as an additional factor.
