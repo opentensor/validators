@@ -52,8 +52,7 @@ class BaseGatingModel(torch.nn.Module, ABC):
         parser.add_argument(
             "--gating.num_uids",
             type=int,
-            default=1024,
-            help="Number of uids to gate on",
+            help="Number of uids to gate on. Default is pulled from subtensor directly",
         )
         parser.add_argument(
             "--gating.learning_rate",
@@ -137,7 +136,7 @@ class GatingModel(BaseGatingModel):
             config = GatingModel.config()
         if model_name is not None:
             config.gating.model_name = model_name
-        config.gating.num_uids = num_uids if num_uids is not None else metagraph.n
+        config.gating.num_uids = num_uids if num_uids is not None else config.gating.num_uids
         self.config = config
         self.num_uids = config.gating.num_uids
         self.device = torch.device(self.config.neuron.device)
@@ -228,7 +227,7 @@ class SentenceEmbedGatingModel(BaseGatingModel):
             config = SentenceEmbedGatingModel.config()
         if model_name is not None:
             config.gating.model_name = model_name
-        config.gating.num_uids = num_uids if num_uids is not None else metagraph.n
+        config.gating.num_uids = num_uids if num_uids is not None else config.gating.num_uids
         self.config = config
         self.num_uids = config.gating.num_uids
         self.device = torch.device(self.config.neuron.device)
