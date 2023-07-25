@@ -49,7 +49,6 @@ class LengthAwareRewardModel(BaseRewardModel):
         self.device = device
         # Load the tokenizer from the pretrained model
         self.tokenizer = AutoTokenizer.from_pretrained(LengthAwareRewardModel.reward_model_path)
-        self.cutoff = 300
         self.count = {}
         self.mean = {}
         self.var = {}
@@ -73,9 +72,10 @@ class LengthAwareRewardModel(BaseRewardModel):
                                     ).to(self.device)
             # Multiply the reward by the length of the completion
             token_len = inputs['input_ids'].size()[1]
+            cutoff = self.mean[name] + 2*torch.sqrt(self.var[name])
 
-            if token_len > self.cutoff:
-                return torch.tensor([self.cutoff]).to(self.device)
+            if token_len > cutoff:
+                return torch.tensor([cutoff]).to(self.device)
             else:
                 return token_len
 
@@ -115,7 +115,7 @@ class LengthAwareRewardModel(BaseRewardModel):
         # Calculate rewards for each successful completion
         successful_rewards = self.get_rewards(prompt, successful_completions, name)
 
-        # Apply softmax normalization to the rewards
+        # Apply normalization to the rewards
         successful_rewards = self.normalize_rewards(successful_rewards, name)
 
         # Initialize a tensor of zeros to hold the rewards for all responses
