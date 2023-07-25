@@ -72,7 +72,10 @@ class LengthAwareRewardModel(BaseRewardModel):
                                     ).to(self.device)
             # Multiply the reward by the length of the completion
             token_len = inputs['input_ids'].size()[1]
-            cutoff = self.mean[name] + 2*torch.sqrt(self.var[name])
+            if name not in self.mean:
+                cutoff = 300
+            else:
+                cutoff = self.mean[name] + 2*torch.sqrt(self.var[name])
 
             if token_len > cutoff:
                 return torch.tensor([cutoff]).to(self.device)
