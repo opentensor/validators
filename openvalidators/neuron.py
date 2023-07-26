@@ -62,6 +62,10 @@ class neuron:
     def run(self):
         run(self)
 
+    subtensor: "bt.subtensor"
+    wallet: "bt.wallet"
+    metagraph: "bt.metagraph"
+
     def __init__(self):
         self.config = neuron.config()
         self.check_config(self.config)
@@ -93,7 +97,8 @@ class neuron:
 
         # Init metagraph.
         bt.logging.debug("loading", "metagraph")
-        self.metagraph = bt.metagraph(netuid=self.config.netuid, network=self.subtensor.network)
+        self.metagraph = bt.metagraph(netuid=self.config.netuid, network=self.subtensor.network, sync=False) # Make sure not to sync without passing subtensor
+        self.metagraph.sync(subtensor=self.subtensor) # Sync metagraph with subtensor.
         self.hotkeys = copy.deepcopy(self.metagraph.hotkeys)
         bt.logging.debug(str(self.metagraph))
 
@@ -112,6 +117,9 @@ class neuron:
 
         # Init the gating model which learns which miners to select for each query.
         bt.logging.debug("loading", "gating_model")
+        if not self.config.gating.num_uids:
+            self.config.gating.num_uids = self.subtensor.max_n(self.config.netuid)
+
         if self.config.neuron.mock_gating_model:
             self.gating_model = MockGatingModel(self.metagraph.n.item())
         elif self.config.neuron.use_custom_gating_model:
@@ -120,7 +128,7 @@ class neuron:
             self.gating_model = GatingModel(metagraph=self.metagraph, config=self.config).to(self.device)
         bt.logging.debug(str(self.gating_model))
 
-        # Dendrite pool for querying the network during training.
+        # Dendrite pool for querying the network during  training.
         bt.logging.debug("loading", "dendrite_pool")
         if self.config.neuron.mock_dendrite_pool:
             self.dendrite_pool = MockDendritePool()
