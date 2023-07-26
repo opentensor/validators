@@ -16,6 +16,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import torch
+from queue import Queue
 import torch.nn.functional as F
 from typing import List
 from .config import RewardModelType
@@ -50,12 +51,13 @@ class DiversityRewardModel( BaseRewardModel ):
     @property
     def name(self) -> str: return RewardModelType.diversity.value
 
-    def __init__( self, device: str ):
+    def __init__( self, device: str, max_history_size: int = 1000 ):
         super().__init__()
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained( DiversityRewardModel.diversity_model_path )
         self.model = AutoModel.from_pretrained( DiversityRewardModel.diversity_model_path ).to(self.device)
         self.reward_quantile = torch.tensor(0.1).to(self.device)
+        self.history = Queue( maxsize = max_history_size )
         
     def get_embeddings( self, sentences: List[str] ) -> "torch.FloatTensor":
         """Runs a forward pass through the model.
@@ -93,13 +95,72 @@ class DiversityRewardModel( BaseRewardModel ):
             return torch.tensor([]).to(self.device)
         
         # Get embeddings for all completions.
-        embeddings = self.get_embeddings( completions )
+        completion_embeddings = self.get_embeddings( completions )
+        
+        # Get embeddings for all completions including history.
+        history_embeddings = completion_embeddings + list( self.history.queue )
 
         # Calculate the pairwise cosine similarity.
-        similarity = pairwise_cosine_similarity( embeddings, embeddings )
+        similarity = pairwise_cosine_similarity( completion_embeddings, history_embeddings )
 
         # Reward to be at the 10% quantile of the 1 - similarity score.
         rewards = (1 - similarity).quantile(self.reward_quantile, dim = 1 )
 
+        # Add all to history
+        self.history.put( **completion_embeddings )
+
         # Return all
         return rewards
+    
+
+
+import unittest
+import torch
+from queue import Queue
+from transformers import AutoTokenizer, AutoModel
+from typing import List
+
+
+class TestMeanPooling(unittest.TestCase):
+
+    def test_mean_pooling(self):
+        model_output = (torch.rand(5, 4, 3),)
+        attention_mask = torch.Tensor([[1, 0, 0, 0], [1, 1, 0, 0], [1, 1, 1, 0], [1, 1, 1, 1], [0, 0, 0, 0]])
+
+        pooled_output = mean_pooling(model_output, attention_mask)
+        self.assertEqual(pooled_output.shape, (5, 3))
+        self.assertTrue(torch.all(torch.isfinite(pooled_output)))
+
+class TestDiversityRewardModel(unittest.TestCase):
+
+    def setUp(self):
+        self.model = DiversityRewardModel(device="cpu")
+        self.assertIsInstance(self.model.tokenizer, AutoTokenizer)
+        self.assertIsInstance(self.model.model, AutoModel)
+
+    def test_get_embeddings(self):
+        sentences = ["This is a test sentence.", "Another test sentence."]
+        embeddings = self.model.get_embeddings(sentences)
+        self.assertEqual(embeddings.shape, (2, self.model.model.config.hidden_size))
+
+    def test_get_rewards(self):
+        prompt = "This is a test prompt."
+        completions: List[str] = ["This is a test completion.", "Another test completion."]
+        rewards = self.model.get_rewards(prompt, completions, "Test")
+        self.assertEqual(rewards.shape, (2,))
+        self.assertTrue(isinstance(self.model.history.queue, Queue))
+        self.assertEqual(len(self.model.history.queue), 2)
+
+    def test_get_rewards_empty(self):
+        prompt = "This is a test prompt."
+        completions: List[str] = []
+        rewards = self.model.get_rewards(prompt, completions, "Test")
+        self.assertEqual(rewards.shape, (0,))
+        self.assertTrue(isinstance(self.model.history.queue, Queue))
+        self.assertEqual(len(self.model.history.queue), 0)
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+    

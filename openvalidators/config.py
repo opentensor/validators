@@ -242,6 +242,12 @@ def add_args(cls, parser):
         help="Dont apply the diversity reward model",
         default=False,
     )    
+    parser.add_argument(
+        "--neuron.diversity_max_history",
+        type = int,
+        help = "Max number of historical embedding values to maintain.",
+        default = 1000,
+    )
 
     parser.add_argument(
         "--reward.reciprocate_weight",
