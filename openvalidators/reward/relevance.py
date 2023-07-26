@@ -116,7 +116,7 @@ class BertRelevanceRewardModel( BaseRewardModel ):
         batch_representation = torch.mean(sentence_embeddings, dim=0)
         return batch_representation
     
-    def reward( self, prompt: str, completion:str , name: str  ) -> float:
+    def reward( self, prompt: str, completion:str ) -> float:
         # Get the two bert embeddings.
         completion_embedding = self.get_embedding( completion)
         prompt_embedding = self.get_embedding( prompt)
@@ -167,7 +167,7 @@ class MpnetRelevenceModel( BaseRewardModel ):
         sentence_embeddings = F.normalize(sentence_embeddings, p=2, dim=1)
         return sentence_embeddings
 
-    def rewards( self, prompt: str, completion: str, name: str ) -> torch.FloatTensor:
+    def rewards( self, prompt: str, completion: str ) -> torch.FloatTensor:
         
         # Get embeddings for all completions.
         embeddings = self.get_embeddings( completion )
