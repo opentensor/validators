@@ -167,7 +167,7 @@ class MpnetRelevenceModel( BaseRewardModel ):
         sentence_embeddings = F.normalize(sentence_embeddings, p=2, dim=1)
         return sentence_embeddings
 
-    def rewards( self, prompt: str, completion: str ) -> torch.FloatTensor:
+    def reward( self, prompt: str, completion: str ) -> torch.FloatTensor:
         
         # Get embeddings for all completions.
         embeddings = self.get_embeddings( completion )
