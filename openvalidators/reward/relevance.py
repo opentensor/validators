@@ -127,7 +127,6 @@ class BertRelevanceRewardModel( BaseRewardModel ):
         # Return relevance scoring.
         return float(-diff)
 
-
 class MpnetRelevenceModel( BaseRewardModel ):
     
     diversity_model_path = "sentence-transformers/all-mpnet-base-v2"
