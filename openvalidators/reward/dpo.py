@@ -25,7 +25,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 
 class DirectPreferenceRewardModel(BaseRewardModel):
 
-    reward_model_name: str = "TheBloke/Llama-2-7B-fp16"
+    reward_model_name: str = "cerebras/btlm-3b-8k-base"
 
     @property
     def name(self) -> str: return RewardModelType.dpo.value
@@ -35,6 +35,7 @@ class DirectPreferenceRewardModel(BaseRewardModel):
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(DirectPreferenceRewardModel.reward_model_name)
         self.model = AutoModelForCausalLM.from_pretrained(DirectPreferenceRewardModel.reward_model_name,
+                                                          trust_remote_code=True,
                                                           torch_dtype=torch.float16).to(self.device)
 
     def reward_single(self, prompt: str, completion: str, name: str) -> float:
@@ -47,6 +48,14 @@ class DirectPreferenceRewardModel(BaseRewardModel):
             combined = self.tokenizer(prompt + completion, return_tensors="pt").input_ids[0].to(self.device)  # [seq_len]
             # Tokenize only the prompt, to help determine prompt token length.
             prompt_part = self.tokenizer(prompt, return_tensors="pt").input_ids[0].to(self.device)  # [prompt_len]
+
+            # Completion doesn't fit into model sequence, so return lowest reward.
+            if self.tokenizer.model_max_length <= len(prompt_part):
+                return -11.  # exp(-11)=1.67e-5 < 2e-5=1/50257 (typical vocab size)
+
+            # Truncate combined to fit into model max sequence length.
+            if self.tokenizer.model_max_length < len(combined):
+                combined = combined[:self.tokenizer.model_max_length]
 
             labels = combined.clone()  # [seq_len]
             # Ignore prompt part for calculating reward.
