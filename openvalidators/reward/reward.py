@@ -35,7 +35,7 @@ class BaseRewardModel:
         self.count = 0
         self.mean = 0.0
         self.var = 0.0
-        self.count_limit = 1000
+        self.count_limit = 3000
 
     def normalize_rewards( self, rewards: torch.FloatTensor ) -> torch.FloatTensor:
         """
@@ -51,7 +51,7 @@ class BaseRewardModel:
             - This function uses Welford's online algorithm to update the mean and variance.
             - It standardizes the reward values using the updated mean and variance.
             - It then scales the standardized values to the 0-1 range using the error function (erf) as a CDF.
-        """
+        """        
         # Get the number of rewards (successful responses).
         new_count = rewards.numel()
 
@@ -88,6 +88,7 @@ class BaseRewardModel:
         """ Applies the reward model across each call. Unsuccessful responses are zeroed.
         """
         # Get indices of correctly responding calls.
+        
         successful_completions_indices: List[int] = [ idx for idx, resp in enumerate(responses) if resp.is_success ]
 
         # Get all completions from responding calls.

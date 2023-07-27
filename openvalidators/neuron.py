@@ -114,6 +114,9 @@ class neuron:
 
         # Init the gating model which learns which miners to select for each query.
         bt.logging.debug("loading", "gating_model")
+        if not self.config.gating.num_uids:
+            self.config.gating.num_uids = self.subtensor.max_n(self.config.netuid)
+
         if self.config.neuron.mock_gating_model:
             self.gating_model = MockGatingModel(self.metagraph.n.item())
         elif self.config.neuron.use_custom_gating_model:
@@ -122,7 +125,7 @@ class neuron:
             self.gating_model = GatingModel(metagraph=self.metagraph, config=self.config).to(self.device)
         bt.logging.debug(str(self.gating_model))
 
-        # Dendrite pool for querying the network during training.
+        # Dendrite pool for querying the network during  training.
         bt.logging.debug("loading", "dendrite_pool")
         if self.config.neuron.mock_dendrite_pool:
             self.dendrite_pool = MockDendritePool()
