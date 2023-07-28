@@ -152,4 +152,7 @@ class DiversityRewardModel( BaseRewardModel ):
         self.update_historic_embeddings(embeddings)
         
         # Return all
-        return batch_rewards * historic_rewards
+        if historic_rewards != None:
+            return batch_rewards * historic_rewards
+        else:
+            return batch_rewards
