@@ -56,6 +56,10 @@ class DiversityRewardModel( BaseRewardModel ):
         self.tokenizer = AutoTokenizer.from_pretrained( DiversityRewardModel.diversity_model_path )
         self.model = AutoModel.from_pretrained( DiversityRewardModel.diversity_model_path ).to(self.device)
         self.reward_quantile = torch.tensor(0.1).to(self.device)
+        self.history_reward_quantile = torch.tensor(0.003).to(self.device)
+        self.historic_embeddings = torch.tensor([]).to(self.device)
+        self.history_size = 1000
+
         
     def get_embeddings( self, sentences: List[str] ) -> "torch.FloatTensor":
         """Runs a forward pass through the model.
@@ -86,6 +90,50 @@ class DiversityRewardModel( BaseRewardModel ):
         sentence_embeddings = F.normalize(sentence_embeddings, p=2, dim=1)
         return sentence_embeddings
 
+    def update_historic_embeddings( self, embeddings: torch.FloatTensor ):
+        def unique(embeddings):
+            unique_embeddings = [embeddings[0]]
+            last_emb = embeddings[0]
+            for emb in embeddings:
+                if not torch.all(torch.eq(emb, last_emb)):
+                    unique_embeddings.append(emb)
+                last_emb = emb
+            return torch.stack(unique_embeddings)
+ 
+        embeddings_unique = unique(embeddings)
+        historic_embeddings = torch.cat([self.historic_embeddings, embeddings_unique])
+        self.historic_embeddings = historic_embeddings[-self.history_size:, :]
+    
+    def get_historic_rewards( self, embeddings: torch.FloatTensor ) -> torch.FloatTensor:
+        def regularise( rewards ):
+            # sigmoid function that does the following mapping approximately
+            # 0.1 -> 0.05 
+            # 0.15 -> 0.4
+            # 0.2 -> 0.9
+            # >0.3 -> 1
+            return 1/(1 + torch.exp(-50 * rewards + 8))
+
+        # Return None if history size is too small 
+        if self.historic_embeddings.shape[0] < self.history_size:
+            return None
+        
+        # Calculate the pairwise cosine similarity.
+        similarity = pairwise_cosine_similarity( embeddings, self.historic_embeddings )
+
+        # Reward to be at the 10% quantile of the 1 - similarity score.
+        rewards = (1 - similarity).quantile(self.history_reward_quantile, dim = 1 )
+
+        return regularise(rewards) 
+
+    def get_batch_rewards( self, embeddings: torch.FloatTensor ) -> torch.FloatTensor:
+        # Calculate the pairwise cosine similarity.
+        similarity = pairwise_cosine_similarity( embeddings, embeddings )
+
+        # Reward to be at the 10% quantile of the 1 - similarity score.
+        rewards = (1 - similarity).quantile(self.reward_quantile, dim = 1 )
+
+        return rewards 
+    
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
 
         # Check if completions are empty, return 0 if so
@@ -95,11 +143,13 @@ class DiversityRewardModel( BaseRewardModel ):
         # Get embeddings for all completions.
         embeddings = self.get_embeddings( completions )
 
-        # Calculate the pairwise cosine similarity.
-        similarity = pairwise_cosine_similarity( embeddings, embeddings )
+        # Get batch rewards.
+        batch_rewards = self.get_batch_rewards(embeddings)
 
-        # Reward to be at the 10% quantile of the 1 - similarity score.
-        rewards = (1 - similarity).quantile(self.reward_quantile, dim = 1 )
+        # get historic rewards.
+        historic_rewards = self.get_historic_rewards(embeddings)
 
+        self.update_historic_embeddings(embeddings)
+        
         # Return all
-        return rewards
+        return batch_rewards * historic_rewards
