@@ -34,6 +34,7 @@ from openvalidators.utils import init_wandb
 # Load gating models
 from openvalidators.reward import (
     Blacklist,
+    TaskValidator,
     NSFWRewardModel,
     OpenAssistantRewardModel,
     ReciprocateRewardModel,
@@ -180,24 +181,31 @@ class neuron:
 
                 bt.logging.error(message)
                 raise Exception(message)
-
+            
+            # Masking functions
             self.blacklist = (
                 Blacklist() if not self.config.neuron.blacklist_off else MockRewardModel(RewardModelType.blacklist.value)
             )
-
-            self.masking_functions = [
-                self.blacklist,
-                RelevanceRewardModel(device=self.device)
-                if not self.config.neuron.relevance_off
+            task_validator = (
+                TaskValidator() if not self.config.neuron.task_validator_off
+                else MockRewardModel(RewardModelType.task_validator.value),
+            )
+            relevance_model = (
+                RelevanceRewardModel(device=self.device) if not self.config.neuron.relevance_off
                 else MockRewardModel(RewardModelType.relevance.value),
-                DiversityRewardModel(device=self.device)
-                if not self.config.neuron.diversity_off
+            )
+            diversity_model = (
+                DiversityRewardModel(device=self.device) if not self.config.neuron.diversity_off
                 else MockRewardModel(RewardModelType.diversity.value),
-                NSFWRewardModel(device=self.device)
-                if not self.config.neuron.nsfw_off
-                else MockRewardModel(RewardModelType.nsfw.value),
-            ]
+            )
+            nsfw_model = (
+                NSFWRewardModel(device=self.device) if not self.config.neuron.nsfw_off
+                else MockRewardModel(RewardModelType.nsfw.value),                
+            )
+
+            self.masking_functions = [self.blacklist, task_validator, relevance_model, diversity_model, nsfw_model]
             bt.logging.debug(str(self.reward_functions))
+            bt.logging.debug(str(self.masking_functions))
 
         # Init the event loop.
         self.loop = asyncio.get_event_loop()
