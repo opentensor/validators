@@ -37,13 +37,17 @@ class TaskValidator( BaseRewardModel ):
         completion_contains_question = any(question_keyword in completion for question_keyword in question_keywords)
         completion_contains_summary = any(summary_keyword in completion for summary_keyword in summary_keywords)
 
-        if name.startswith('followup') and completion_contains_answer:
+        is_summarization_prompt = name == 'augment'
+        is_question_prompt = name.startswith('followup')
+        is_answer_prompt = name.startswith('answer')
+
+        if (is_summarization_prompt or is_question_prompt) and completion_contains_answer:
             return 0.0
 
-        if name.startswith('answer') and completion_contains_question:
+        if (is_summarization_prompt or is_answer_prompt) and completion_contains_question:
             return 0.0
 
-        if name != 'augment' and completion_contains_summary:
+        if not is_summarization_prompt and completion_contains_summary:
             return 0.0 
 
         return 1

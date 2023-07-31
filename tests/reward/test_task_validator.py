@@ -12,6 +12,15 @@ class TaskValidatorTestCase(unittest.TestCase):
     def setUp(self):
         self.validator = TaskValidator()
 
+    def test_augment_with_answer_keyword(self):
+        """
+        Test if the reward method returns 0 when the task "name" starts with 'augment' (summarization)
+        and the completion contains the 'Answer:' keyword.
+        """
+        name = f'augment'
+        completion = "Summary: test summary\nAnswer: Test answer"
+        self.assertEqual(self.validator.reward('', completion, name), 0.0)
+
     def test_followup_with_answer_keyword(self):
         """
         Test if the reward method returns 0 when the task "name" starts with 'followup' (question generation)
@@ -21,6 +30,15 @@ class TaskValidatorTestCase(unittest.TestCase):
             name = f'followup{i}'
             completion = 'Question: This is a test question?\nAnswer: This is a test answer.'
             self.assertEqual(self.validator.reward('', completion, name), 0.0)
+
+    def test_augment_with_question_keyword(self):
+        """
+        Test if the reward method returns 0 when the task "name" starts with 'augment' (summarization)
+        and the completion contains the 'Question:' keyword.
+        """
+        name = f'augment'
+        completion = "Summary: test summary\nQuestion: This is a test question?"
+        self.assertEqual(self.validator.reward('', completion, name), 0.0)
 
     def test_answer_with_question_keyword(self):
         """
