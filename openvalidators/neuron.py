@@ -188,19 +188,19 @@ class neuron:
             )
             task_validator = (
                 TaskValidator() if not self.config.neuron.task_validator_off
-                else MockRewardModel(RewardModelType.task_validator.value),
+                else MockRewardModel(RewardModelType.task_validator.value)
             )
             relevance_model = (
                 RelevanceRewardModel(device=self.device) if not self.config.neuron.relevance_off
-                else MockRewardModel(RewardModelType.relevance.value),
+                else MockRewardModel(RewardModelType.relevance.value)
             )
             diversity_model = (
                 DiversityRewardModel(device=self.device) if not self.config.neuron.diversity_off
-                else MockRewardModel(RewardModelType.diversity.value),
+                else MockRewardModel(RewardModelType.diversity.value)
             )
             nsfw_model = (
                 NSFWRewardModel(device=self.device) if not self.config.neuron.nsfw_off
-                else MockRewardModel(RewardModelType.nsfw.value),                
+                else MockRewardModel(RewardModelType.nsfw.value)              
             )
 
             self.masking_functions = [self.blacklist, task_validator, relevance_model, diversity_model, nsfw_model]
