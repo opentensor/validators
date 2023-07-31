@@ -37,7 +37,7 @@ from openvalidators.reward import (
     NSFWRewardModel,
     OpenAssistantRewardModel,
     ReciprocateRewardModel,
-    BertRelevanceRewardModel,
+    RelevanceRewardModel,
     MockRewardModel,
     DahoasRewardModel,
     DiversityRewardModel,
@@ -192,7 +192,7 @@ class neuron:
 
             self.masking_functions = [
                 self.blacklist,
-                BertRelevanceRewardModel(device=self.device)
+                RelevanceRewardModel(device=self.device)
                 if not self.config.neuron.relevance_off
                 else MockRewardModel(RewardModelType.relevance.value),
                 DiversityRewardModel(device=self.device)
