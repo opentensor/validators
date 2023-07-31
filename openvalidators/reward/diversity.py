@@ -58,7 +58,7 @@ class DiversityRewardModel( BaseRewardModel ):
         self.reward_quantile = torch.tensor(0.1).to(self.device)
         self.history_reward_quantile = torch.tensor(0.003).to(self.device)
         self.historic_embeddings = torch.tensor([]).to(self.device)
-        self.history_size = 1000
+        self.history_range = (500, 1500) # store 30 batches of completions.
 
         
     def get_embeddings( self, sentences: List[str] ) -> "torch.FloatTensor":
@@ -102,23 +102,19 @@ class DiversityRewardModel( BaseRewardModel ):
  
         embeddings_unique = unique(embeddings)
         historic_embeddings = torch.cat([self.historic_embeddings, embeddings_unique])
-        self.historic_embeddings = historic_embeddings[-self.history_size:, :]
+        self.historic_embeddings = historic_embeddings[-self.history_range[1]:, :]
     
     def get_historic_rewards( self, embeddings: torch.FloatTensor ) -> torch.FloatTensor:
         def regularise( rewards ):
-            # sigmoid function that does the following mapping approximately
-            # 0.1 -> 0.05 
-            # 0.15 -> 0.4
-            # 0.2 -> 0.9
-            # >0.3 -> 1
-            return 1/(1 + torch.exp(-50 * rewards + 8))
+            # sigmoid function that cutoff at 0.05 approximately
+            return 1/(1 + torch.exp(-1000 * rewards + 50))
 
         # Return None if history size is too small 
-        if self.historic_embeddings.shape[0] < self.history_size:
+        if self.historic_embeddings.shape[0] < self.history_range[1]:
             return None
         
         # Calculate the pairwise cosine similarity.
-        similarity = pairwise_cosine_similarity( embeddings, self.historic_embeddings )
+        similarity = pairwise_cosine_similarity( embeddings, self.historic_embeddings[self.history_range[0]:] )
 
         # Reward to be at the 10% quantile of the 1 - similarity score.
         rewards = (1 - similarity).quantile(self.history_reward_quantile, dim = 1 )
