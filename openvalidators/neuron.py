@@ -88,11 +88,9 @@ class neuron:
         self.wallet = bt.wallet(config=self.config)
         self.wallet.create_if_non_existent()
         if not self.config.wallet._mock:
-            bt.utils.reregister(
-                wallet = self.wallet,
-                subtensor=self.subtensor,
-                netuid=self.config.netuid
-            )
+            if not self.subtensor.is_hotkey_registered_on_subnet(hotkey_ss58=self.wallet.hotkey.ss58_address, netuid=self.config.netuid):
+                raise Exception(f'Wallet not currently registered on netuid {self.config.netuid}, please first register wallet before running')
+                
         bt.logging.debug(str(self.wallet))
 
         # Init metagraph.
