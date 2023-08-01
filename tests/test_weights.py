@@ -20,11 +20,28 @@ import asyncio
 import sys
 from openvalidators.neuron import neuron as Neuron
 from openvalidators.forward import run_step
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+
+from .helpers import __mock_wallet_factory__
 
 CLI_ARGS_STR = "validators/openvalidators/neuron.py --mock --wallet._mock --wandb.off --neuron.followup_sample_size 10 --neuron.answer_sample_size 10"
 
 SYS_ARGV = sys.argv.copy()
+
+
+patcher = None
+
+def setUpModule():
+    """Runs once for the tests in this module."""
+    global patcher
+    patcher = patch("bittensor.wallet.__new__", __mock_wallet_factory__ )
+    patcher.start()
+
+def tearDownModule():
+    """Runs once for the tests in this module."""
+    global patcher
+    if patcher:
+        patcher.stop()
 
 
 def test_uid_weights_unchanged_unless_queried(n_steps=10, n_concurrent=1):
