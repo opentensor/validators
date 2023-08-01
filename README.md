@@ -2,7 +2,6 @@
 
 # **Open Validators** <!-- omit in toc -->
 [![Discord Chat](https://img.shields.io/discord/308323056592486420.svg)](https://discord.gg/bittensor)
-[![PyPI version](https://badge.fury.io/py/openvalidators.svg)](https://badge.fury.io/py/openvalidators)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
 
 ---
@@ -19,7 +18,7 @@ It offers several functionalities, such as:
 
 The main goal of this repository is to facilitate the interaction with the Bittensor network by providing a set of
 open-source validators to the community. The current validator implementation queries the network for responses and 
-evaluations using carefully crafted prompts, that are later evaluated by a large foundation GPT-J reward model.
+evaluations using carefully crafted prompts using CoT, that are later evaluated by a pipeline of reward functions, including diversity, relevance, rlhf, among others.
 
 Additionally, the repository provides an analysis and data toolkit that allows users to analyze the data generated from
 the validator's interaction with the network. By default, the validator collects various data points, such as question 
@@ -69,14 +68,7 @@ There are currently four main avenues for engaging with this repository:
    - Serves individuals, researchers, and developers who seek to create datasets for the community's miners.
 
 # Install
-There are two ways to use OpenTensor validators:
-
-1. With pip:
-```bash
-$ pip3 install openvalidators
-```
-
-2. From source:
+From source:
 ```bash
 $ git clone https://github.com/opentensor/validators.git
 $ pip3 install -e openvalidators/
