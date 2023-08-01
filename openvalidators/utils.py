@@ -32,7 +32,11 @@ def should_reinit_wandb(self):
 
 def init_wandb(self, reinit=False):
     """Starts a new wandb run."""
-    tags = [self.wallet.hotkey.ss58_address, openvalidators.__version__, str(openvalidators.__spec_version__)]
+    tags = [self.wallet.hotkey.ss58_address,
+            openvalidators.__version__,
+            str(openvalidators.__spec_version__),
+            f'netuid_{self.metagraph.netuid}']
+
     if self.config.mock:
         tags.append("mock")
     if self.config.neuron.use_custom_gating_model:
@@ -83,7 +87,7 @@ def checkpoint(self):
     save_state(self)
 
 
-def resync_metagraph(self):
+def resync_metagraph(self: 'openvalidators.neuron.neuron'):
     """Resyncs the metagraph and updates the hotkeys and moving averages based on the new metagraph."""
     bt.logging.info("resync_metagraph()")
 
@@ -91,7 +95,7 @@ def resync_metagraph(self):
     previous_metagraph = copy.deepcopy(self.metagraph)
 
     # Sync the metagraph.
-    self.metagraph.sync()
+    self.metagraph.sync(subtensor=self.subtensor)
 
     # Check if the metagraph axon info has changed.
     metagraph_axon_info_updated = previous_metagraph.axons != self.metagraph.axons
@@ -182,7 +186,7 @@ def save_state(self):
     bt.logging.info("save_state()")
     try:
         neuron_state_dict = {
-            "neuron_weights": self.moving_averaged_scores,
+            "neuron_weights": self.moving_averaged_scores.to('cpu').tolist(),
             "neuron_hotkeys": self.hotkeys,
         }
         torch.save(neuron_state_dict, f"{self.config.neuron.full_path}/model.torch")
@@ -202,13 +206,17 @@ def save_state(self):
                 "step": self.step,
                 "block": ttl_get_block(self),
                 **neuron_state_dict                
-            })                
+            })
         if not self.config.wandb.off and self.config.wandb.track_gating_model:
             model_artifact = wandb.Artifact(f"{gating_model_name}_gating_linear_layer", type="model")
             model_artifact.add_file(gating_model_file_path)
             self.wandb.log_artifact(model_artifact)
 
         bt.logging.success(prefix="Saved gating model", sufix=f"<blue>{gating_model_file_path}</blue>")
+
+        #empty cache
+        torch.cuda.empty_cache()
+        
     except Exception as e:
         bt.logging.warning(f"Failed to save model with error: {e}")
 

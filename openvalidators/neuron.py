@@ -62,6 +62,10 @@ class neuron:
     def run(self):
         run(self)
 
+    subtensor: "bt.subtensor"
+    wallet: "bt.wallet"
+    metagraph: "bt.metagraph"
+
     def __init__(self):
         self.config = neuron.config()
         self.check_config(self.config)
@@ -84,12 +88,15 @@ class neuron:
         self.wallet = bt.wallet(config=self.config)
         self.wallet.create_if_non_existent()
         if not self.config.wallet._mock:
-            self.wallet.reregister(subtensor=self.subtensor, netuid=self.config.netuid)
+            if not self.subtensor.is_hotkey_registered_on_subnet(hotkey_ss58=self.wallet.hotkey.ss58_address, netuid=self.config.netuid):
+                raise Exception(f'Wallet not currently registered on netuid {self.config.netuid}, please first register wallet before running')
+                
         bt.logging.debug(str(self.wallet))
 
         # Init metagraph.
         bt.logging.debug("loading", "metagraph")
-        self.metagraph = bt.metagraph(netuid=self.config.netuid, network=self.subtensor.network)
+        self.metagraph = bt.metagraph(netuid=self.config.netuid, network=self.subtensor.network, sync=False) # Make sure not to sync without passing subtensor
+        self.metagraph.sync(subtensor=self.subtensor) # Sync metagraph with subtensor.
         self.hotkeys = copy.deepcopy(self.metagraph.hotkeys)
         bt.logging.debug(str(self.metagraph))
 
