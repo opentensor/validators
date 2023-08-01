@@ -58,7 +58,7 @@ class DiversityRewardModel( BaseRewardModel ):
         self.reward_quantile = torch.tensor(0.1).to(self.device)
         self.history_reward_bottom_k = 5
         self.historic_embeddings = torch.tensor([]).to(self.device)
-        self.history_range = (500, 5500)
+        self.history_range = (500, 15500)
         
     def get_embeddings( self, sentences: List[str] ) -> "torch.FloatTensor":
         """Runs a forward pass through the model.
@@ -130,7 +130,6 @@ class DiversityRewardModel( BaseRewardModel ):
         return rewards 
     
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
-
         # Check if completions are empty, return 0 if so
         if len(completions) == 0:
             return torch.tensor([]).to(self.device)
@@ -151,9 +150,3 @@ class DiversityRewardModel( BaseRewardModel ):
             return batch_rewards * historic_rewards
         else:
             return batch_rewards
-
-    def normalize_rewards( self, rewards: torch.FloatTensor ) -> torch.FloatTensor:
-        # def regularise( rewards ):
-        #     return 1/(1 + torch.exp(-100 * rewards + 12))
-        # return regularise(rewards)
-        return rewards
