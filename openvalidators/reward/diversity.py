@@ -111,6 +111,7 @@ class DiversityRewardModel( BaseRewardModel ):
 
         # Return None if history size is too small 
         if self.historic_embeddings.shape[0] < self.history_range[1]:
+            print('### history size too small###',self.history_range[1])
             return None
         
         # Calculate the pairwise cosine similarity.
