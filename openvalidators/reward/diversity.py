@@ -110,8 +110,9 @@ class DiversityRewardModel( BaseRewardModel ):
             return 1/(1 + torch.exp(-1000 * rewards + 50))
 
         # Return None if history size is too small 
+        print(self.historic_embeddings.shape[0])
         if self.historic_embeddings.shape[0] < self.history_range[1]:
-            print('### history size too small###',self.history_range[1])
+            print('### history size too small###',1500,self.historic_embeddings.shape[0])
             return None
         
         # Calculate the pairwise cosine similarity.
