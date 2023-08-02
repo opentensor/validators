@@ -56,7 +56,7 @@ class DiversityRewardModel( BaseRewardModel ):
         self.tokenizer = AutoTokenizer.from_pretrained( DiversityRewardModel.diversity_model_path )
         self.model = AutoModel.from_pretrained( DiversityRewardModel.diversity_model_path ).to(self.device)
         self.reward_quantile = torch.tensor(0.1).to(self.device)
-        self.history_reward_bottom_k = 5
+        self.history_reward_bottom_k = 2
         self.historic_embeddings = torch.tensor([]).to(self.device)
         self.history_range = (500, 15500)
         
