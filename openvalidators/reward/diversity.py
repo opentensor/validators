@@ -109,13 +109,13 @@ class DiversityRewardModel( BaseRewardModel ):
             return 1/(1 + torch.exp(-1000 * rewards + 50))
 
         # Return None if history size is too small 
-        if self.historic_embeddings.shape[0] < self.history_range[0]:
+        if self.historic_embeddings.shape[0] < (self.history_range[0] + self.history_reward_bottom_k):
             return None
         
         # Calculate the pairwise cosine similarity.
         similarity = pairwise_cosine_similarity( embeddings, self.historic_embeddings[self.history_range[0]:] )
 
-        # Reward to be at the 10% quantile of the 1 - similarity score.
+        # Reward to be at the bottom_k smallest of the 1 - similarity score.
         rewards = torch.topk((1 - similarity), self.history_reward_bottom_k, largest = False)[0][:, -1]
 
         return regularise(rewards) 
