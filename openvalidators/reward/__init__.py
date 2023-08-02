@@ -1,4 +1,5 @@
 from .blacklist import Blacklist
+from .task_validator import TaskValidator
 from .nsfw import NSFWRewardModel
 from .open_assistant import OpenAssistantRewardModel
 from .reciprocate import ReciprocateRewardModel

@@ -241,6 +241,12 @@ def add_args(cls, parser):
         action="store_true",
         help="Dont apply the diversity reward model",
         default=False,
+    )
+    parser.add_argument(
+        "--neuron.task_validator_off",
+        action="store_true",
+        help="Dont apply the task validator reward model",
+        default=False,
     )    
 
     parser.add_argument(

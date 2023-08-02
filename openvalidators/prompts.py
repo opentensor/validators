@@ -348,16 +348,16 @@ Please pay special attention to the delimiters used in the upcoming sections. Th
 
 def followup_prompt( base_text:str, i:int = 0) -> str:
     if i == 0:
-        return f"{base_text}\n\n{followup_request_template}. Do not return an answer:\n"
+        return f"{base_text}\n\n{followup_request_template}\n. Do not try to return an answer or a summary:"
     else:
-        return f"{base_text}\n\n{followup_request_template} and previous questions. Do not return an answer:\n"
+        return f"{base_text}\n\n{followup_request_template} and previous questions. Do not try to return an answer or a summary:\n"
 
 
 def answer_prompt( base_text:str, followup:str ) -> str:
-    return f"{base_text}\n\nQuestion: {followup}\nAnswer the last question step by step and explain your thoughts:\n"
+    return f"{base_text}\n\nQuestion:{followup}\nAnswer the question step by step and explain your thoughts. Do not include questions or summaries in your answer."
 
 augment_request_template = "Summarize the preceding context"
 
 def augment_prompt( base_text:str ) -> str:
     random_level = random.randint(4, 8)
-    return f"{base_text}\n\n{augment_request_template} in {random_level} sentences.\n"
+    return f"{base_text}\n\n{augment_request_template} in {random_level} sentences. Do not try to create questions or answers for your summarization.\n\n"

@@ -28,6 +28,7 @@ class RewardModelType(Enum):
     blacklist = 'blacklist_filter'
     nsfw = 'nsfw_filter'
     relevance = 'relevance_filter'
+    task_validator = 'task_validator_filter'
 
 
 @dataclass(frozen=True)
