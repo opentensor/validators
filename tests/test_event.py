@@ -45,6 +45,7 @@ class EventTestCase(unittest.TestCase):
             RewardModelType.rlhf.value: [1.0],
             RewardModelType.prompt.value: [1.0],
             RewardModelType.relevance.value: [1.0],
+            RewardModelType.task_validator.value: [1.0]
         }
 
         # Act
@@ -102,6 +103,7 @@ class EventTestCase(unittest.TestCase):
         assert event.rlhf_reward_model is None
         assert event.prompt_reward_model is None
         assert event.relevance_filter is None
+        assert event.task_validator_filter is None
 
     def test_event_from_dict_forward_reward_logging_mismatch(self):
         """Test that all default columns logged on the forward pass are correctly converted and that
@@ -142,4 +144,5 @@ class EventTestCase(unittest.TestCase):
         assert event.rlhf_reward_model is None
         assert event.prompt_reward_model is None
         assert event.relevance_filter is None
+        assert event.task_validator_filter is None
 

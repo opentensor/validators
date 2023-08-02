@@ -35,7 +35,7 @@ class BaseRewardModel:
         self.count = 0
         self.mean = 0.0
         self.var = 0.0
-        self.count_limit = 1000
+        self.count_limit = 3000
 
     def normalize_rewards( self, rewards: torch.FloatTensor ) -> torch.FloatTensor:
         """
