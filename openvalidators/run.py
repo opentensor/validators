@@ -16,6 +16,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import asyncio
+import time
 import bittensor as bt
 from traceback import print_exc
 
@@ -24,6 +25,8 @@ from openvalidators.utils import should_checkpoint, checkpoint, should_reinit_wa
 from openvalidators.weights import should_set_weights, set_weights
 from openvalidators.misc import ttl_get_block
 
+SLEEP_TIME = 180
+
 # Neuron run loop.`
 def run(self):
     bt.logging.info("run()")
@@ -31,6 +34,10 @@ def run(self):
     checkpoint(self)
     try:
         while True:
+            if not self.wallet.hotkey.ss58_address in self.metagraph.hotkeys:
+                bt.logging.info(f"Validator is not registered - sleeping for {SLEEP_TIME} seconds")
+                time.sleep(SLEEP_TIME)
+                continue
             bt.logging.info(f"step({self.step}) block({ttl_get_block( self )})")
 
             # Run multiple forwards.
