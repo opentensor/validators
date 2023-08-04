@@ -29,9 +29,9 @@ class TaskValidator( BaseRewardModel ):
         super().__init__()
 
     def reward( self, prompt: str, completion: str, name: str ) -> float:
-        summary_keywords = ['Summary:']
-        question_keywords = ['Question:']
-        answer_keywords = ['Answer:']
+        summary_keywords = ['Summary:', 'Paraphrase:', 'Paraphrasing:', 'Paraphrased:']
+        question_keywords = ['Question:', 'Query:', 'Q:']
+        answer_keywords = ['Answer:', 'Response:', 'A:', 'Completion:']
         
         completion_contains_answer = any(answer_keyword.lower() in completion.lower() for answer_keyword in answer_keywords)
         completion_contains_question = any(question_keyword.lower() in completion.lower() for question_keyword in question_keywords)
