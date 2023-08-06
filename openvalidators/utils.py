@@ -186,7 +186,7 @@ def save_state(self):
     bt.logging.info("save_state()")
     try:
         neuron_state_dict = {
-            "neuron_weights": self.moving_averaged_scores.to('cpu').tolist(),
+            "neuron_weights": self.moving_averaged_scores,
             "neuron_hotkeys": self.hotkeys,
         }
         torch.save(neuron_state_dict, f"{self.config.neuron.full_path}/model.torch")
