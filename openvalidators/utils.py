@@ -201,6 +201,15 @@ def save_state(self):
         gating_model_file_path = f"{self.config.neuron.full_path}/{gating_model_name}_gating_linear_layer.pth"
         torch.save(gating_model_linear_layer_dict, gating_model_file_path)
 
+        # Save diversity model.
+        diversity_model_dict = {"historic_embeddings": self.diversity_model.historic_embeddings}
+        diversity_model_file_path = f"{self.config.neuron.full_path}/diversity_model.pth"
+        torch.save(diversity_model_dict, diversity_model_file_path)
+        bt.logging.success(
+            prefix="Saved diversity model",
+            sufix=f"<blue>{diversity_model_file_path}</blue> [{self.diversity_model.historic_embeddings.shape}]",
+        )
+
         if not self.config.wandb.off:
             wandb.log({
                 "step": self.step,
@@ -234,5 +243,15 @@ def load_state(self):
             prefix="Reloaded model",
             sufix=f"<blue>{ self.config.neuron.full_path }/model.torch</blue>",
         )
+
+        # Load diversity model.
+        diversity_model_file_path = f"{self.config.neuron.full_path}/diversity_model.pth"
+        diversity_model_dict = torch.load(diversity_model_file_path)
+        self.diversity_model.historic_embeddings = diversity_model_dict["historic_embeddings"]
+        bt.logging.success(
+            prefix="Reloaded diversity model",
+            sufix=f"<blue>{diversity_model_file_path}</blue> [{self.diversity_model.historic_embeddings.shape}]",
+        )
+
     except Exception as e:
         bt.logging.warning(f"Failed to load model with error: {e}")
