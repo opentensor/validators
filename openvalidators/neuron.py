@@ -130,7 +130,7 @@ class neuron:
         bt.logging.debug('serving ip to chain...')
         axon = bt.axon( 
             wallet=self.wallet, metagraph=self.metagraph, config=self.config 
-         ).serve()
+         )
 
         del axon
 
