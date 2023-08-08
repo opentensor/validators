@@ -241,8 +241,9 @@ def load_state(self):
     try:
         state_dict = torch.load(f"{self.config.neuron.full_path}/model.torch")
         # Check for nans in saved state dict
-        if not torch.isnan(state_dict["neuron_weights"]).any():        
-            self.moving_averaged_scores = state_dict["neuron_weights"].clone().detach()
+        neuron_weights = torch.tensor(state_dict["neuron_weights"])
+        if not torch.isnan(neuron_weights).any():
+            self.moving_averaged_scores = neuron_weights
         self.hotkeys = state_dict["neuron_hotkeys"]
         bt.logging.success(
             prefix="Reloaded model",
