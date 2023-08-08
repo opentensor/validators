@@ -213,4 +213,3 @@ async def forward(self):
         else:
             base_text = base_text + "\nQuestion:" + followup_event["best"] + "\nAnswer:" + answer_event["best"]
     
-    print(base_text)
