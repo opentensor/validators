@@ -221,7 +221,7 @@ def save_state(self):
 
     try:
         # Save diversity model.
-        diversity_model_dict = {"historic_embeddings": self.diversity_model.historic_embeddings}
+        diversity_model_dict = {"historic_embeddings": self.diversity_model.historic_embeddings.to('cpu')}
         diversity_model_file_path = f"{self.config.neuron.full_path}/diversity_model.pth"
         torch.save(diversity_model_dict, diversity_model_file_path)
         bt.logging.success(
@@ -256,7 +256,7 @@ def load_state(self):
         # Load diversity model.
         diversity_model_file_path = f"{self.config.neuron.full_path}/diversity_model.pth"
         diversity_model_dict = torch.load(diversity_model_file_path)
-        self.diversity_model.historic_embeddings = diversity_model_dict["historic_embeddings"]
+        self.diversity_model.historic_embeddings = diversity_model_dict["historic_embeddings"].to(self.device)
         bt.logging.success(
             prefix="Reloaded diversity model",
             sufix=f"<blue>{diversity_model_file_path}</blue> {list(self.diversity_model.historic_embeddings.shape)}",
