@@ -201,7 +201,7 @@ class neuron:
                 RelevanceRewardModel(device=self.device) if not self.config.neuron.relevance_off
                 else MockRewardModel(RewardModelType.relevance.value)
             )
-            diversity_model = (
+            self.diversity_model = (
                 DiversityRewardModel(device=self.device) if not self.config.neuron.diversity_off
                 else MockRewardModel(RewardModelType.diversity.value)
             )
@@ -210,7 +210,7 @@ class neuron:
                 else MockRewardModel(RewardModelType.nsfw.value)              
             )
 
-            self.masking_functions = [self.blacklist, task_validator, relevance_model, diversity_model, nsfw_model]
+            self.masking_functions = [self.blacklist, task_validator, relevance_model, self.diversity_model, nsfw_model]
             bt.logging.debug(str(self.reward_functions))
             bt.logging.debug(str(self.masking_functions))
 
