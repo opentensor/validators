@@ -1,7 +1,12 @@
 # Changelog
 
-## 1.1.4 / 2023-08-07
+## 1.1.5 / 2023-08-08
 ### What’s Changed
+- Adds new keywords for the task validator by @p-ferreira in #119
+- Save historic embeddings on disk by @opentaco in #121 
+- Updates relevance mechanism by @Eugene-hu in #122 
+
+## 1.1.4 / 2023-08-07
 - HOTFIX: create and serve the axon at startup by @robertalanm in #120
 
 
