@@ -1,9 +1,11 @@
 # Changelog
 
-## 1.1.3 / 2023-08-02
-
+## 1.1.4 / 2023-08-07
 ### What’s Changed
+- HOTFIX: create and serve the axon at startup by @robertalanm in #120
 
+
+## 1.1.3 / 2023-08-02
 - Adds subtensor to metagraph sync by @camfairchild in #79
 - Fix wandb weights format logging by @p-ferreira in #88
 - Adds netuid tag to wandb runs by @p-ferreira in #95

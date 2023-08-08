@@ -127,6 +127,13 @@ class neuron:
             self.gating_model = GatingModel(metagraph=self.metagraph, config=self.config).to(self.device)
         bt.logging.debug(str(self.gating_model))
 
+        bt.logging.debug('serving ip to chain...')
+        axon = bt.axon( 
+            wallet=self.wallet, metagraph=self.metagraph, config=self.config 
+         )
+
+        del axon
+
         # Dendrite pool for querying the network during  training.
         bt.logging.debug("loading", "dendrite_pool")
         if self.config.neuron.mock_dendrite_pool:
