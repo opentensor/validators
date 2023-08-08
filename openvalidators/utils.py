@@ -226,7 +226,7 @@ def save_state(self):
         torch.save(diversity_model_dict, diversity_model_file_path)
         bt.logging.success(
             prefix="Saved diversity model",
-            sufix=f"<blue>{diversity_model_file_path}</blue> [{list(self.diversity_model.historic_embeddings.shape)}]",
+            sufix=f"<blue>{diversity_model_file_path}</blue> {list(self.diversity_model.historic_embeddings.shape)}",
         )
     except Exception as e:
         bt.logging.warning(f"Failed to save diversity model with error: {e}")
@@ -258,7 +258,7 @@ def load_state(self):
         self.diversity_model.historic_embeddings = diversity_model_dict["historic_embeddings"]
         bt.logging.success(
             prefix="Reloaded diversity model",
-            sufix=f"<blue>{diversity_model_file_path}</blue> [{list(self.diversity_model.historic_embeddings.shape)}]",
+            sufix=f"<blue>{diversity_model_file_path}</blue> {list(self.diversity_model.historic_embeddings.shape)}",
         )
     except Exception as e:
         bt.logging.warning(f"Failed to load diversity model with error: {e}")
