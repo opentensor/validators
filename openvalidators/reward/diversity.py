@@ -122,8 +122,8 @@ class DiversityRewardModel( BaseRewardModel ):
 
     def get_batch_rewards( self, embeddings: torch.FloatTensor ) -> torch.FloatTensor:
         def regularise( rewards ):
-            # sigmoid function that maps 0.07 -> 0.15; 0.1 -> 0.5; 0.2 -> 1
-            return 1/(1 + torch.exp(-60 * rewards + 6))
+            # sigmoid function that maps 0.07 -> 0.23; 0.1 -> 0.5; 0.2 -> 0.98
+            return 1/(1 + torch.exp(-40 * rewards + 4))
 
         # Calculate the pairwise cosine similarity.
         similarity = pairwise_cosine_similarity( embeddings, embeddings )
