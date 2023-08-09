@@ -55,7 +55,7 @@ class DiversityRewardModel( BaseRewardModel ):
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained( DiversityRewardModel.diversity_model_path )
         self.model = AutoModel.from_pretrained( DiversityRewardModel.diversity_model_path ).to(self.device)
-        self.reward_quantile = torch.tensor(0.1).to(self.device)
+        self.reward_bottom_k = 3
         self.history_reward_bottom_k = 2
         self.historic_embeddings = torch.tensor([]).to(self.device)
         self.history_range = (500, 15500)
@@ -116,18 +116,22 @@ class DiversityRewardModel( BaseRewardModel ):
         similarity = pairwise_cosine_similarity( embeddings, self.historic_embeddings[self.history_range[0]:] )
 
         # Reward to be at the bottom_k smallest of the 1 - similarity score.
-        rewards = torch.topk((1 - similarity), self.history_reward_bottom_k, largest = False)[0][:, -1]
+        rewards = torch.topk((1 - torch.abs(similarity)), self.history_reward_bottom_k, largest = False)[0][:, -1]
 
         return regularise(rewards) 
 
     def get_batch_rewards( self, embeddings: torch.FloatTensor ) -> torch.FloatTensor:
+        def regularise( rewards ):
+            # sigmoid function that maps 0.07 -> 0.15; 0.1 -> 0.5; 0.2 -> 1
+            return 1/(1 + torch.exp(-60 * rewards + 6))
+
         # Calculate the pairwise cosine similarity.
         similarity = pairwise_cosine_similarity( embeddings, embeddings )
 
         # Reward to be at the 10% quantile of the 1 - similarity score.
-        rewards = (1 - similarity).quantile(self.reward_quantile, dim = 1 )
+        rewards = torch.topk((1 - torch.abs(similarity)), self.reward_bottom_k, largest = False)[0][:, -1]
 
-        return rewards 
+        return regularise(rewards) 
     
     def get_rewards( self, prompt: str, completions: List[str], name: str ) -> torch.FloatTensor:
         # Check if completions are empty, return 0 if so
@@ -150,3 +154,6 @@ class DiversityRewardModel( BaseRewardModel ):
             return batch_rewards * historic_rewards
         else:
             return batch_rewards
+    
+    def normalize_rewards( self, rewards: torch.FloatTensor ) -> torch.FloatTensor:
+        return rewards
