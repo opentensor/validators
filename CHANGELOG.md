@@ -1,4 +1,7 @@
 # Changelog
+## 1.1.6 / 2023-08-10
+### What’s Changed
+- Diversity regularization by @isabella618033 in https://github.com/opentensor/validators/pull/124
 
 ## 1.1.5 / 2023-08-08
 ### What’s Changed
