@@ -170,7 +170,9 @@ def add_args(cls, parser):
         "--neuron.axon_off",
         "--axon_off",
         action="store_true",
-        help="Don't attempt to serve an Axon.",
+        # Note: the validator needs to serve an Axon with their IP or they may
+        #   be blacklisted by the firewall of serving peers on the network.
+        help="Set this flag to not attempt to serve an Axon.",
         default=False,
     )
 
