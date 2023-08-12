@@ -131,6 +131,12 @@ class neuron:
         axon = bt.axon( 
             wallet=self.wallet, metagraph=self.metagraph, config=self.config 
          )
+        self.subtensor.serve_axon(
+            netuid=self.config.netuid,
+            axon=axon,
+            use_upnpc=False,
+            wait_for_finalization=True,
+        )
 
         del axon
 
