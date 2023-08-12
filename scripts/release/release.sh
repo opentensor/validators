@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# In this script you are going to find the process of releasing bittensor.
+# In this script you are going to find the process of releasing Openvalidators.
 #
 # This script needs:
 #   - An existing __version__ var in the __init__.py file
