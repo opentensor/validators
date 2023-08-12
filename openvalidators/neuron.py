@@ -129,17 +129,27 @@ class neuron:
 
         if not self.config.neuron.axon_off:
             bt.logging.debug('serving ip to chain...')
-            axon = bt.axon( 
-                wallet=self.wallet, metagraph=self.metagraph, config=self.config 
-            )
-            self.subtensor.serve_axon(
-                netuid=self.config.netuid,
-                axon=axon,
-                use_upnpc=False,
-                wait_for_finalization=True,
-            )
+            try:
+                axon = bt.axon( 
+                    wallet=self.wallet, metagraph=self.metagraph, config=self.config 
+                )
 
-            del axon
+                try:
+                    self.subtensor.serve_axon(
+                        netuid=self.config.netuid,
+                        axon=axon,
+                        use_upnpc=False,
+                        wait_for_finalization=True,
+                    )
+
+                    del axon
+                except Exception as e:
+                    bt.logging.error(f'Failed to serve Axon with exception: {e}')
+                    pass
+            except Exception as e:
+                bt.logging.error(f'Failed to create Axon initialize with exception: {e}')
+                pass
+
         else:
             bt.logging.debug('axon off, not serving ip to chain.')
 
