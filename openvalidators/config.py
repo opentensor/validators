@@ -166,6 +166,14 @@ def add_args(cls, parser):
         default=4096,
     )
 
+    parser.add_argument(
+        "--neuron.axon_off",
+        "--axon_off",
+        action="store_true",
+        help="Don't attempt to serve an Axon.",
+        default=False,
+    )
+
     parser.add_argument("--wandb.off", action="store_true", help="Turn off wandb.", default=False)
     parser.add_argument(
         "--wandb.project_name",

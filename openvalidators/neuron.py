@@ -127,18 +127,21 @@ class neuron:
             self.gating_model = GatingModel(metagraph=self.metagraph, config=self.config).to(self.device)
         bt.logging.debug(str(self.gating_model))
 
-        bt.logging.debug('serving ip to chain...')
-        axon = bt.axon( 
-            wallet=self.wallet, metagraph=self.metagraph, config=self.config 
-         )
-        self.subtensor.serve_axon(
-            netuid=self.config.netuid,
-            axon=axon,
-            use_upnpc=False,
-            wait_for_finalization=True,
-        )
+        if not self.config.neuron.axon_off:
+            bt.logging.debug('serving ip to chain...')
+            axon = bt.axon( 
+                wallet=self.wallet, metagraph=self.metagraph, config=self.config 
+            )
+            self.subtensor.serve_axon(
+                netuid=self.config.netuid,
+                axon=axon,
+                use_upnpc=False,
+                wait_for_finalization=True,
+            )
 
-        del axon
+            del axon
+        else:
+            bt.logging.debug('axon off, not serving ip to chain.')
 
         # Dendrite pool for querying the network during  training.
         bt.logging.debug("loading", "dendrite_pool")
