@@ -141,11 +141,11 @@ class neuron:
                         use_upnpc=False,
                         wait_for_finalization=True,
                     )
-
-                    del axon
                 except Exception as e:
                     bt.logging.error(f'Failed to serve Axon with exception: {e}')
                     pass
+
+                del axon
             except Exception as e:
                 bt.logging.error(f'Failed to create Axon initialize with exception: {e}')
                 pass
