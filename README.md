@@ -118,13 +118,6 @@ Check the [README of the data collector](./scripts/README.md) for more informati
 
 ----
 ## Experimental Features
-### Prompt-Based Scoring
-The reward mechanism for miner completions plays a crucial role in the overall quality of the network. As such, we are constantly developing and testing new methods that make the reward process **open** and **robust**. This benefits everyone. Presently, miners weights are set based on evaluations of their completions that are carried out by a reward model. This presents two major challenges:
-
-1. Reward model evaluations are a bottleneck, owing to the large model size
-2. Reward models are vulnerable to attacks, which reduces the network quality for everyone
-
-Consequently, validators also perform *shadow scoring*, which outsources the reward mechanism to the network. This feature is currently under development, and so the prompt-based scores are only used for research purposes.
 
 ## Sentence Embedding Gating Model
 Another cornerstone of the validator functionality is the use of a mixture of experts (MoE) model, which we call the gating model, to enable queries to be efficiently routed to the best-suited miners. **This incentivizes miners to become specialists, which in turn improves response quality**. It also reduces latency and addresses bandwidth issues in the network.
