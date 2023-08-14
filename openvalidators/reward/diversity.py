@@ -59,6 +59,7 @@ class DiversityRewardModel( BaseRewardModel ):
         self.history_reward_bottom_k = 2
         self.historic_embeddings = torch.tensor([]).to(self.device)
         self.history_range = (500, 15500)
+        self.embedding_path = 'embeddings.txt'
         
     def get_embeddings( self, sentences: List[str] ) -> "torch.FloatTensor":
         """Runs a forward pass through the model.
@@ -139,7 +140,7 @@ class DiversityRewardModel( BaseRewardModel ):
             return torch.tensor([]).to(self.device)
         
         # Get embeddings for all completions.
-        embeddings = self.get_embeddings( completions )
+        embeddings = self.get_embeddings(completions)
 
         # Get batch rewards.
         batch_rewards = self.get_batch_rewards(embeddings)
@@ -148,6 +149,10 @@ class DiversityRewardModel( BaseRewardModel ):
         historic_rewards = self.get_historic_rewards(embeddings)
 
         self.update_historic_embeddings(embeddings)
+
+        with open(self.embedding_path,'a') as f:
+            for completion, embedding in zip(completions, embeddings):
+                f.write(f'{embedding.tolist()}:{completion}\n')
         
         # Return all
         if historic_rewards != None:
