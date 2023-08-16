@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.8 / 2023-08-12
+
+## What's Changed
+- Make sure to serve axon first by @camfairchild in 14921d35c
+
+
+**Full Changelog**: https://github.com/opentensor/validators/compare/v1.1.7...v1.1.8
+
+
 ## 1.1.7 / 2023-08-11
 ### What’s Changed
 - Hotfix cutoff limit by @Eugene-hu  in #126
