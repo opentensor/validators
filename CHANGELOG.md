@@ -1,4 +1,9 @@
 # Changelog
+
+## 1.1.7 / 2023-08-11
+### What’s Changed
+- Hotfix cutoff limit by @Eugene-hu  in #126
+
 ## 1.1.6 / 2023-08-10
 ### What’s Changed
 - Diversity regularization by @isabella618033 in https://github.com/opentensor/validators/pull/124
