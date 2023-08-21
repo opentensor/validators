@@ -22,7 +22,7 @@ import pandas as pd
 import openvalidators
 import os
 from analysis.utils import get_runs, download_data
-from traceback import print_exc
+from traceback import print_exception
 from typing import List
 from data_formatter import create_json_dataset, create_csv_dataset, create_openai_dataset
 
@@ -170,4 +170,4 @@ if __name__ == '__main__':
             )
     except Exception as e:
         bt.logging.error("Error in training loop", str(e))
-        bt.logging.debug(print_exc(e))
+        bt.logging.debug(print_exception(value=e))
