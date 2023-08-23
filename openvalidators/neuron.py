@@ -23,7 +23,7 @@ import bittensor as bt
 from openvalidators.dataset import Dataset, MockDataset
 from openvalidators.dendrite import AsyncDendritePool
 from openvalidators.gating import GatingModel, SentenceEmbedGatingModel
-from openvalidators.mock import MockDendritePool, MockRewardModel, MockGatingModel
+from openvalidators.mock import MockDendritePool, MockGatingModel
 
 # Load local forward function.
 from openvalidators.config import add_args, check_config, config
@@ -89,15 +89,21 @@ class neuron:
         self.wallet = bt.wallet(config=self.config)
         self.wallet.create_if_non_existent()
         if not self.config.wallet._mock:
-            if not self.subtensor.is_hotkey_registered_on_subnet(hotkey_ss58=self.wallet.hotkey.ss58_address, netuid=self.config.netuid):
-                raise Exception(f'Wallet not currently registered on netuid {self.config.netuid}, please first register wallet before running')
-                
+            if not self.subtensor.is_hotkey_registered_on_subnet(
+                hotkey_ss58=self.wallet.hotkey.ss58_address, netuid=self.config.netuid
+            ):
+                raise Exception(
+                    f"Wallet not currently registered on netuid {self.config.netuid}, please first register wallet before running"
+                )
+
         bt.logging.debug(str(self.wallet))
 
         # Init metagraph.
         bt.logging.debug("loading", "metagraph")
-        self.metagraph = bt.metagraph(netuid=self.config.netuid, network=self.subtensor.network, sync=False) # Make sure not to sync without passing subtensor
-        self.metagraph.sync(subtensor=self.subtensor) # Sync metagraph with subtensor.
+        self.metagraph = bt.metagraph(
+            netuid=self.config.netuid, network=self.subtensor.network, sync=False
+        )  # Make sure not to sync without passing subtensor
+        self.metagraph.sync(subtensor=self.subtensor)  # Sync metagraph with subtensor.
         self.hotkeys = copy.deepcopy(self.metagraph.hotkeys)
         bt.logging.debug(str(self.metagraph))
 
@@ -128,11 +134,9 @@ class neuron:
         bt.logging.debug(str(self.gating_model))
 
         if not self.config.neuron.axon_off:
-            bt.logging.debug('serving ip to chain...')
+            bt.logging.debug("serving ip to chain...")
             try:
-                axon = bt.axon( 
-                    wallet=self.wallet, metagraph=self.metagraph, config=self.config 
-                )
+                axon = bt.axon(wallet=self.wallet, metagraph=self.metagraph, config=self.config)
 
                 try:
                     self.subtensor.serve_axon(
@@ -142,16 +146,16 @@ class neuron:
                         wait_for_finalization=True,
                     )
                 except Exception as e:
-                    bt.logging.error(f'Failed to serve Axon with exception: {e}')
+                    bt.logging.error(f"Failed to serve Axon with exception: {e}")
                     pass
 
                 del axon
             except Exception as e:
-                bt.logging.error(f'Failed to create Axon initialize with exception: {e}')
+                bt.logging.error(f"Failed to create Axon initialize with exception: {e}")
                 pass
 
         else:
-            bt.logging.debug('axon off, not serving ip to chain.')
+            bt.logging.debug("axon off, not serving ip to chain.")
 
         # Dendrite pool for querying the network during  training.
         bt.logging.debug("loading", "dendrite_pool")
@@ -166,8 +170,9 @@ class neuron:
         if self.config.neuron.mock_reward_models:
             self.reward_functions = []
             self.reward_weights = []
+            self.blacklist = MockRewardModel(RewardModelType.blacklist.value)
             self.masking_functions = [
-                MockRewardModel(RewardModelType.blacklist.value),
+                self.blacklist,
                 MockRewardModel(RewardModelType.nsfw.value),
             ]
             bt.logging.debug(str(self.reward_functions))
@@ -214,26 +219,30 @@ class neuron:
 
                 bt.logging.error(message)
                 raise Exception(message)
-            
+
             # Masking functions
             self.blacklist = (
                 Blacklist() if not self.config.neuron.blacklist_off else MockRewardModel(RewardModelType.blacklist.value)
             )
             task_validator = (
-                TaskValidator() if not self.config.neuron.task_validator_off
+                TaskValidator()
+                if not self.config.neuron.task_validator_off
                 else MockRewardModel(RewardModelType.task_validator.value)
             )
             relevance_model = (
-                RelevanceRewardModel(device=self.device) if not self.config.neuron.relevance_off
+                RelevanceRewardModel(device=self.device)
+                if not self.config.neuron.relevance_off
                 else MockRewardModel(RewardModelType.relevance.value)
             )
             self.diversity_model = (
-                DiversityRewardModel(device=self.device) if not self.config.neuron.diversity_off
+                DiversityRewardModel(device=self.device)
+                if not self.config.neuron.diversity_off
                 else MockRewardModel(RewardModelType.diversity.value)
             )
             nsfw_model = (
-                NSFWRewardModel(device=self.device) if not self.config.neuron.nsfw_off
-                else MockRewardModel(RewardModelType.nsfw.value)              
+                NSFWRewardModel(device=self.device)
+                if not self.config.neuron.nsfw_off
+                else MockRewardModel(RewardModelType.nsfw.value)
             )
 
             self.masking_functions = [self.blacklist, task_validator, relevance_model, self.diversity_model, nsfw_model]
