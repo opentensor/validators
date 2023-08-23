@@ -44,17 +44,6 @@ class MockGatingModel(BaseGatingModel):
         pass
 
 
-class MockRewardModel(torch.nn.Module):
-    def reward(
-        self,
-        completions_with_prompt: List[str],
-        completions_without_prompt: List[str],
-        difference=False,
-        shift=3,
-    ) -> torch.FloatTensor:
-        return torch.zeros(len(completions_with_prompt))
-
-
 class MockDendriteResponse:
     completion = ""
     elapsed_time = 0
