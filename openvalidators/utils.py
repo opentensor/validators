@@ -49,7 +49,7 @@ def init_wandb(self, reinit=False):
     if self.config.neuron.disable_log_rewards:
         tags.append("disable_log_rewards")
 
-    wandb_config = {key: self.config.get(key, None) for key in ('neuron', 'reward', 'netuid', 'wandb')}
+    wandb_config = {key: copy.deepcopy(self.config.get(key, None)) for key in ('neuron', 'reward', 'netuid', 'wandb')}
     wandb_config['neuron'].pop('full_path', None)
 
     self.wandb = wandb.init(
