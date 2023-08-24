@@ -1,5 +1,5 @@
 # The MIT License (MIT)
-# Copyright © 2021 Yuma Rao
+# Copyright © 2023 Opentensor Technologies
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -14,20 +14,18 @@
 # THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
-from . import config
-from . import dendrite
-from . import forward
-from . import gating
-from . import misc
-from . import mock
-from . import neuron
-from . import prompts
-from . import reward
-from . import run
-from . import utils
-from . import weights
-from . import event
 
-__version__ = "1.1.8"
-version_split = __version__.split(".")
-__spec_version__ = (1000 * int(version_split[0])) + (10 * int(version_split[1])) + (1 * int(version_split[2]))
+from bittensor_wallet.mock import MockWallet as _MockWallet, utils as _mock_wallet_utils
+
+_get_mock_coldkey = _mock_wallet_utils.get_mock_coldkey
+_get_mock_hotkey = _mock_wallet_utils.get_mock_hotkey
+_get_mock_keypair = _mock_wallet_utils.get_mock_keypair
+_get_mock_wallet = _mock_wallet_utils.get_mock_wallet
+
+
+def __mock_wallet_factory__(*args, **kwargs) -> _MockWallet:
+    """Returns a mock wallet object."""
+
+    mock_wallet = _get_mock_wallet()
+
+    return mock_wallet
