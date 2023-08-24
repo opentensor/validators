@@ -45,6 +45,7 @@ class EventSchema:
     rlhf_reward_model: Optional[List[float]]  # Output vector of the rlhf reward model
     prompt_reward_model: Optional[List[float]]  # Output vector of the prompt reward model
     relevance_filter: Optional[List[float]]  # Output vector of the relevance scoring reward model
+    task_validator_filter: Optional[List[float]]
 
     # Weights data
     set_weights: Optional[List[List[float]]]
@@ -55,6 +56,7 @@ class EventSchema:
         rewards = {
             'dahoas_reward_model': event_dict.get(RewardModelType.dahoas.value),
             'blacklist_filter': event_dict.get(RewardModelType.blacklist.value),
+            'task_validator_filter': event_dict.get(RewardModelType.task_validator.value),
             'nsfw_filter': event_dict.get(RewardModelType.nsfw.value),
             'relevance_filter': event_dict.get(RewardModelType.relevance.value),
             'reciprocate_reward_model': event_dict.get(RewardModelType.reciprocate.value),

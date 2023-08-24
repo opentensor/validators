@@ -62,7 +62,11 @@ def get_random_uids(self, k: int, exclude: List[int] = None) -> torch.LongTensor
     return uids
 
 
-async def run_step(self, prompt: str, k: int, timeout: float, name: str, exclude: list = []):
+async def run_step(self, prompt: str, k: int, timeout: float, name: str, exclude: list = [], base_prompt = None):
+
+    if base_prompt == None:
+        base_prompt = prompt
+
     bt.logging.debug("run_step", name)
 
     # Record event start time.
@@ -83,18 +87,20 @@ async def run_step(self, prompt: str, k: int, timeout: float, name: str, exclude
     # Compute the rewards for the responses given the prompt.
     rewards: torch.FloatTensor = torch.zeros(len(responses), dtype=torch.float32).to(self.device)
     for weight_i, reward_fn_i in zip(self.reward_weights, self.reward_functions):
-        reward_i = reward_fn_i.apply(prompt, responses, name).to(self.device)
-        rewards += weight_i * reward_i
+        reward_i, reward_i_normalized = reward_fn_i.apply(prompt, responses, name).to(self.device)
+        rewards += weight_i * reward_i_normalized
         if not self.config.neuron.disable_log_rewards:
             event[reward_fn_i.name] = reward_i.tolist()
-        bt.logging.trace(str(reward_fn_i.name), reward_i.tolist())
+            event[reward_fn_i.name + '_normalized'] = reward_i_normalized.tolist()
+        bt.logging.trace(str(reward_fn_i.name), reward_i_normalized.tolist())
 
     for masking_fn_i in self.masking_functions:
-        mask_i = masking_fn_i.apply(prompt, responses, name).to(self.device)
-        rewards *= mask_i  # includes diversity
+        mask_i, mask_i_normalized = masking_fn_i.apply(base_prompt, responses, name).to(self.device)
+        rewards *= mask_i_normalized  # includes diversity
         if not self.config.neuron.disable_log_rewards:
             event[masking_fn_i.name] = mask_i.tolist()
-        bt.logging.trace(str(masking_fn_i.name), mask_i.tolist())
+            event[masking_fn_i.name + '_normalized'] = mask_i_normalized.tolist()
+        bt.logging.trace(str(masking_fn_i.name), mask_i_normalized.tolist())
 
     # Train the gating model based on the predicted scores and the actual rewards.
     gating_scores: torch.FloatTensor = self.gating_model(prompt).to(self.device)
@@ -168,6 +174,7 @@ async def forward(self):
     )
 
     base_text = augment_event["best"]
+    base_prompt = augment_event["best"]
     exclude = augment_event["uids"]
     for k in range(self.config.neuron.num_followup_steps):
 
@@ -180,6 +187,7 @@ async def forward(self):
             k=self.config.neuron.followup_sample_size,
             timeout=self.config.neuron.followup_timeout,
             exclude=exclude,
+            base_prompt=base_prompt
         )
         exclude += followup_event["uids"]
 
@@ -192,6 +200,7 @@ async def forward(self):
             k=self.config.neuron.answer_sample_size,
             timeout=self.config.neuron.answer_timeout,
             exclude=exclude,
+            base_prompt=followup_event["best"]
         )
         exclude += answer_event["uids"]
 
@@ -205,3 +214,4 @@ async def forward(self):
             )
         else:
             base_text = base_text + "\nQuestion:" + followup_event["best"] + "\nAnswer:" + answer_event["best"]
+    

@@ -98,17 +98,19 @@ class BaseRewardModel:
         successful_rewards = self.get_rewards( prompt, successful_completions, name )
 
         # Softmax rewards across samples.
-        successful_rewards = self.normalize_rewards( successful_rewards )
+        successful_rewards_normalized = self.normalize_rewards( successful_rewards )
 
         # Init zero rewards for all calls.
         filled_rewards = torch.zeros( len( responses ), dtype=torch.float32)
+        filled_rewards_normalized = torch.zeros( len( responses ), dtype=torch.float32)
 
         # Fill reward tensor.
-        for idx, reward in zip(successful_completions_indices, successful_rewards):
+        for idx, reward, reward_normalized in zip(successful_completions_indices, successful_rewards, successful_rewards_normalized):
             filled_rewards[idx] = reward
+            filled_rewards_normalized[idx] = reward_normalized
 
         # Return the filled rewards.
-        return filled_rewards 
+        return filled_rewards, filled_rewards_normalized
 
 
 class MockRewardModel( BaseRewardModel ):
@@ -121,7 +123,7 @@ class MockRewardModel( BaseRewardModel ):
         self.mock_name = mock_name
 
     def apply( self, prompt: str, completion: List[str], name: str ) -> torch.FloatTensor: 
-        return torch.tensor( [0 for _ in completion], dtype=torch.float32 )
-
+        mock_reward = torch.tensor( [0 for _ in completion], dtype=torch.float32 )
+        return mock_reward, mock_reward
 
         
