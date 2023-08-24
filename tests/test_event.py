@@ -42,6 +42,7 @@ class EventTestCase(unittest.TestCase):
             RewardModelType.nsfw.value: [1.0],
             RewardModelType.reciprocate.value: [1.0],
             RewardModelType.diversity.value: [1.0],
+            RewardModelType.dpo.value: [1.0],
             RewardModelType.rlhf.value: [1.0],
             RewardModelType.prompt.value: [1.0],
             RewardModelType.relevance.value: [1.0],
@@ -100,6 +101,7 @@ class EventTestCase(unittest.TestCase):
         assert event.nsfw_filter is None
         assert event.reciprocate_reward_model is None
         assert event.diversity_reward_model is None
+        assert event.dpo_reward_model is None
         assert event.rlhf_reward_model is None
         assert event.prompt_reward_model is None
         assert event.relevance_filter is None
@@ -141,6 +143,7 @@ class EventTestCase(unittest.TestCase):
         assert event.nsfw_filter is None
         assert event.reciprocate_reward_model is None
         assert event.diversity_reward_model is None
+        assert event.dpo_reward_model is None
         assert event.rlhf_reward_model is None
         assert event.prompt_reward_model is None
         assert event.relevance_filter is None

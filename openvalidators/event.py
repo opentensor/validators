@@ -41,6 +41,7 @@ class EventSchema:
     nsfw_filter: Optional[List[float]]  # Output vector of the nsfw filter
     reciprocate_reward_model: Optional[List[float]]  # Output vector of the reciprocate reward model
     diversity_reward_model: Optional[List[float]]  # Output vector of the diversity reward model
+    dpo_reward_model: Optional[List[float]]  # Output vector of the dpo reward model
     rlhf_reward_model: Optional[List[float]]  # Output vector of the rlhf reward model
     prompt_reward_model: Optional[List[float]]  # Output vector of the prompt reward model
     relevance_filter: Optional[List[float]]  # Output vector of the relevance scoring reward model
@@ -60,6 +61,7 @@ class EventSchema:
             'relevance_filter': event_dict.get(RewardModelType.relevance.value),
             'reciprocate_reward_model': event_dict.get(RewardModelType.reciprocate.value),
             'diversity_reward_model': event_dict.get(RewardModelType.diversity.value),
+            'dpo_reward_model': event_dict.get(RewardModelType.dpo.value),
             'rlhf_reward_model': event_dict.get(RewardModelType.rlhf.value),
             'prompt_reward_model': event_dict.get(RewardModelType.prompt.value),
         }
