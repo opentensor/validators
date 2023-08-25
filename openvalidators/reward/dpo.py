@@ -33,7 +33,7 @@ class DirectPreferenceRewardModel(BaseRewardModel):
     def __init__(self, device: str):
         super().__init__()
         self.device = device
-        self.penalty = 1.5
+        self.penalty = 1.2
         self.tokenizer = AutoTokenizer.from_pretrained(DirectPreferenceRewardModel.reward_model_name)
         self.model = AutoModelForCausalLM.from_pretrained(DirectPreferenceRewardModel.reward_model_name,
                                                           trust_remote_code=True,
