@@ -47,6 +47,16 @@ class EventSchema:
     relevance_filter: Optional[List[float]]  # Output vector of the relevance scoring reward model
     task_validator_filter: Optional[List[float]]
 
+    dahoas_reward_model_normalized: Optional[List[float]] # Output vector of the dahoas reward model
+    nsfw_filter_normalized: Optional[List[float]]  # Output vector of the nsfw filter
+    reciprocate_reward_model_normalized: Optional[List[float]]  # Output vector of the reciprocate reward model
+    diversity_reward_model_normalized: Optional[List[float]]  # Output vector of the diversity reward model
+    dpo_reward_model_normalized: Optional[List[float]]  # Output vector of the dpo reward model
+    rlhf_reward_model_normalized: Optional[List[float]]  # Output vector of the rlhf reward model
+    prompt_reward_model_normalized: Optional[List[float]]  # Output vector of the prompt reward model
+    relevance_filter_normalized: Optional[List[float]]  # Output vector of the relevance scoring reward model
+    task_validator_filter_normalized: Optional[List[float]]
+    
     # Weights data
     set_weights: Optional[List[List[float]]]
 
@@ -54,8 +64,8 @@ class EventSchema:
     def from_dict(event_dict: dict, disable_log_rewards: bool) -> 'EventSchema':
         """Converts a dictionary to an EventSchema object."""
         rewards = {
-            'dahoas_reward_model': event_dict.get(RewardModelType.dahoas.value),
             'blacklist_filter': event_dict.get(RewardModelType.blacklist.value),
+            'dahoas_reward_model': event_dict.get(RewardModelType.dahoas.value),
             'task_validator_filter': event_dict.get(RewardModelType.task_validator.value),
             'nsfw_filter': event_dict.get(RewardModelType.nsfw.value),
             'relevance_filter': event_dict.get(RewardModelType.relevance.value),
@@ -64,6 +74,16 @@ class EventSchema:
             'dpo_reward_model': event_dict.get(RewardModelType.dpo.value),
             'rlhf_reward_model': event_dict.get(RewardModelType.rlhf.value),
             'prompt_reward_model': event_dict.get(RewardModelType.prompt.value),
+            
+            'dahoas_reward_model_normalized': event_dict.get(RewardModelType.dahoas.value + '_normalized'),
+            'task_validator_filter_normalized': event_dict.get(RewardModelType.task_validator.value + '_normalized'),
+            'nsfw_filter_normalized': event_dict.get(RewardModelType.nsfw.value + '_normalized'),
+            'relevance_filter_normalized': event_dict.get(RewardModelType.relevance.value + '_normalized'),
+            'reciprocate_reward_model_normalized': event_dict.get(RewardModelType.reciprocate.value + '_normalized'),
+            'diversity_reward_model_normalized': event_dict.get(RewardModelType.diversity.value + '_normalized'),
+            'dpo_reward_model_normalized': event_dict.get(RewardModelType.dpo.value + '_normalized'),
+            'rlhf_reward_model_normalized': event_dict.get(RewardModelType.rlhf.value + '_normalized'),
+            'prompt_reward_model_normalized': event_dict.get(RewardModelType.prompt.value + '_normalized'),
         }
 
         # Logs warning that expected data was not set properly
