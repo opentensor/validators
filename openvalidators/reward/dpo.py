@@ -107,7 +107,7 @@ class DirectPreferenceRewardModel(BaseRewardModel):
 
 
     def logit_penalty(self, input_ids: torch.LongTensor, logit: torch.FloatTensor) -> torch.FloatTensor:
-        #import pdb;pdb.set_trace()
+        import pdb;pdb.set_trace()
         uniques, counts = input_ids.unique(return_counts=True)
         score = torch.gather(logit, 1, uniques.unsqueeze(0))
 
