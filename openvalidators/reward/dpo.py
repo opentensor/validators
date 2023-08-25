@@ -33,7 +33,7 @@ class DirectPreferenceRewardModel(BaseRewardModel):
     def __init__(self, device: str):
         super().__init__()
         self.device = device
-        self.penalty = 1.2
+        self.penalty = 1.5
         self.tokenizer = AutoTokenizer.from_pretrained(DirectPreferenceRewardModel.reward_model_name)
         self.model = AutoModelForCausalLM.from_pretrained(DirectPreferenceRewardModel.reward_model_name,
                                                           trust_remote_code=True,
@@ -107,6 +107,7 @@ class DirectPreferenceRewardModel(BaseRewardModel):
 
 
     def logit_penalty(self, input_ids: torch.LongTensor, logit: torch.FloatTensor) -> torch.FloatTensor:
+        import pdb;pdb.set_trace()
         score = torch.gather(logit, 1, input_ids.unsqueeze(0))
 
         # if score < 0 then repetition penalty has to be multiplied to reduce the previous token probability
