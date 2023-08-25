@@ -82,8 +82,8 @@ class DirectPreferenceRewardModel(BaseRewardModel):
             if with_penalty:
                 # Apply penalty for repeated generation
                 for i in range(len(prompt_part), len(combined)-1):
-                    logit = logits[:,i,:].copy()
-                    inputs = combined[:i].copy()
+                    logit = logits[:,i,:].clone()
+                    inputs = combined[:i].clone()
                     logits[:,i,:] =  self.logit_penalty(input_ids=inputs, logit=logit)
 
             # Rescale via log(softmax(logits)).
