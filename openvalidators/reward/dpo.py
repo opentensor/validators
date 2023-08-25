@@ -107,12 +107,12 @@ class DirectPreferenceRewardModel(BaseRewardModel):
 
 
     def logit_penalty(self, input_ids: torch.LongTensor, logit: torch.FloatTensor) -> torch.FloatTensor:
-        import pdb;pdb.set_trace()
+        #import pdb;pdb.set_trace()
         uniques, counts = input_ids.unique(return_counts=True)
         score = torch.gather(logit, 1, uniques.unsqueeze(0))
 
         # if score < 0 then repetition penalty has to be multiplied to reduce the previous token probability
         score = torch.where(score < 0, score * (self.penalty**counts), score / (self.penalty**counts))
 
-        logit.scatter_(1, uniques.unsqueeze(0), score)
+        logit.scatter_(1, uniques.unsqueeze(0), score.to(logit.dtype))
         return logit
