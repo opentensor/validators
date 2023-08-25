@@ -32,6 +32,7 @@ class DirectPreferenceRewardModel(BaseRewardModel):
 
     def __init__(self, device: str):
         super().__init__()
+        self.min_completion_len = 5  # minimum number of tokens expected in each completion part.
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(DirectPreferenceRewardModel.reward_model_name)
         self.model = AutoModelForCausalLM.from_pretrained(DirectPreferenceRewardModel.reward_model_name,
@@ -48,6 +49,12 @@ class DirectPreferenceRewardModel(BaseRewardModel):
             combined = self.tokenizer(prompt + completion, return_tensors="pt").input_ids[0].to(self.device)  # [seq_len]
             # Tokenize only the prompt, to help determine prompt token length.
             prompt_part = self.tokenizer(prompt, return_tensors="pt").input_ids[0].to(self.device)  # [prompt_len]
+
+            # Number of tokens in the completion part.
+            completion_len = len(combined) - len(prompt_part)
+            # Completion part is less than the minimum allowed length.
+            if completion_len < self.min_completion_len:
+                return -11.  # exp(-11)=1.67e-5 < 2e-5=1/50257 (typical vocab size)
 
             # Completion doesn't fit into model sequence, so return lowest reward.
             if self.tokenizer.model_max_length <= len(prompt_part):
