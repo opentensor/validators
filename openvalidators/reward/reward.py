@@ -101,7 +101,7 @@ class BaseRewardModel:
         successful_rewards_normalized = self.normalize_rewards( successful_rewards )
 
         # Init zero rewards for all calls.
-        filled_rewards = torch.zeros( len( responses ), dtype=torch.float32)
+        filled_rewards = torch.ones( len( responses ), dtype=torch.float32) * torch.nan
         filled_rewards_normalized = torch.zeros( len( responses ), dtype=torch.float32)
 
         # Fill reward tensor.
