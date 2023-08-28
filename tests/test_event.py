@@ -42,10 +42,22 @@ class EventTestCase(unittest.TestCase):
             RewardModelType.nsfw.value: [1.0],
             RewardModelType.reciprocate.value: [1.0],
             RewardModelType.diversity.value: [1.0],
+            RewardModelType.dpo.value: [1.0],
             RewardModelType.rlhf.value: [1.0],
             RewardModelType.prompt.value: [1.0],
             RewardModelType.relevance.value: [1.0],
-            RewardModelType.task_validator.value: [1.0]
+            RewardModelType.task_validator.value: [1.0],
+            
+            RewardModelType.dahoas.value + '_normalized': [1.0],
+            RewardModelType.blacklist.value + '_normalized': [1.0],
+            RewardModelType.nsfw.value + '_normalized': [1.0],
+            RewardModelType.reciprocate.value + '_normalized': [1.0],
+            RewardModelType.diversity.value + '_normalized': [1.0],
+            RewardModelType.dpo.value + '_normalized': [1.0],
+            RewardModelType.rlhf.value + '_normalized': [1.0],
+            RewardModelType.prompt.value + '_normalized': [1.0],
+            RewardModelType.relevance.value + '_normalized': [1.0],
+            RewardModelType.task_validator.value + '_normalized': [1.0]
         }
 
         # Act
@@ -100,10 +112,21 @@ class EventTestCase(unittest.TestCase):
         assert event.nsfw_filter is None
         assert event.reciprocate_reward_model is None
         assert event.diversity_reward_model is None
+        assert event.dpo_reward_model is None
         assert event.rlhf_reward_model is None
         assert event.prompt_reward_model is None
         assert event.relevance_filter is None
         assert event.task_validator_filter is None
+
+        assert event.dahoas_reward_model_normalized is None
+        assert event.nsfw_filter_normalized is None
+        assert event.reciprocate_reward_model_normalized is None
+        assert event.diversity_reward_model_normalized is None
+        assert event.dpo_reward_model_normalized is None
+        assert event.rlhf_reward_model_normalized is None
+        assert event.prompt_reward_model_normalized is None
+        assert event.relevance_filter_normalized is None
+        assert event.task_validator_filter_normalized is None
 
     def test_event_from_dict_forward_reward_logging_mismatch(self):
         """Test that all default columns logged on the forward pass are correctly converted and that
@@ -122,7 +145,12 @@ class EventTestCase(unittest.TestCase):
             'rewards': [1.0],
         }
 
-        not_logged_columns = [field.value for field in RewardModelType]
+        not_logged_columns = []
+        for field in RewardModelType: 
+            not_logged_columns.append(field.value)
+            if field.value != 'blacklist_filter':
+                not_logged_columns.append(field.value + '_normalized')
+                
 
         # Act
         with patch('bittensor.logging.warning') as mock_warning:
@@ -141,8 +169,18 @@ class EventTestCase(unittest.TestCase):
         assert event.nsfw_filter is None
         assert event.reciprocate_reward_model is None
         assert event.diversity_reward_model is None
+        assert event.dpo_reward_model is None
         assert event.rlhf_reward_model is None
         assert event.prompt_reward_model is None
         assert event.relevance_filter is None
         assert event.task_validator_filter is None
 
+        assert event.dahoas_reward_model_normalized is None
+        assert event.nsfw_filter_normalized is None
+        assert event.reciprocate_reward_model_normalized is None
+        assert event.diversity_reward_model_normalized is None
+        assert event.dpo_reward_model_normalized is None
+        assert event.rlhf_reward_model_normalized is None
+        assert event.prompt_reward_model_normalized is None
+        assert event.relevance_filter_normalized is None
+        assert event.task_validator_filter_normalized is None

@@ -36,6 +36,7 @@ from openvalidators.reward import (
     Blacklist,
     TaskValidator,
     NSFWRewardModel,
+    DirectPreferenceRewardModel,
     OpenAssistantRewardModel,
     ReciprocateRewardModel,
     RelevanceRewardModel,
@@ -174,6 +175,7 @@ class neuron:
         else:
             self.reward_weights = torch.tensor(
                 [
+                    self.config.reward.dpo_weight,
                     self.config.reward.rlhf_weight,
                     self.config.reward.reciprocate_weight,
                     self.config.reward.dahoas_weight,
@@ -192,6 +194,9 @@ class neuron:
                 raise Exception(message)
 
             self.reward_functions = [
+                DirectPreferenceRewardModel(device=self.device)
+                if self.config.reward.dpo_weight > 0
+                else MockRewardModel(RewardModelType.dpo.value),
                 OpenAssistantRewardModel(device=self.device)
                 if self.config.reward.rlhf_weight > 0
                 else MockRewardModel(RewardModelType.rlhf.value),
