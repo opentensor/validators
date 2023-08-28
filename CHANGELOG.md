@@ -1,13 +1,24 @@
 # Changelog
 
+## 1.2.0 / 2023-08-28
+### What's changed
+- Adds Direct Optimization (DPO) style rewards by @opentaco on #99
+- Changes print format on exception catch by @camfairchild on #135
+- Brings back netuid and wandb to logged config by @p-ferreira on #137
+- Adds DPO penalty update by @Eugene-hu  on #138
+- Adds original reward output to wandb logs by @isabella618033  on #139
+- Reweights reward models by @Eugene-hu  on #140
+- Update stale documentation by @steffencruz  on #129
+
+
+
+**Full Changelog**: https://github.com/opentensor/validators/compare/v1.1.7...v1.2.0
+
 ## 1.1.8 / 2023-08-12
-
-## What's Changed
+### What's Changed
 - Make sure to serve axon first by @camfairchild in 14921d35c
-
-
-**Full Changelog**: https://github.com/opentensor/validators/compare/v1.1.7...v1.1.8
-
+- Adds scripts for releases on github by @camfairchild  in #128
+- Wandb config log changes @isabella618033  in #132  
 
 ## 1.1.7 / 2023-08-11
 ### What’s Changed
