@@ -58,4 +58,4 @@ def run(self):
 
     except Exception as e:
         bt.logging.error("Error in training loop", str(e))
-        bt.logging.debug(print_exception(value=e))
+        bt.logging.debug(print_exception(type(err), err, err.__traceback__))
