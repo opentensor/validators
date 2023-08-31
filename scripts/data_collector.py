@@ -168,6 +168,6 @@ if __name__ == '__main__':
                 with_score=export_mining_with_scoring_dataset,
                 export_openai_dataset=export_openai_dataset
             )
-    except Exception as e:
-        bt.logging.error("Error in training loop", str(e))
-        bt.logging.debug(print_exception(value=e))
+    except Exception as err:
+        bt.logging.error("Error in data collector execution", str(err))
+        bt.logging.debug(print_exception(type(err), err, err.__traceback__))
