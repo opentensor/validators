@@ -18,7 +18,7 @@
 import asyncio
 import time
 import bittensor as bt
-from traceback import print_exc
+from traceback import print_exception
 
 from openvalidators.forward import forward
 from openvalidators.utils import should_checkpoint, checkpoint, should_reinit_wandb, reinit_wandb, load_state, save_state
@@ -65,4 +65,4 @@ def run(self):
 
     except Exception as e:
         bt.logging.error("Error in training loop", str(e))
-        bt.logging.debug(print_exc(e))
+        bt.logging.debug(print_exception(value=e))

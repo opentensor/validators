@@ -176,4 +176,4 @@ class MpnetRelevenceModel( BaseRewardModel ):
         # Calculate the pairwise cosine similarity.
         similarity = pairwise_cosine_similarity( prompt_embed, embeddings )
 
-        return similarity
+        return torch.abs(similarity)

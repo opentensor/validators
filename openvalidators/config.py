@@ -166,6 +166,16 @@ def add_args(cls, parser):
         default=4096,
     )
 
+    parser.add_argument(
+        "--neuron.axon_off",
+        "--axon_off",
+        action="store_true",
+        # Note: the validator needs to serve an Axon with their IP or they may
+        #   be blacklisted by the firewall of serving peers on the network.
+        help="Set this flag to not attempt to serve an Axon.",
+        default=False,
+    )
+
     parser.add_argument("--wandb.off", action="store_true", help="Turn off wandb.", default=False)
     parser.add_argument(
         "--wandb.project_name",
@@ -241,6 +251,12 @@ def add_args(cls, parser):
         action="store_true",
         help="Dont apply the diversity reward model",
         default=False,
+    )
+    parser.add_argument(
+        "--neuron.task_validator_off",
+        action="store_true",
+        help="Dont apply the task validator reward model",
+        default=False,
     )    
 
     parser.add_argument(
@@ -248,6 +264,12 @@ def add_args(cls, parser):
         type=float,
         help="Weight for the reciprocate reward model",
         default=DefaultRewardFrameworkConfig.reciprocate_model_weight,
+    )
+    parser.add_argument(
+        "--reward.dpo_weight",
+        type=float,
+        help="Weight for the dpo reward model",
+        default=DefaultRewardFrameworkConfig.dpo_model_weight,
     )
     parser.add_argument(
         "--reward.rlhf_weight",
