@@ -112,6 +112,8 @@ async def run_step(self, prompt: str, k: int, timeout: float, name: str, exclude
 
     # Get completion times
     completion_times: List[float] = [comp.elapsed_time for comp in responses]
+    completion_return_messages: List[str] = [comp.return_message for comp in responses]
+    completion_return_codes: List[str] = [comp.return_code for comp in responses]
 
     # Compute forward pass rewards, assumes followup_uids and answer_uids are mutually exclusive.
     # shape: [ metagraph.n ]
@@ -133,6 +135,8 @@ async def run_step(self, prompt: str, k: int, timeout: float, name: str, exclude
             "uids": uids.tolist(),
             "completions": completions,
             "completion_times": completion_times,
+            "completion_return_messages": completion_return_messages,
+            "completion_return_codes": completion_return_codes,
             "rewards": rewards.tolist(),
             "gating_loss": gating_loss.item(),
             "best": best,
