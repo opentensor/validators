@@ -112,8 +112,8 @@ async def run_step(self, prompt: str, k: int, timeout: float, name: str, exclude
 
     # Get completion times
     completion_times: List[float] = [comp.elapsed_time for comp in responses]
-    completion_return_messages: List[str] = [comp.return_message for comp in responses]
-    completion_return_codes: List[str] = [comp.return_code for comp in responses]
+    completion_return_messages: List[str] = [str(comp.return_message) for comp in responses]
+    completion_return_codes: List[str] = [str(comp.return_code) for comp in responses]
 
     # Compute forward pass rewards, assumes followup_uids and answer_uids are mutually exclusive.
     # shape: [ metagraph.n ]
@@ -146,9 +146,9 @@ async def run_step(self, prompt: str, k: int, timeout: float, name: str, exclude
     if not self.config.neuron.dont_save_events:
         logger.log("EVENTS", "events", **event)
 
-    # Log the event to wandb.
-    wandb_event = EventSchema.from_dict(event, self.config.neuron.disable_log_rewards)
+    # Log the event to wandb.    
     if not self.config.wandb.off:
+        wandb_event = EventSchema.from_dict(event, self.config.neuron.disable_log_rewards)
         self.wandb.log(asdict(wandb_event))
 
     # Return the event.
