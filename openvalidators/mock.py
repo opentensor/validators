@@ -57,6 +57,8 @@ class MockRewardModel(torch.nn.Module):
 
 class MockDendriteResponse:
     completion = ""
+    return_message = "Success"
+    return_code = "1"
     elapsed_time = 0
     is_success = True
     firewall_prompt = FirewallPrompt()
