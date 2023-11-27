@@ -8,6 +8,8 @@
 
 </div>
 
+## ⚠️ **Deprecated**: This project is no longer maintained. We recommend using [text-prompting repository](https://github.com/opentensor/text-prompting) instead.
+
 This repository contains Bittensor Validators designed by the OpenTensor Foundation team for the community.
 It offers several functionalities, such as:
 
